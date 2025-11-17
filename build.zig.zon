@@ -1,0 +1,38 @@
+.{
+    .name = .zdse,
+    .version = "0.0.0",
+    .fingerprint = 0x53d243fae294cecb,
+    .minimum_zig_version = "0.14.1",
+    .dependencies = .{
+        .zglfw = .{
+            .url = "https://github.com/zig-gamedev/zglfw/archive/c337cb3d3f984468ea7a386335937a5d555fc024.tar.gz",
+            .hash = "zglfw-0.10.0-dev-zgVDNMacIQA-k7kNSfwUc9Lfzx-bb_wklVm25K-p8Tr7",
+        },
+        .zgpu = .{
+            .url = "https://github.com/zig-gamedev/zgpu/archive/d860e2b4a333cacffb168fab49a233c5d2f1bca2.tar.gz",
+            .hash = "zgpu-0.12.0-dev-nqFT5EKgCADkhwAf97_pfSOmPWEguKmljSECs9ihpFS7",
+        },
+        .dawn_x86_64_linux_gnu = .{
+            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-linux-gnu/archive/7d70db023bf254546024629cbec5ee6113e12a42.tar.gz",
+            .hash = "N-V-__8AAK7XUQNKNRnv1J6i189jtURJKjp3HTftoyD4Y4CB",
+            .lazy = true,
+        },
+        .zgui = .{
+            .url = "https://github.com/zig-gamedev/zgui/archive/b1c775da1f14d9dbeadc22243a11f7342bf59a51.tar.gz",
+            .hash = "zgui-0.6.0-dev--L6sZC-1aADzgrip50BHiYDaCwSMC04XWK0epNlQD6Dt",
+        },
+        .zstbi = .{
+            .url = "git+https://github.com/zig-gamedev/zstbi#a70604a93988ee553d0ae6a3871726270a6025d5",
+            .hash = "zstbi-0.11.0-dev-L0Ea_9WVBwAO8t0Qbr87vnCEf1QBcNQHbV-O_D0UWYqT",
+        },
+        .zgltf = .{
+            .url = "git+https://github.com/kooparse/zgltf#ee153a493a773d1a8c4893f117d593ea21e4db93",
+            .hash = "12207f41bf1035f272bc654056ab07f0004c9b20ede8be03fc2cb0f2eb29cd1c897b",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
