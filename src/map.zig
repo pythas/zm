@@ -2,47 +2,11 @@ const std = @import("std");
 const zstbi = @import("zstbi");
 const zgpu = @import("zgpu");
 
-pub const Tile = struct {
-    const Self = @This();
-    pub const tileSize: usize = 8;
-
-    pub const Kind = enum(u8) {
-        Empty = 0,
-        Asteroid = 1,
-        Hull = 2,
-    };
-
-    pub const SpriteSheet = enum(u8) {
-        World = 0,
-        Asteroids = 1,
-        Ships = 2,
-    };
-
-    kind: Kind,
-    sheet: SpriteSheet,
-    sprite: u16,
-
-    pub fn init(kind: Kind, sheet: SpriteSheet, sprite: u8) Self {
-        return .{
-            .kind = kind,
-            .sheet = sheet,
-            .sprite = sprite,
-        };
-    }
-
-    pub fn initEmpty() Self {
-        return .{
-            .kind = .Empty,
-            .sheet = .World,
-            .sprite = 0,
-        };
-    }
-};
+const Tile = @import("tile.zig").Tile;
 
 pub const Chunk = struct {
     const Self = @This();
-    pub const chunkWidth: usize = 64;
-    pub const chunkHeight: usize = 64;
+    pub const chunkSize: usize = 64;
 
     pub const RenderData = struct {
         tilemap: zgpu.TextureHandle,
@@ -53,12 +17,12 @@ pub const Chunk = struct {
 
     x: i32,
     y: i32,
-    tiles: [chunkWidth][chunkHeight]Tile,
+    tiles: [chunkSize][chunkSize]Tile,
     render_data: ?RenderData = null,
 
-    pub fn initEmpty(x: i32, y: i32) Self {
-        const tiles: [chunkWidth][chunkHeight]Tile =
-            .{.{Tile.initEmpty()} ** chunkHeight} ** chunkWidth;
+    pub fn initEmpty(allocator: std.mem.Allocator, x: i32, y: i32) !Self {
+        const tiles: [chunkSize][chunkSize]Tile =
+            .{.{try Tile.initEmpty(allocator)} ** chunkSize} ** chunkSize;
 
         return .{
             .x = x,
@@ -67,41 +31,43 @@ pub const Chunk = struct {
         };
     }
 
-    pub fn initTest(x: i32, y: i32) Self {
+    pub fn initTest(allocator: std.mem.Allocator, x: i32, y: i32) !Self {
         var tiles: [64][64]Tile = undefined;
 
-        for (0..chunkWidth) |chunk_x| {
-            for (0..chunkHeight) |chunk_y| {
-                tiles[chunk_x][chunk_y] = Tile.initEmpty();
+        for (0..chunkSize) |chunk_x| {
+            for (0..chunkSize) |chunk_y| {
+                tiles[chunk_x][chunk_y] = try Tile.initEmpty(allocator);
             }
         }
 
-        // tiles[0][0] = Tile.init(.Stone, 0);
-        // tiles[63][0] = Tile.init(.Stone, 0);
-        // tiles[63][63] = Tile.init(.Stone, 0);
-        // tiles[0][63] = Tile.init(.Stone, 0);
+        tiles[0][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[63][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[63][63] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[0][63] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
 
-        tiles[51][50] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[52][50] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[53][50] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[50][51] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[51][51] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[52][51] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[53][51] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[54][51] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[50][52] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[51][52] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[52][52] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[53][52] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[54][52] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[50][53] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[51][53] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[52][53] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[53][53] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[54][53] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[51][54] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[52][54] = Tile.init(.Asteroid, .Asteroids, 0);
-        tiles[53][54] = Tile.init(.Asteroid, .Asteroids, 0);
+        // tiles[51][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[52][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[50][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[51][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[52][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[54][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[50][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // var tile = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 1);
+        // try tile.composition.setOre(.Iron, 255);
+        // tiles[51][52] = tile;
+        // tiles[52][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[54][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[50][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[51][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[52][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[54][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[51][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[52][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
 
         return .{
             .x = x,
@@ -114,26 +80,32 @@ pub const Chunk = struct {
 pub const Map = struct {
     const Self = @This();
 
-    allocator: std.mem.Allocator,
     chunks: std.ArrayList(Chunk),
 
     pub fn init(allocator: std.mem.Allocator) !Self {
         var chunks = std.ArrayList(Chunk).init(allocator);
 
-        try chunks.append(Chunk.initTest(-1, -1));
-        try chunks.append(Chunk.initTest(0, -1));
-        try chunks.append(Chunk.initTest(1, -1));
+        // try chunks.append(try Chunk.initEmpty(allocator, -1, -1));
+        // try chunks.append(try Chunk.initEmpty(allocator, 0, -1));
+        // try chunks.append(try Chunk.initEmpty(allocator, 1, -1));
+        // try chunks.append(try Chunk.initEmpty(allocator, -1, 0));
+        // try chunks.append(try Chunk.initTest(allocator, 0, 0));
+        // try chunks.append(try Chunk.initEmpty(allocator, 1, 0));
+        // try chunks.append(try Chunk.initEmpty(allocator, -1, 1));
+        // try chunks.append(try Chunk.initEmpty(allocator, 0, 1));
+        // try chunks.append(try Chunk.initEmpty(allocator, 1, 1));
 
-        try chunks.append(Chunk.initTest(-1, 0));
-        try chunks.append(Chunk.initTest(0, 0));
-        try chunks.append(Chunk.initTest(1, 0));
-
-        try chunks.append(Chunk.initTest(-1, 1));
-        try chunks.append(Chunk.initTest(0, 1));
-        try chunks.append(Chunk.initTest(1, 1));
+        try chunks.append(try Chunk.initTest(allocator, -1, -1));
+        try chunks.append(try Chunk.initTest(allocator, 0, -1));
+        try chunks.append(try Chunk.initTest(allocator, 1, -1));
+        try chunks.append(try Chunk.initTest(allocator, -1, 0));
+        try chunks.append(try Chunk.initTest(allocator, 0, 0));
+        try chunks.append(try Chunk.initTest(allocator, 1, 0));
+        try chunks.append(try Chunk.initTest(allocator, -1, 1));
+        try chunks.append(try Chunk.initTest(allocator, 0, 1));
+        try chunks.append(try Chunk.initTest(allocator, 1, 1));
 
         return .{
-            .allocator = allocator,
             .chunks = chunks,
         };
     }

@@ -5,7 +5,7 @@ const zglfw = @import("zglfw");
 
 const World = @import("world.zig").World;
 const Map = @import("map.zig").Map;
-const Tile = @import("map.zig").Tile;
+const Tile = @import("tile.zig").Tile;
 const Chunk = @import("map.zig").Chunk;
 const Texture = @import("texture.zig").Texture;
 const Player = @import("player.zig").Player;
@@ -196,7 +196,7 @@ pub const WorldRenderer = struct {
 
         var uniform_data = ChunkUniforms{
             .chunk_xy = .{ @floatFromInt(chunk.x), @floatFromInt(chunk.y), 0, 0 },
-            .chunk_wh = .{ @floatFromInt(Chunk.chunkWidth), @floatFromInt(Chunk.chunkHeight), 0, 0 },
+            .chunk_wh = .{ @floatFromInt(Chunk.chunkSize), @floatFromInt(Chunk.chunkSize), 0, 0 },
         };
 
         self.gctx.queue.writeBuffer(
@@ -211,8 +211,8 @@ pub const WorldRenderer = struct {
         const tilemap = self.gctx.createTexture(.{
             .usage = .{ .texture_binding = true, .copy_dst = true },
             .size = .{
-                .width = Chunk.chunkWidth,
-                .height = Chunk.chunkHeight,
+                .width = Chunk.chunkSize,
+                .height = Chunk.chunkSize,
                 .depth_or_array_layers = 1,
             },
             .format = wgpu.TextureFormat.r32_uint,
@@ -230,21 +230,21 @@ pub const WorldRenderer = struct {
             .{ .binding = 1, .texture_view_handle = tilemap_view },
         });
 
-        const chunk_data = try self.allocator.alloc(u32, Chunk.chunkWidth * Chunk.chunkHeight);
+        const chunk_data = try self.allocator.alloc(u32, Chunk.chunkSize * Chunk.chunkSize);
         defer self.allocator.free(chunk_data);
 
-        for (0..Chunk.chunkHeight) |y| {
-            for (0..Chunk.chunkWidth) |x| {
+        for (0..Chunk.chunkSize) |y| {
+            for (0..Chunk.chunkSize) |x| {
                 const tile = chunk.tiles[x][y];
                 const id = packTileForGpu(tile);
-                chunk_data[(y * Chunk.chunkWidth) + x] = id;
+                chunk_data[(y * Chunk.chunkSize) + x] = id;
             }
         }
 
         self.gctx.queue.writeTexture(
             .{ .texture = self.gctx.lookupResource(tilemap).? },
-            .{ .bytes_per_row = Chunk.chunkWidth * @sizeOf(u32), .rows_per_image = Chunk.chunkHeight },
-            .{ .width = Chunk.chunkWidth, .height = Chunk.chunkHeight },
+            .{ .bytes_per_row = Chunk.chunkSize * @sizeOf(u32), .rows_per_image = Chunk.chunkSize },
+            .{ .width = Chunk.chunkSize, .height = Chunk.chunkSize },
             u32,
             chunk_data,
         );
@@ -539,9 +539,9 @@ fn createSampler(gctx: *zgpu.GraphicsContext) zgpu.SamplerHandle {
 }
 
 fn packTileForGpu(tile: Tile) u32 {
-    const sheet_bits: u32 = @intFromEnum(tile.sheet) & 0x0F; // 4 bits
-    const kind_bits: u32 = @intFromEnum(tile.kind) & 0x0F; // 4 bits
-    const sprite_bits: u32 = tile.sprite & 0x03FF; // 10 bits
+    const sheet: u32 = @intFromEnum(tile.sheet) & 0x0F; // 4 bits
+    const category: u32 = @intFromEnum(tile.category) & 0x0F; // 4 bits
+    const sprite: u32 = tile.sprite & 0x03FF; // 10 bits
 
-    return (sheet_bits << 14) | (kind_bits << 10) | sprite_bits;
+    return (sheet << 14) | (category << 10) | sprite;
 }

@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const Vec2 = @import("vec2.zig").Vec2;
-const Tile = @import("map.zig").Tile;
+const Tile = @import("tile.zig").Tile;
 
 pub const Player = struct {
     const Self = @This();
@@ -23,6 +23,7 @@ pub const Player = struct {
     tiles: [playerWidth][playerHeight]Tile,
 
     pub fn init(
+        allocator: std.mem.Allocator,
         position: Vec2,
         rotation: f32,
         thrust: f32,
@@ -30,31 +31,42 @@ pub const Player = struct {
     ) Self {
         // const tiles: [playerWidth][playerHeight]Tile =
         //     .{.{Tile.init(.Hull, .Ships, 0)} ** playerHeight} ** playerWidth;
+
         var tiles: [playerWidth][playerHeight]Tile = undefined;
 
-        tiles[0][0] = Tile.init(.Hull, .Ships, 0);
-        tiles[1][0] = Tile.init(.Hull, .Ships, 33);
-        tiles[2][0] = Tile.init(.Hull, .Ships, 33);
-        tiles[3][0] = Tile.init(.Hull, .Ships, 1);
+        tiles[0][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 0);
+        tiles[1][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);
+        tiles[2][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);
+        tiles[3][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 1);
+        tiles[0][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        tiles[0][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        tiles[0][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        tiles[0][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        tiles[0][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        tiles[0][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        tiles[1][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[1][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[1][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[1][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[1][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[1][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[2][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[2][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[2][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[2][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[2][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[2][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        tiles[3][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        tiles[3][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        tiles[3][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        tiles[3][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        tiles[3][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        tiles[3][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        tiles[0][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 2);
+        tiles[1][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 35);
+        tiles[2][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 35);
+        tiles[3][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 3);
 
-        tiles[0][1] = Tile.init(.Hull, .Ships, 32);
-        tiles[0][2] = Tile.init(.Hull, .Ships, 32);
-        tiles[0][3] = Tile.init(.Hull, .Ships, 32);
-        tiles[0][4] = Tile.init(.Hull, .Ships, 32);
-        tiles[0][5] = Tile.init(.Hull, .Ships, 32);
-        tiles[0][6] = Tile.init(.Hull, .Ships, 32);
-
-        tiles[3][1] = Tile.init(.Hull, .Ships, 34);
-        tiles[3][2] = Tile.init(.Hull, .Ships, 34);
-        tiles[3][3] = Tile.init(.Hull, .Ships, 34);
-        tiles[3][4] = Tile.init(.Hull, .Ships, 34);
-        tiles[3][5] = Tile.init(.Hull, .Ships, 34);
-        tiles[3][6] = Tile.init(.Hull, .Ships, 34);
-
-        tiles[0][6] = Tile.init(.Hull, .Ships, 2);
-        tiles[1][6] = Tile.init(.Hull, .Ships, 35);
-        tiles[2][6] = Tile.init(.Hull, .Ships, 35);
-        tiles[3][6] = Tile.init(.Hull, .Ships, 3);
         return .{
             .position = position,
             .velocity = Vec2.init(0, 0),
@@ -90,5 +102,12 @@ pub const Player = struct {
         const acceleration = input_torque * self.torque;
 
         self.angular_velocity = self.angular_velocity + acceleration * dt;
+    }
+
+    pub fn applySideThrust(self: *Self, dt: f32, input_strafe: f32) void {
+        const right = Vec2.init(@cos(self.rotation), @sin(self.rotation));
+
+        const acceleration = right.mulScalar(input_strafe * self.thrust);
+        self.velocity = self.velocity.add(acceleration.mulScalar(dt));
     }
 };

@@ -14,7 +14,7 @@ struct GlobalUniforms {
 };
 
 struct Tile {
-  kind: u32,
+  category: u32,
   sheet: u32,
   sprite: u32,
 };
@@ -34,10 +34,11 @@ fn fetch_tile(pos: vec2<f32>) -> Tile {
 }
 
 fn unpack_tile(id: u32) -> Tile {
-  let sprite : u32 =  id         & 0x3FFu;
-  let kind   : u32 = (id >> 10u) & 0x0Fu;
-  let sheet  : u32 = (id >> 14u) & 0x0Fu;
-  return Tile(kind, sheet, sprite);
+  let sprite: u32 = id & 0x3FFu;
+  let category: u32 = (id >> 10u) & 0x0Fu;
+  let sheet: u32 = (id >> 14u) & 0x0Fu;
+
+  return Tile(category, sheet, sprite);
 }
 
 fn get_sprite_uv(tile: Tile, tile_uv: vec2<f32>) -> vec2<f32> {
@@ -67,7 +68,7 @@ fn main(in: FSIn) -> @location(0) vec4<f32> {
 
   let tile = fetch_tile(vec2<f32>(f32(tile_x), f32(tile_y)));
 
-  let is_empty = tile.kind == 0u;
+  let is_empty = tile.category == 0u;
 
   if is_empty {
     return vec4<f32>(0.0);

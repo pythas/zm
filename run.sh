@@ -1,3 +1,3 @@
 #!/bin/bash
-# Force X11/XWayland instead of native Wayland
-env -u WAYLAND_DISPLAY ./zig-out/bin/zdse "$@"
+env -u WAYLAND_DISPLAY zig build run"$@"
+# env -u WAYLAND_DISPLAY ./zig-out/bin/zm"$@"

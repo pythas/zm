@@ -15,7 +15,7 @@ struct ChunkUniforms {
 };
 
 struct Tile {
-  kind: u32,
+  category: u32,
   sheet: u32,
   sprite: u32,
 };
@@ -36,10 +36,11 @@ fn fetch_tile(pos: vec2<f32>) -> Tile {
 }
 
 fn unpack_tile(id: u32) -> Tile {
-  let sprite : u32 =  id         & 0x3FFu;
-  let kind   : u32 = (id >> 10u) & 0x0Fu;
-  let sheet  : u32 = (id >> 14u) & 0x0Fu;
-  return Tile(kind, sheet, sprite);
+  let sprite: u32 = id & 0x3FFu;
+  let category: u32 = (id >> 10u) & 0x0Fu;
+  let sheet: u32 = (id >> 14u) & 0x0Fu;
+
+  return Tile(category, sheet, sprite);
 }
 
 fn get_sprite_uv(tile: Tile, tile_pos: vec2<f32>) -> vec2<f32> {
@@ -66,7 +67,7 @@ struct FSIn {
 fn main(in: FSIn) -> @location(0) vec4<f32> {
   let tile = fetch_tile(in.tile_pos);
 
-  if (tile.kind == 0u) {
+  if (tile.category == 0u) {
       return vec4<f32>(0.0, 0.0, 0.0, 1.0);
   }
 
