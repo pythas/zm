@@ -125,43 +125,18 @@ pub const World = struct {
         self.camera.zoom = @max(0.1, @min(10.0, self.camera.zoom));
     }
 
-    fn getTile(self: Self, x: f32, y: f32) ?Tile {
+    fn getTile(self: *Self, local_x: f32, local_y: f32) ?Tile {
         const tile_size = @as(f32, @floatFromInt(Tile.tileSize));
 
-        const camera_x = self.camera.position.x * tile_size;
-        const camera_y = self.camera.position.y * tile_size;
+        const world = self.camera.screenToWorld(
+            .{
+                .x = local_x,
+                .y = local_y,
+            },
+            tile_size,
+        );
 
-        const world_x = camera_x + x;
-        const world_y = camera_y + y;
-
-        const chunk_size = @as(f32, @floatFromInt(Chunk.chunkSize)) * tile_size;
-
-        const half_size = chunk_size / 2.0;
-
-        for (self.map.chunks.items) |chunk| {
-            const chunk_center_x =
-                @as(f32, @floatFromInt(chunk.x)) * chunk_size;
-            const chunk_center_y =
-                @as(f32, @floatFromInt(chunk.y)) * chunk_size;
-
-            const chunk_top = chunk_center_y - half_size;
-            const chunk_right = chunk_center_x + half_size;
-            const chunk_bottom = chunk_center_y + half_size;
-            const chunk_left = chunk_center_x - half_size;
-
-            if (world_x >= chunk_left and world_x <= chunk_right and
-                world_y >= chunk_top and world_y <= chunk_bottom)
-            {
-                const relatve_x = world_x - chunk_left;
-                const relatve_y = world_y - chunk_top;
-                const tile_x: u32 = @intFromFloat(relatve_x / tile_size);
-                const tile_y: u32 = @intFromFloat(relatve_y / tile_size);
-
-                return chunk.tiles[tile_x][tile_y];
-            }
-        }
-
-        return null;
+        return self.map.getTileAtWorld(world, tile_size);
     }
 };
 

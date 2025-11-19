@@ -3,6 +3,7 @@ const zstbi = @import("zstbi");
 const zgpu = @import("zgpu");
 
 const Tile = @import("tile.zig").Tile;
+const Vec2 = @import("vec2.zig").Vec2;
 
 pub const Chunk = struct {
     const Self = @This();
@@ -75,6 +76,44 @@ pub const Chunk = struct {
             .tiles = tiles,
         };
     }
+
+    pub fn worldCenter(self: Chunk, chunk_size: f32) Vec2 {
+        return .{
+            .x = @as(f32, @floatFromInt(self.x)) * chunk_size,
+            .y = @as(f32, @floatFromInt(self.y)) * chunk_size,
+        };
+    }
+
+    pub fn containsWorld(self: Self, world: Vec2, chunk_size: f32) bool {
+        const half = chunk_size / 2.0;
+        const center = self.worldCenter(chunk_size);
+        const left = center.x - half;
+        const right = center.x + half;
+        const top = center.y - half;
+        const bottom = center.y + half;
+
+        return world.x >= left and world.x < right and
+            world.y >= top and world.y < bottom;
+    }
+
+    pub fn tileAtWorld(self: Self, world: Vec2, tile_size: f32, chunk_size: f32) ?Tile {
+        const half = chunk_size / 2.0;
+        const center = self.worldCenter(chunk_size);
+        const left = center.x - half;
+        const top = center.y - half;
+
+        const rel_x = world.x - left;
+        const rel_y = world.y - top;
+
+        const tile_x: u32 = @intFromFloat(rel_x / tile_size);
+        const tile_y: u32 = @intFromFloat(rel_y / tile_size);
+
+        if (tile_x >= Self.chunkSize or tile_y >= Self.chunkSize) {
+            return null;
+        }
+
+        return self.tiles[tile_x][tile_y];
+    }
 };
 
 pub const Map = struct {
@@ -114,11 +153,15 @@ pub const Map = struct {
         self.chunks.deinit();
     }
 
-    pub fn getTile(self: Self, x: i32, y: i32) ?Tile {
-        if (x < 0 or y < 0 or x >= self.width or y >= self.height) {
-            return null;
+    pub fn getTileAtWorld(self: *Self, world: Vec2, tile_size: f32) ?Tile {
+        const chunk_size = @as(f32, @floatFromInt(Chunk.chunkSize)) * tile_size;
+
+        for (self.chunks.items) |chunk| {
+            if (chunk.containsWorld(world, chunk_size)) {
+                return chunk.tileAtWorld(world, tile_size, chunk_size);
+            }
         }
 
-        return self.data[@as(usize, @intCast(y)) * self.width + @as(usize, @intCast(x))];
+        return null;
     }
 };
