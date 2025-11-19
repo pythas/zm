@@ -17,7 +17,7 @@ pub const Texture = struct {
         var image = try zstbi.Image.loadFromFile(zpath, 4);
         defer image.deinit();
 
-        std.debug.assert(image.width == 32 and image.height == 32);
+        // std.debug.assert(image.width == 32 and image.height == 32);
 
         const size = image.width * image.height;
         const data = try allocator.dupe(u8, image.data[0 .. size * 4]);

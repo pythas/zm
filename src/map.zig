@@ -4,26 +4,37 @@ const zgpu = @import("zgpu");
 
 pub const Tile = struct {
     const Self = @This();
+    pub const tileSize: usize = 8;
 
     pub const Kind = enum(u8) {
         Empty = 0,
-        Stone = 1,
+        Asteroid = 1,
+        Hull = 2,
+    };
+
+    pub const SpriteSheet = enum(u8) {
+        World = 0,
+        Asteroids = 1,
+        Ships = 2,
     };
 
     kind: Kind,
-    texture: u8,
+    sheet: SpriteSheet,
+    sprite: u16,
 
-    pub fn init(kind: Kind, texture: u8) Self {
+    pub fn init(kind: Kind, sheet: SpriteSheet, sprite: u8) Self {
         return .{
             .kind = kind,
-            .texture = texture,
+            .sheet = sheet,
+            .sprite = sprite,
         };
     }
 
     pub fn initEmpty() Self {
         return .{
             .kind = .Empty,
-            .texture = 0,
+            .sheet = .World,
+            .sprite = 0,
         };
     }
 };
@@ -70,27 +81,27 @@ pub const Chunk = struct {
         // tiles[63][63] = Tile.init(.Stone, 0);
         // tiles[0][63] = Tile.init(.Stone, 0);
 
-        tiles[51][50] = Tile.init(.Stone, 0);
-        tiles[52][50] = Tile.init(.Stone, 0);
-        tiles[53][50] = Tile.init(.Stone, 0);
-        tiles[50][51] = Tile.init(.Stone, 0);
-        tiles[51][51] = Tile.init(.Stone, 0);
-        tiles[52][51] = Tile.init(.Stone, 0);
-        tiles[53][51] = Tile.init(.Stone, 0);
-        tiles[54][51] = Tile.init(.Stone, 0);
-        tiles[50][52] = Tile.init(.Stone, 0);
-        tiles[51][52] = Tile.init(.Stone, 0);
-        tiles[52][52] = Tile.init(.Stone, 0);
-        tiles[53][52] = Tile.init(.Stone, 0);
-        tiles[54][52] = Tile.init(.Stone, 0);
-        tiles[50][53] = Tile.init(.Stone, 0);
-        tiles[51][53] = Tile.init(.Stone, 0);
-        tiles[52][53] = Tile.init(.Stone, 0);
-        tiles[53][53] = Tile.init(.Stone, 0);
-        tiles[54][53] = Tile.init(.Stone, 0);
-        tiles[51][54] = Tile.init(.Stone, 0);
-        tiles[52][54] = Tile.init(.Stone, 0);
-        tiles[53][54] = Tile.init(.Stone, 0);
+        tiles[51][50] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[52][50] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[53][50] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[50][51] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[51][51] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[52][51] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[53][51] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[54][51] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[50][52] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[51][52] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[52][52] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[53][52] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[54][52] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[50][53] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[51][53] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[52][53] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[53][53] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[54][53] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[51][54] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[52][54] = Tile.init(.Asteroid, .Asteroids, 0);
+        tiles[53][54] = Tile.init(.Asteroid, .Asteroids, 0);
 
         return .{
             .x = x,

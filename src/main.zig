@@ -110,7 +110,7 @@ fn renderFrame(
         defer encoder.release();
 
         {
-            const pass = zgpu.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
+            const pass = zgpu.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, null, null);
             defer zgpu.endReleasePass(pass);
 
             try game.render(pass, dt, t);

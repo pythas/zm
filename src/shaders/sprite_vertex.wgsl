@@ -52,7 +52,8 @@ fn main(
 
     let rotated = rot * (pos - vec2<f32>(0.5, 0.5));
 
-    let sprite_size = in.wh.xy;
+    // let sprite_size = in.wh.xy;
+    let sprite_size = vec2<f32>(8.0);
     let sprite_pos = in.position.xy;
     
     let world_pos = sprite_pos + rotated * sprite_size;

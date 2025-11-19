@@ -41,6 +41,7 @@ pub const GameMode = struct {
 
         self.world_renderer = try WorldRenderer.init(allocator, gctx, window, &self.global_render_state);
         self.sprite_renderer = try SpriteRenderer.init(allocator, gctx, &self.global_render_state);
+        try self.sprite_renderer.writeTilemap(&self.world);
 
         for (self.world.map.chunks.items) |*chunk| {
             try self.world_renderer.createChunkRenderData(chunk);
@@ -86,7 +87,6 @@ pub const GameMode = struct {
         }
 
         // TODO: for each visible chunk
-
         for (self.world.map.chunks.items) |chunk| {
             const render_data = chunk.render_data orelse continue;
             const bind_group = gctx.lookupResource(render_data.bind_group).?;
