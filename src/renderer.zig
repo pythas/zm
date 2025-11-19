@@ -6,7 +6,7 @@ const zglfw = @import("zglfw");
 const World = @import("world.zig").World;
 const Map = @import("map.zig").Map;
 const Tile = @import("tile.zig").Tile;
-const Chunk = @import("map.zig").Chunk;
+const Chunk = @import("chunk.zig").Chunk;
 const Texture = @import("texture.zig").Texture;
 const Player = @import("player.zig").Player;
 
