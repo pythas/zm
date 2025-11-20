@@ -3,13 +3,16 @@ const zstbi = @import("zstbi");
 const zgpu = @import("zgpu");
 
 const Tile = @import("tile.zig").Tile;
+const TileReference = @import("tile.zig").TileReference;
 const Vec2 = @import("vec2.zig").Vec2;
 const Chunk = @import("chunk.zig").Chunk;
 
 pub const Map = struct {
     const Self = @This();
 
+    allocator: std.mem.Allocator,
     chunks: std.ArrayList(Chunk),
+    is_dirty: bool = false,
 
     pub fn init(allocator: std.mem.Allocator) !Self {
         var chunks = std.ArrayList(Chunk).init(allocator);
@@ -35,6 +38,7 @@ pub const Map = struct {
         try chunks.append(try Chunk.initTest(allocator, 1, 1));
 
         return .{
+            .allocator = allocator,
             .chunks = chunks,
         };
     }
@@ -43,10 +47,10 @@ pub const Map = struct {
         self.chunks.deinit();
     }
 
-    pub fn getTileAtWorld(self: *Self, world: Vec2, tile_size: f32) ?Tile {
+    pub fn getTileAtWorld(self: *Self, world: Vec2, tile_size: f32) ?TileReference {
         const chunk_size = @as(f32, @floatFromInt(Chunk.chunkSize)) * tile_size;
 
-        for (self.chunks.items) |chunk| {
+        for (self.chunks.items) |*chunk| {
             if (chunk.containsWorld(world, chunk_size)) {
                 return chunk.tileAtWorld(world, tile_size, chunk_size);
             }

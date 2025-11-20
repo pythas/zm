@@ -85,8 +85,8 @@ fn runGameLoop(
         fps.update(dt);
 
         if (fps.shouldRefreshTitle()) {
-            const fps_avg = @as(f64, @floatFromInt(fps.acc_frames)) / fps.acc_time;
-            std.debug.print("\rFPS: {d:5.1} | frametime: {d:6.2} ms/n", .{ fps_avg, fps.ema_ms });
+            // const fps_avg = @as(f64, @floatFromInt(fps.acc_frames)) / fps.acc_time;
+            // std.debug.print("\rFPS: {d:5.1} | frametime: {d:6.2} ms/n", .{ fps_avg, fps.ema_ms });
             fps.acc_time = 0.0;
             fps.acc_frames = 0;
         }

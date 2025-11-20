@@ -5,6 +5,7 @@ const zglfw = @import("zglfw");
 
 const KeyboardState = @import("input.zig").KeyboardState;
 const Map = @import("map.zig").Map;
+const TileReference = @import("tile.zig").TileReference;
 const Chunk = @import("map.zig").Chunk;
 const Player = @import("player.zig").Player;
 const Camera = @import("camera.zig").Camera;
@@ -19,6 +20,9 @@ pub const World = struct {
     map: Map,
     camera: Camera,
     player: Player,
+
+    last_left: zglfw.Action = .release,
+    last_right: zglfw.Action = .release,
 
     pub fn init(allocator: std.mem.Allocator, map: Map) !Self {
         const camera = Camera.init(
@@ -50,7 +54,7 @@ pub const World = struct {
         dt: f32,
         keyboard_state: *const KeyboardState,
         window: *zglfw.Window,
-    ) void {
+    ) !void {
         const wh = window.getFramebufferSize();
         const mouse_pos = window.getCursorPos();
         const mouse_x: f32 = @floatCast(mouse_pos[0]);
@@ -58,8 +62,11 @@ pub const World = struct {
         const mouse_x_relative = mouse_x - @as(f32, @floatFromInt(wh[0])) / 2;
         const mouse_y_relative = mouse_y - @as(f32, @floatFromInt(wh[1])) / 2;
 
-        const left_button = window.getMouseButton(.left);
-        const right_button = window.getMouseButton(.right);
+        const left_now = window.getMouseButton(.left);
+        const right_now = window.getMouseButton(.right);
+
+        const left_clicked = (left_now == .press and self.last_left == .release);
+        const right_clicked = (right_now == .press and self.last_right == .release);
 
         // TODO : Move these
         const thrust = 1.0;
@@ -90,22 +97,29 @@ pub const World = struct {
             self.player.applySideThrust(dt, side_thrust);
         }
 
-        if (left_button == .press) {
-            if (self.getTile(mouse_x_relative, mouse_y_relative)) |tile| {
-                if (tile.category != .Empty) {
-                    std.debug.print("tile hit: {d}\n", .{@intFromEnum(tile.category)});
+        if (left_clicked) {
+            if (self.getTile(mouse_x_relative, mouse_y_relative)) |tile_ref| {
+                if (tile_ref.getTile(&self.map)) |tile| {
+                    if (tile.category != .Empty) {
+                        std.debug.print("tile hit: cat: {d}, xy: {d} {d}\n", .{ @intFromEnum(tile.category), tile_ref.tile_x, tile_ref.tile_y });
+
+                        try self.player.startTileAction(.Mine, tile_ref);
+                    }
                 }
             }
         }
 
-        if (right_button == .press) {
+        if (right_clicked) {
             // ...
         }
 
         // sync camera with player
         self.camera.position = self.player.position;
 
-        self.player.update(dt);
+        try self.player.update(dt, &self.map);
+
+        self.last_left = left_now;
+        self.last_right = right_now;
     }
 
     fn tryMovePlayer(self: *Self, x: f32, y: f32) void {
@@ -125,7 +139,7 @@ pub const World = struct {
         self.camera.zoom = @max(0.1, @min(10.0, self.camera.zoom));
     }
 
-    fn getTile(self: *Self, local_x: f32, local_y: f32) ?Tile {
+    fn getTile(self: *Self, local_x: f32, local_y: f32) ?TileReference {
         const tile_size = @as(f32, @floatFromInt(Tile.tileSize));
 
         const world = self.camera.screenToWorld(

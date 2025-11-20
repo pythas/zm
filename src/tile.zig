@@ -1,5 +1,48 @@
 const std = @import("std");
 
+const Map = @import("map.zig").Map;
+const Chunk = @import("chunk.zig").Chunk;
+
+pub const TileReference = struct {
+    const Self = @This();
+
+    chunk_x: i32,
+    chunk_y: i32,
+    tile_x: u32,
+    tile_y: u32,
+
+    pub fn getChunk(self: Self, map: *Map) ?*Chunk {
+        for (map.chunks.items) |*chunk| {
+            if (chunk.x == self.chunk_x and chunk.y == self.chunk_y) {
+                return chunk;
+            }
+        }
+
+        return null;
+    }
+
+    pub fn getTile(self: Self, map: *Map) ?*Tile {
+        const chunk = self.getChunk(map) orelse return null;
+
+        if (self.tile_x >= Chunk.chunkSize or self.tile_y >= Chunk.chunkSize) {
+            return null;
+        }
+
+        return &chunk.tiles[self.tile_x][self.tile_y];
+    }
+
+    pub fn mineTile(self: Self, map: *Map) !void {
+        const chunk = self.getChunk(map) orelse return;
+
+        if (self.tile_x >= Chunk.chunkSize or self.tile_y >= Chunk.chunkSize) {
+            return;
+        }
+
+        chunk.tiles[self.tile_x][self.tile_y] = try Tile.initEmpty(map.allocator);
+        map.is_dirty = true;
+    }
+};
+
 pub const Category = enum(u8) {
     Empty,
     Terrain,

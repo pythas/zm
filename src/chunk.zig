@@ -1,7 +1,9 @@
 const std = @import("std");
 const zgpu = @import("zgpu");
 
+const Map = @import("map.zig").Map;
 const Tile = @import("tile.zig").Tile;
+const TileReference = @import("tile.zig").TileReference;
 const Vec2 = @import("vec2.zig").Vec2;
 
 pub const Chunk = struct {
@@ -95,7 +97,7 @@ pub const Chunk = struct {
             world.y >= top and world.y < bottom;
     }
 
-    pub fn tileAtWorld(self: Self, world: Vec2, tile_size: f32, chunk_size: f32) ?Tile {
+    pub fn tileAtWorld(self: *Self, world: Vec2, tile_size: f32, chunk_size: f32) ?TileReference {
         const half = chunk_size / 2.0;
         const center = self.worldCenter(chunk_size);
         const left = center.x - half;
@@ -111,6 +113,11 @@ pub const Chunk = struct {
             return null;
         }
 
-        return self.tiles[tile_x][tile_y];
+        return .{
+            .chunk_x = self.x,
+            .chunk_y = self.y,
+            .tile_x = tile_x,
+            .tile_y = tile_y,
+        };
     }
 };

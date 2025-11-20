@@ -62,7 +62,16 @@ pub const GameMode = struct {
 
     pub fn update(self: *Self, dt: f32) !void {
         self.keyboard_state.beginFrame();
-        self.world.update(dt, &self.keyboard_state, self.window);
+        try self.world.update(dt, &self.keyboard_state, self.window);
+
+        if (self.world.map.is_dirty) {
+            // TODO: only for dirty chunks
+            for (self.world.map.chunks.items) |*chunk| {
+                try self.world_renderer.createChunkRenderData(chunk);
+            }
+
+            self.world.map.is_dirty = false;
+        }
     }
 
     pub fn render(
