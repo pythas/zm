@@ -42,34 +42,34 @@ pub const Chunk = struct {
             }
         }
 
-        tiles[0][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[63][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[63][63] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[0][63] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[0][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[63][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[63][63] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[0][63] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
 
-        // tiles[51][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[52][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[53][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[50][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[51][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[52][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[53][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[54][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[50][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // var tile = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 1);
-        // try tile.composition.setOre(.Iron, 255);
-        // tiles[51][52] = tile;
-        // tiles[52][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[53][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[54][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[50][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[51][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[52][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[53][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[54][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[51][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[52][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        // tiles[53][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[51][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[52][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[53][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[50][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[51][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[52][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[53][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[54][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[50][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        var tile = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 1);
+        try tile.composition.setOre(.Iron, 255);
+        tiles[51][52] = tile;
+        tiles[52][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[53][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[54][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[50][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[51][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[52][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[53][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[54][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[51][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[52][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        tiles[53][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
 
         return .{
             .x = x,

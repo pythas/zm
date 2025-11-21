@@ -5,9 +5,7 @@ const zglfw = @import("zglfw");
 const World = @import("../world.zig").World;
 const Map = @import("../map.zig").Map;
 const KeyboardState = @import("../input.zig").KeyboardState;
-const GlobalRenderState = @import("../renderer.zig").GlobalRenderState;
-const WorldRenderer = @import("../renderer.zig").WorldRenderer;
-const SpriteRenderer = @import("../renderer.zig").SpriteRenderer;
+const Renderer = @import("../renderer/renderer.zig").Renderer;
 const scrollCallback = @import("../world.zig").scrollCallback;
 
 pub const GameMode = struct {
@@ -15,9 +13,7 @@ pub const GameMode = struct {
 
     allocator: std.mem.Allocator,
     window: *zglfw.Window,
-    global_render_state: GlobalRenderState,
-    world_renderer: WorldRenderer,
-    sprite_renderer: SpriteRenderer,
+    renderer: Renderer,
     keyboard_state: KeyboardState,
     world: World,
 
@@ -28,23 +24,20 @@ pub const GameMode = struct {
         map: Map,
     ) !Self {
         const world = try World.init(allocator, map);
+        const renderer = try Renderer.init(allocator, gctx, window);
 
         var self = Self{
             .allocator = allocator,
             .window = window,
+            .renderer = renderer,
             .world = world,
-            .global_render_state = try GlobalRenderState.init(allocator, gctx),
-            .world_renderer = undefined,
-            .sprite_renderer = undefined,
             .keyboard_state = KeyboardState.init(window),
         };
 
-        self.world_renderer = try WorldRenderer.init(allocator, gctx, window, &self.global_render_state);
-        self.sprite_renderer = try SpriteRenderer.init(allocator, gctx, &self.global_render_state);
-        try self.sprite_renderer.writeTilemap(&self.world);
+        try self.renderer.sprite.writeTilemap(&self.world);
 
         for (self.world.map.chunks.items) |*chunk| {
-            try self.world_renderer.createChunkRenderData(chunk);
+            try self.renderer.world.createChunkRenderData(chunk);
         }
 
         return self;
@@ -52,7 +45,6 @@ pub const GameMode = struct {
 
     pub fn deinit(self: *Self) void {
         self.world.deinit();
-        self.world_renderer.deinit(self.allocator);
     }
 
     pub fn setupCallbacks(self: *Self) void {
@@ -60,53 +52,26 @@ pub const GameMode = struct {
         _ = self.window.setScrollCallback(scrollCallback);
     }
 
-    pub fn update(self: *Self, dt: f32) !void {
+    pub fn update(self: *Self, dt: f32, t: f32) !void {
         self.keyboard_state.beginFrame();
         try self.world.update(dt, &self.keyboard_state, self.window);
 
         if (self.world.map.is_dirty) {
             // TODO: only for dirty chunks
             for (self.world.map.chunks.items) |*chunk| {
-                try self.world_renderer.createChunkRenderData(chunk);
+                try self.renderer.world.createChunkRenderData(chunk);
             }
 
             self.world.map.is_dirty = false;
         }
+
+        self.renderer.update(self.window, &self.world, dt, t);
     }
 
     pub fn render(
         self: *Self,
         pass: zgpu.wgpu.RenderPassEncoder,
-        dt: f32,
-        t: f32,
     ) !void {
-        const renderer = self.world_renderer;
-        const gctx = renderer.gctx;
-
-        self.global_render_state.write(gctx, self.window, &self.world, dt, t);
-
-        {
-            try renderer.writeTextures(&self.world);
-
-            const pipeline = gctx.lookupResource(renderer.pipeline).?;
-            const bind_group = gctx.lookupResource(self.global_render_state.bind_group).?;
-
-            pass.setPipeline(pipeline);
-            pass.setBindGroup(0, bind_group, null);
-        }
-
-        // TODO: for each visible chunk
-        for (self.world.map.chunks.items) |chunk| {
-            const render_data = chunk.render_data orelse continue;
-            const bind_group = gctx.lookupResource(render_data.bind_group).?;
-
-            renderer.writeChunkBuffers(chunk);
-
-            pass.setBindGroup(1, bind_group, null);
-            pass.draw(6, 1, 0, 0);
-        }
-
-        try self.sprite_renderer.writeBuffers(&self.world);
-        self.sprite_renderer.draw(pass, &self.global_render_state);
+        try self.renderer.draw(pass, &self.world);
     }
 };

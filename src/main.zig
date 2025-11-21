@@ -91,16 +91,14 @@ fn runGameLoop(
             fps.acc_frames = 0;
         }
 
-        try game.update(dt);
-        try renderFrame(gctx, &game, dt, t);
+        try game.update(dt, t);
+        try renderFrame(gctx, &game);
     }
 }
 
 fn renderFrame(
     gctx: *zgpu.GraphicsContext,
     game: *Game,
-    dt: f32,
-    t: f32,
 ) !void {
     const swapchain_texv = gctx.swapchain.getCurrentTextureView();
     defer swapchain_texv.release();
@@ -113,7 +111,7 @@ fn renderFrame(
             const pass = zgpu.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, null, null);
             defer zgpu.endReleasePass(pass);
 
-            try game.render(pass, dt, t);
+            try game.render(pass);
         }
 
         break :commands encoder.finish(null);

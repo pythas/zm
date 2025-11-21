@@ -21,6 +21,7 @@ pub const KeyboardState = struct {
         down,
         left,
         right,
+        space,
     };
 
     pub fn init(window: *zglfw.Window) Self {
@@ -45,6 +46,7 @@ pub const KeyboardState = struct {
         if (self.window.getKey(.down) == .press) self.curr |= bit(.down);
         if (self.window.getKey(.left) == .press) self.curr |= bit(.left);
         if (self.window.getKey(.right) == .press) self.curr |= bit(.right);
+        if (self.window.getKey(.space) == .press) self.curr |= bit(.space);
     }
 
     pub fn isDown(self: *const Self, k: Key) bool {
