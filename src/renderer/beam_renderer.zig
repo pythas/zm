@@ -10,10 +10,11 @@ const Tile = @import("../tile.zig").Tile;
 const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
 const Player = @import("../player.zig").Player;
+const Vec2 = @import("../vec2.zig").Vec2;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
 
-pub const SpriteRenderer = struct {
+pub const BeamRenderer = struct {
     const Self = @This();
     const maxInstances = 128;
 
@@ -22,13 +23,12 @@ pub const SpriteRenderer = struct {
     pipeline_layout: zgpu.PipelineLayoutHandle,
     pipeline: zgpu.RenderPipelineHandle,
     buffer: zgpu.BufferHandle,
-    tilemap: zgpu.TextureHandle,
-    bind_group: zgpu.BindGroupHandle,
 
-    pub const SpriteRenderData = struct {
-        wh: [4]f32,
-        position: [4]f32,
-        rotation: [4]f32,
+    pub const BeamRenderData = struct {
+        start: [2]f32,
+        end: [2]f32,
+        width: f32,
+        intensity: f32,
     };
 
     pub fn init(
@@ -38,16 +38,11 @@ pub const SpriteRenderer = struct {
     ) !Self {
         const instance_buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .vertex = true },
-            .size = @sizeOf(SpriteRenderData) * maxInstances,
-        });
-
-        const layout = gctx.createBindGroupLayout(&.{
-            zgpu.textureEntry(0, .{ .fragment = true }, .uint, .tvdim_2d, false),
+            .size = @sizeOf(BeamRenderData) * maxInstances,
         });
 
         const pipeline_layout = gctx.createPipelineLayout(&.{
             global.layout,
-            layout,
         });
 
         const pipeline = try createPipeline(
@@ -55,30 +50,12 @@ pub const SpriteRenderer = struct {
             pipeline_layout,
         );
 
-        const tilemap = gctx.createTexture(.{
-            .usage = .{ .texture_binding = true, .copy_dst = true },
-            .size = .{
-                .width = 8,
-                .height = 8,
-                .depth_or_array_layers = 1,
-            },
-            .format = wgpu.TextureFormat.r32_uint,
-            .mip_level_count = 1,
-        });
-        const tilemap_view = gctx.createTextureView(tilemap, .{});
-
-        const bind_group = gctx.createBindGroup(layout, &.{
-            .{ .binding = 0, .texture_view_handle = tilemap_view },
-        });
-
         return .{
             .allocator = allocator,
             .gctx = gctx,
             .pipeline_layout = pipeline_layout,
             .pipeline = pipeline,
             .buffer = instance_buffer,
-            .tilemap = tilemap,
-            .bind_group = bind_group,
         };
     }
 
@@ -86,76 +63,123 @@ pub const SpriteRenderer = struct {
         _ = self;
     }
 
-    pub fn writeBuffers(self: *Self, world: *const World) !void {
-        const count = 1;
+    pub fn writeBuffers(self: *Self, world: *const World) !u32 {
+        const player = &world.player;
+        const actions = player.tile_actions.items;
 
-        var sprites = try self.allocator.alloc(SpriteRenderData, count);
-        defer self.allocator.free(sprites);
+        // How many beams do we actually need?
+        var active_count: usize = 0;
+        for (actions) |action| {
+            if (action.isActive() and action.kind == .Mine) {
+                active_count += 1;
+            }
+        }
 
-        // player
-        sprites[0] = .{
-            .wh = .{ Player.playerWidth, Player.playerHeight, 0, 0 },
-            .position = .{ world.player.position.x, world.player.position.y, 0, 0 },
-            .rotation = .{ world.player.rotation, 0, 0, 0 },
-        };
+        if (active_count == 0) {
+            // No beams → nothing to write
+            return 0;
+        }
+
+        const count = @min(active_count, maxInstances);
+        var beams = try self.allocator.alloc(BeamRenderData, count);
+        defer self.allocator.free(beams);
+
+        var bi: usize = 0;
+        for (actions) |action| {
+            if (!action.isActive() or action.kind != .Mine) continue;
+            if (bi >= count) break;
+
+            const p = action.getProgress();
+
+            const start = player.position;
+
+            const tile_world_pos = action.tile_ref.worldCenter();
+            const tile_size = @as(f32, @floatFromInt(Tile.tileSize));
+            const tile_pos = Vec2.init(tile_world_pos.x / tile_size, tile_world_pos.y / tile_size);
+
+            const base_width: f32 = 6.0;
+            const extra_pulse: f32 = 2.0 * @sin(p * std.math.pi);
+            const width: f32 = base_width + extra_pulse;
+
+            beams[bi] = .{
+                .start = .{ start.x, start.y },
+                .end = .{ tile_pos.x, tile_pos.y },
+                .width = width,
+                .intensity = p,
+            };
+
+            bi += 1;
+        }
+
+        if (bi == 0) return 0;
 
         self.gctx.queue.writeBuffer(
             self.gctx.lookupResource(self.buffer).?,
             0,
             u8,
-            std.mem.sliceAsBytes(sprites),
+            std.mem.sliceAsBytes(beams[0..bi]),
         );
+
+        return @intCast(bi);
     }
 
-    pub fn writeTilemap(self: *Self, world: *const World) !void {
-        const width = 8;
-        const height = 8;
-
-        const data = try self.allocator.alloc(u32, width * height);
-        defer self.allocator.free(data);
-
-        for (0..height) |y| {
-            for (0..width) |x| {
-                data[y * width + x] = 0;
-            }
-        }
-
-        for (0..Player.playerHeight) |y| {
-            for (0..Player.playerWidth) |x| {
-                const tile = world.player.tiles[@intCast(x)][@intCast(y)];
-                const id = packTileForGpu(tile);
-                data[(y * width) + x] = id;
-            }
-        }
-
-        self.gctx.queue.writeTexture(
-            .{ .texture = self.gctx.lookupResource(self.tilemap).? },
-            .{ .bytes_per_row = width * @sizeOf(u32), .rows_per_image = height },
-            .{ .width = width, .height = height },
-            u32,
-            data,
-        );
-    }
+    // pub fn writeBuffers(self: *Self, world: *const World) !void {
+    //     const count = 1;
+    //
+    //     var beams = try self.allocator.alloc(BeamRenderData, count);
+    //     defer self.allocator.free(beams);
+    //
+    //     beams[0] = .{
+    //         .start = .{ world.player.position.x, world.player.position.y },
+    //         .end = .{ 10, 10 },
+    //         .width = 8.0,
+    //         .intensity = 1.0,
+    //     };
+    //
+    //     self.gctx.queue.writeBuffer(
+    //         self.gctx.lookupResource(self.buffer).?,
+    //         0,
+    //         u8,
+    //         std.mem.sliceAsBytes(beams),
+    //     );
+    // }
 
     pub fn draw(
         self: Self,
         pass: zgpu.wgpu.RenderPassEncoder,
         global: *const GlobalRenderState,
+        instance_count: u32,
     ) void {
+        if (instance_count == 0) return;
+
         const gctx = self.gctx;
         const pipeline = gctx.lookupResource(self.pipeline).?;
         const global_bind_group = gctx.lookupResource(global.bind_group).?;
-        const bind_group = gctx.lookupResource(self.bind_group).?;
         const buffer = gctx.lookupResource(self.buffer).?;
-
-        const count = 1;
 
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, global_bind_group, null);
-        pass.setBindGroup(1, bind_group, null);
-        pass.setVertexBuffer(0, buffer, 0, @sizeOf(SpriteRenderData) * count);
-        pass.draw(6, 1, 0, 0);
+        pass.setVertexBuffer(0, buffer, 0, @sizeOf(BeamRenderData) * instance_count);
+        pass.draw(6, instance_count, 0, 0);
     }
+
+    // pub fn draw(
+    //     self: Self,
+    //     pass: zgpu.wgpu.RenderPassEncoder,
+    //     global: *const GlobalRenderState,
+    // ) void {
+    //     const gctx = self.gctx;
+    //     const pipeline = gctx.lookupResource(self.pipeline).?;
+    //     const global_bind_group = gctx.lookupResource(global.bind_group).?;
+    //     const buffer = gctx.lookupResource(self.buffer).?;
+    //
+    //     const count = 1;
+    //
+    //     pass.setPipeline(pipeline);
+    //     pass.setBindGroup(0, global_bind_group, null);
+    //     pass.setVertexBuffer(0, buffer, 0, @sizeOf(BeamRenderData) * count);
+    //     pass.draw(6, count, 0, 0);
+    // }
 };
 
 fn createPipeline(
@@ -164,14 +188,14 @@ fn createPipeline(
 ) !zgpu.RenderPipelineHandle {
     const vs_module = shader_utils.createShaderModuleWithCommon(
         gctx.device,
-        @embedFile("../shaders/sprite_vertex.wgsl"),
+        @embedFile("../shaders/beam_vertex.wgsl"),
         "vs_main",
     );
     defer vs_module.release();
 
     const fs_module = shader_utils.createShaderModuleWithCommon(
         gctx.device,
-        @embedFile("../shaders/sprite_fragment.wgsl"),
+        @embedFile("../shaders/beam_fragment.wgsl"),
         "fs_main",
     );
     defer fs_module.release();
@@ -197,25 +221,25 @@ fn createPipeline(
 
     const vertex_attrs = [_]wgpu.VertexAttribute{
         .{
-            .format = .float32x4,
-            .offset = @offsetOf(SpriteRenderer.SpriteRenderData, "wh"),
+            .format = .float32x2,
+            .offset = @offsetOf(BeamRenderer.BeamRenderData, "start"),
             .shader_location = 0,
         },
         .{
-            .format = .float32x4,
-            .offset = @offsetOf(SpriteRenderer.SpriteRenderData, "position"),
+            .format = .float32x2,
+            .offset = @offsetOf(BeamRenderer.BeamRenderData, "end"),
             .shader_location = 1,
         },
         .{
-            .format = .float32x4,
-            .offset = @offsetOf(SpriteRenderer.SpriteRenderData, "rotation"),
+            .format = .float32,
+            .offset = @offsetOf(BeamRenderer.BeamRenderData, "width"),
             .shader_location = 2,
         },
     };
 
     const vertex_buffers = [_]wgpu.VertexBufferLayout{
         .{
-            .array_stride = @sizeOf(SpriteRenderer.SpriteRenderData),
+            .array_stride = @sizeOf(BeamRenderer.BeamRenderData),
             .step_mode = .instance,
             .attribute_count = vertex_attrs.len,
             .attributes = &vertex_attrs,

@@ -39,7 +39,7 @@ pub const Player = struct {
     const Self = @This();
     pub const playerWidth = 4;
     pub const playerHeight = 8;
-    pub const tileActionMineDuration = 1.0;
+    pub const tileActionMineDuration = 10.0;
 
     position: Vec2,
     velocity: Vec2,

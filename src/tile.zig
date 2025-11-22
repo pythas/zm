@@ -2,6 +2,7 @@ const std = @import("std");
 
 const Map = @import("map.zig").Map;
 const Chunk = @import("chunk.zig").Chunk;
+const Vec2 = @import("vec2.zig").Vec2;
 
 pub const TileReference = struct {
     const Self = @This();
@@ -10,6 +11,30 @@ pub const TileReference = struct {
     chunk_y: i32,
     tile_x: u32,
     tile_y: u32,
+
+    pub fn worldCenter(self: Self) Vec2 {
+        const tile_size: f32 = Tile.tileSize;
+        const tiles_per_chunk_f: f32 = @floatFromInt(Chunk.chunkSize);
+        const chunk_size_world: f32 = tile_size * tiles_per_chunk_f;
+
+        const chunk_center_x: f32 =
+            @as(f32, @floatFromInt(self.chunk_x)) * chunk_size_world;
+        const chunk_center_y: f32 =
+            @as(f32, @floatFromInt(self.chunk_y)) * chunk_size_world;
+
+        const tile_x_f: f32 = @as(f32, @floatFromInt(self.tile_x));
+        const tile_y_f: f32 = @as(f32, @floatFromInt(self.tile_y));
+
+        const half_tiles = tiles_per_chunk_f / 2.0;
+
+        const local_x_tiles = (tile_x_f + 0.5) - half_tiles;
+        const local_y_tiles = (tile_y_f + 0.5) - half_tiles;
+
+        return Vec2.init(
+            chunk_center_x + local_x_tiles * tile_size,
+            chunk_center_y + local_y_tiles * tile_size,
+        );
+    }
 
     pub fn getChunk(self: Self, map: *Map) ?*Chunk {
         for (map.chunks.items) |*chunk| {

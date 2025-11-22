@@ -2,6 +2,7 @@ const std = @import("std");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zglfw = @import("zglfw");
+const shader_utils = @import("../shader_utils.zig");
 
 const World = @import("../world.zig").World;
 const Map = @import("../map.zig").Map;
@@ -167,14 +168,14 @@ fn createPipeline(
     gctx: *zgpu.GraphicsContext,
     pipeline_layout: zgpu.PipelineLayoutHandle,
 ) !zgpu.RenderPipelineHandle {
-    const vs_module = zgpu.createWgslShaderModule(
+    const vs_module = shader_utils.createShaderModuleWithCommon(
         gctx.device,
         @embedFile("../shaders/world_vertex.wgsl"),
         "vs_main",
     );
     defer vs_module.release();
 
-    const fs_module = zgpu.createWgslShaderModule(
+    const fs_module = shader_utils.createShaderModuleWithCommon(
         gctx.device,
         @embedFile("../shaders/world_fragment.wgsl"),
         "fs_main",

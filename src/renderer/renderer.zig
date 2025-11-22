@@ -6,6 +6,8 @@ const Atlas = @import("common.zig").Atlas;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const WorldRenderer = @import("world_renderer.zig").WorldRenderer;
 const SpriteRenderer = @import("sprite_renderer.zig").SpriteRenderer;
+const EffectRenderer = @import("effect_renderer.zig").EffectRenderer;
+const BeamRenderer = @import("beam_renderer.zig").BeamRenderer;
 const World = @import("../world.zig").World;
 
 pub const Renderer = struct {
@@ -15,6 +17,8 @@ pub const Renderer = struct {
     global: GlobalRenderState,
     world: WorldRenderer,
     sprite: SpriteRenderer,
+    effect: EffectRenderer,
+    beam: BeamRenderer,
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -30,12 +34,16 @@ pub const Renderer = struct {
         var global = try GlobalRenderState.init(gctx, atlas.view);
         const world = try WorldRenderer.init(allocator, gctx, window, &global);
         const sprite = try SpriteRenderer.init(allocator, gctx, &global);
+        const effect = try EffectRenderer.init(allocator, gctx, &global);
+        const beam = try BeamRenderer.init(allocator, gctx, &global);
 
         return .{
             .atlas = atlas,
             .global = global,
             .world = world,
             .sprite = sprite,
+            .effect = effect,
+            .beam = beam,
         };
     }
 
@@ -59,5 +67,8 @@ pub const Renderer = struct {
 
         try self.sprite.writeBuffers(world);
         self.sprite.draw(pass, &self.global);
+
+        const beam_instance_count = try self.beam.writeBuffers(world);
+        self.beam.draw(pass, &self.global, beam_instance_count);
     }
 };
