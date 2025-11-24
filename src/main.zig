@@ -3,7 +3,7 @@ const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 
-const Game = @import("modes/game_mode.zig").GameMode;
+const Game = @import("game.zig").Game;
 const Map = @import("map.zig").Map;
 
 pub fn main() !void {

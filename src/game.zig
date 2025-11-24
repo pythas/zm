@@ -2,13 +2,13 @@ const std = @import("std");
 const zgpu = @import("zgpu");
 const zglfw = @import("zglfw");
 
-const World = @import("../world.zig").World;
-const Map = @import("../map.zig").Map;
-const KeyboardState = @import("../input.zig").KeyboardState;
-const Renderer = @import("../renderer/renderer.zig").Renderer;
-const scrollCallback = @import("../world.zig").scrollCallback;
+const World = @import("world.zig").World;
+const Map = @import("map.zig").Map;
+const KeyboardState = @import("input.zig").KeyboardState;
+const Renderer = @import("renderer/renderer.zig").Renderer;
+const scrollCallback = @import("world.zig").scrollCallback;
 
-pub const GameMode = struct {
+pub const Game = struct {
     const Self = @This();
 
     allocator: std.mem.Allocator,
