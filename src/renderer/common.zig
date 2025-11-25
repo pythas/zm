@@ -9,12 +9,13 @@ const Tile = @import("../tile.zig").Tile;
 const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
 const Player = @import("../player.zig").Player;
+const GameMode = @import("../game.zig").GameMode;
 
 pub const GlobalUniforms = extern struct {
     dt: f32,
     t: f32,
+    mode: f32,
     _pad0: f32,
-    _pad1: f32,
 
     screen_wh: [4]f32,
     camera_xy: [4]f32,
@@ -64,14 +65,14 @@ pub const GlobalRenderState = struct {
         };
     }
 
-    pub fn write(self: Self, window: *zglfw.Window, world: *const World, dt: f32, t: f32) void {
+    pub fn write(self: Self, window: *zglfw.Window, world: *const World, dt: f32, t: f32, mode: GameMode) void {
         const wh = window.getFramebufferSize();
 
         var uniform_data = GlobalUniforms{
             .dt = dt,
             .t = t,
+            .mode = @floatFromInt(@intFromEnum(mode)),
             ._pad0 = 0.0,
-            ._pad1 = 0.0,
             .screen_wh = .{ @floatFromInt(wh[0]), @floatFromInt(wh[1]), 0, 0 },
             .camera_xy = .{ world.camera.position.x, world.camera.position.y, 0, 0 },
             .camera_zoom = world.camera.zoom,

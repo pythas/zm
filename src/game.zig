@@ -8,6 +8,8 @@ const KeyboardState = @import("input.zig").KeyboardState;
 const Renderer = @import("renderer/renderer.zig").Renderer;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
+const tilemapWidth = @import("tile.zig").tilemapWidth;
+const tilemapHeight = @import("tile.zig").tilemapHeight;
 const scrollCallback = @import("world.zig").scrollCallback;
 
 pub const GameMode = enum {
@@ -69,6 +71,8 @@ pub const Game = struct {
             }
         }
 
+        self.renderer.global.write(self.window, &self.world, dt, t, self.mode);
+
         switch (self.mode) {
             .InWorld => {
                 try self.world.update(dt, &self.keyboard_state, self.window);
@@ -81,8 +85,6 @@ pub const Game = struct {
 
                     self.world.map.is_dirty = false;
                 }
-
-                self.renderer.global.write(self.window, &self.world, dt, t);
             },
             .ShipEditor => {},
         }
@@ -136,8 +138,19 @@ pub const Game = struct {
 
                 ui.endFrame(pass, &self.renderer.global);
 
-                // try self.renderer.sprite.writeBuffers(&self.world);
-                // self.renderer.sprite.draw(pass, &self.renderer.global);
+                const global = &self.renderer.global;
+                const world = &self.world;
+
+                const instances = [_]SpriteRenderData{
+                    .{
+                        .wh = .{ tilemapWidth, tilemapHeight, 0, 0 },
+                        .position = .{ tilemapWidth * 8 / 2, tilemapWidth * 8 / 2, 0, 0 },
+                        .rotation = .{ 0, 0, 0, 0 },
+                    },
+                };
+                try self.renderer.sprite.writeInstances(&instances);
+                try self.renderer.sprite.writeTilemap(world.player.tiles);
+                self.renderer.sprite.draw(pass, global);
             },
         }
     }
