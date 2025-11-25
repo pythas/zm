@@ -17,6 +17,7 @@ pub const KeyboardState = struct {
         e,
         r,
         f,
+        o,
         up,
         down,
         left,
@@ -42,6 +43,7 @@ pub const KeyboardState = struct {
         if (self.window.getKey(.e) == .press) self.curr |= bit(.e);
         if (self.window.getKey(.r) == .press) self.curr |= bit(.r);
         if (self.window.getKey(.f) == .press) self.curr |= bit(.f);
+        if (self.window.getKey(.o) == .press) self.curr |= bit(.o);
         if (self.window.getKey(.up) == .press) self.curr |= bit(.up);
         if (self.window.getKey(.down) == .press) self.curr |= bit(.down);
         if (self.window.getKey(.left) == .press) self.curr |= bit(.left);

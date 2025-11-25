@@ -8,6 +8,11 @@ const KeyboardState = @import("input.zig").KeyboardState;
 const Renderer = @import("renderer/renderer.zig").Renderer;
 const scrollCallback = @import("world.zig").scrollCallback;
 
+pub const GameMode = enum {
+    InWorld,
+    ShipEditor,
+};
+
 pub const Game = struct {
     const Self = @This();
 
@@ -15,6 +20,7 @@ pub const Game = struct {
     window: *zglfw.Window,
     renderer: Renderer,
     keyboard_state: KeyboardState,
+    mode: GameMode = .InWorld,
     world: World,
 
     pub fn init(
@@ -54,24 +60,65 @@ pub const Game = struct {
 
     pub fn update(self: *Self, dt: f32, t: f32) !void {
         self.keyboard_state.beginFrame();
-        try self.world.update(dt, &self.keyboard_state, self.window);
 
-        if (self.world.map.is_dirty) {
-            // TODO: only for dirty chunks
-            for (self.world.map.chunks.items) |*chunk| {
-                try self.renderer.world.createChunkRenderData(chunk);
+        if (self.keyboard_state.isPressed(.o)) {
+            if (self.mode == .InWorld) {
+                self.mode = .ShipEditor;
+            } else {
+                self.mode = .InWorld;
             }
-
-            self.world.map.is_dirty = false;
         }
 
-        self.renderer.update(self.window, &self.world, dt, t);
+        switch (self.mode) {
+            .InWorld => {
+                try self.world.update(dt, &self.keyboard_state, self.window);
+
+                if (self.world.map.is_dirty) {
+                    // TODO: only for dirty chunks
+                    for (self.world.map.chunks.items) |*chunk| {
+                        try self.renderer.world.createChunkRenderData(chunk);
+                    }
+
+                    self.world.map.is_dirty = false;
+                }
+
+                self.renderer.update(self.window, &self.world, dt, t);
+            },
+            .ShipEditor => {},
+        }
     }
 
     pub fn render(
         self: *Self,
         pass: zgpu.wgpu.RenderPassEncoder,
     ) !void {
-        try self.renderer.draw(pass, &self.world);
+        switch (self.mode) {
+            .InWorld => {
+                try self.renderer.draw(pass, &self.world);
+            },
+            .ShipEditor => {
+                const wh = self.window.getFramebufferSize();
+                const screen_w: f32 = @floatFromInt(wh[0]);
+                const screen_h: f32 = @floatFromInt(wh[1]);
+                const mouse_pos = self.window.getCursorPos();
+                const mouse_x: f32 = @floatCast(mouse_pos[0]);
+                const mouse_y: f32 = @floatCast(mouse_pos[1]);
+
+                const left_mouse_action = self.window.getMouseButton(.left);
+
+                var ui = &self.renderer.ui;
+
+                ui.beginFrame(.{ .x = mouse_x, .y = mouse_y }, left_mouse_action);
+                try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h });
+
+                try ui.panel(.{ .x = 10, .y = 10, .w = 200, .h = 300 });
+
+                if (try ui.button(.{ .x = 20, .y = 20, .w = 180, .h = 32 }, "Hull")) {
+                    std.debug.print("HULL\n", .{});
+                }
+
+                ui.endFrame(pass, &self.renderer.global);
+            },
+        }
     }
 };

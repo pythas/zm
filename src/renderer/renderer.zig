@@ -8,6 +8,7 @@ const WorldRenderer = @import("world_renderer.zig").WorldRenderer;
 const SpriteRenderer = @import("sprite_renderer.zig").SpriteRenderer;
 const EffectRenderer = @import("effect_renderer.zig").EffectRenderer;
 const BeamRenderer = @import("beam_renderer.zig").BeamRenderer;
+const UiRenderer = @import("ui_renderer.zig").UiRenderer;
 const World = @import("../world.zig").World;
 
 pub const Renderer = struct {
@@ -19,6 +20,7 @@ pub const Renderer = struct {
     sprite: SpriteRenderer,
     effect: EffectRenderer,
     beam: BeamRenderer,
+    ui: UiRenderer,
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -36,6 +38,7 @@ pub const Renderer = struct {
         const sprite = try SpriteRenderer.init(allocator, gctx, &global);
         const effect = try EffectRenderer.init(allocator, gctx, &global);
         const beam = try BeamRenderer.init(allocator, gctx, &global);
+        const ui = try UiRenderer.init(allocator, gctx, &global);
 
         return .{
             .atlas = atlas,
@@ -44,6 +47,7 @@ pub const Renderer = struct {
             .sprite = sprite,
             .effect = effect,
             .beam = beam,
+            .ui = ui,
         };
     }
 

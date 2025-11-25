@@ -1,5 +1,3 @@
-
-
 struct VertexInput {
     @location(0) size: vec4<f32>,
     @location(1) position: vec4<f32>,

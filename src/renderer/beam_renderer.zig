@@ -67,7 +67,6 @@ pub const BeamRenderer = struct {
         const player = &world.player;
         const actions = player.tile_actions.items;
 
-        // How many beams do we actually need?
         var active_count: usize = 0;
         for (actions) |action| {
             if (action.isActive() and action.kind == .Mine) {
@@ -76,7 +75,6 @@ pub const BeamRenderer = struct {
         }
 
         if (active_count == 0) {
-            // No beams → nothing to write
             return 0;
         }
 
@@ -123,34 +121,15 @@ pub const BeamRenderer = struct {
         return @intCast(bi);
     }
 
-    // pub fn writeBuffers(self: *Self, world: *const World) !void {
-    //     const count = 1;
-    //
-    //     var beams = try self.allocator.alloc(BeamRenderData, count);
-    //     defer self.allocator.free(beams);
-    //
-    //     beams[0] = .{
-    //         .start = .{ world.player.position.x, world.player.position.y },
-    //         .end = .{ 10, 10 },
-    //         .width = 8.0,
-    //         .intensity = 1.0,
-    //     };
-    //
-    //     self.gctx.queue.writeBuffer(
-    //         self.gctx.lookupResource(self.buffer).?,
-    //         0,
-    //         u8,
-    //         std.mem.sliceAsBytes(beams),
-    //     );
-    // }
-
     pub fn draw(
         self: Self,
         pass: zgpu.wgpu.RenderPassEncoder,
         global: *const GlobalRenderState,
         instance_count: u32,
     ) void {
-        if (instance_count == 0) return;
+        if (instance_count == 0) {
+            return;
+        }
 
         const gctx = self.gctx;
         const pipeline = gctx.lookupResource(self.pipeline).?;
@@ -162,24 +141,6 @@ pub const BeamRenderer = struct {
         pass.setVertexBuffer(0, buffer, 0, @sizeOf(BeamRenderData) * instance_count);
         pass.draw(6, instance_count, 0, 0);
     }
-
-    // pub fn draw(
-    //     self: Self,
-    //     pass: zgpu.wgpu.RenderPassEncoder,
-    //     global: *const GlobalRenderState,
-    // ) void {
-    //     const gctx = self.gctx;
-    //     const pipeline = gctx.lookupResource(self.pipeline).?;
-    //     const global_bind_group = gctx.lookupResource(global.bind_group).?;
-    //     const buffer = gctx.lookupResource(self.buffer).?;
-    //
-    //     const count = 1;
-    //
-    //     pass.setPipeline(pipeline);
-    //     pass.setBindGroup(0, global_bind_group, null);
-    //     pass.setVertexBuffer(0, buffer, 0, @sizeOf(BeamRenderData) * count);
-    //     pass.draw(6, count, 0, 0);
-    // }
 };
 
 fn createPipeline(
