@@ -68,7 +68,7 @@ pub const UiRenderer = struct {
     ) !Self {
         const buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .vertex = true },
-            .size = 1024 * 1024, // NOTE: Not sure about this
+            .size = 1024 * 1024,
         });
 
         const pipeline_layout = gctx.createPipelineLayout(&.{
@@ -147,6 +147,7 @@ pub const UiRenderer = struct {
         _ = self;
         _ = pos;
         _ = text;
+        // TODO: ...
     }
 
     pub fn endFrame(

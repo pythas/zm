@@ -142,11 +142,10 @@ pub const SpriteRenderer = struct {
         pass: zgpu.wgpu.RenderPassEncoder,
         global: *const GlobalRenderState,
     ) void {
-        const gctx = self.gctx;
-        const pipeline = gctx.lookupResource(self.pipeline).?;
-        const global_bind_group = gctx.lookupResource(global.bind_group).?;
-        const bind_group = gctx.lookupResource(self.bind_group).?;
-        const buffer = gctx.lookupResource(self.buffer).?;
+        const pipeline = self.gctx.lookupResource(self.pipeline).?;
+        const global_bind_group = self.gctx.lookupResource(global.bind_group).?;
+        const bind_group = self.gctx.lookupResource(self.bind_group).?;
+        const buffer = self.gctx.lookupResource(self.buffer).?;
 
         const count = 1;
 

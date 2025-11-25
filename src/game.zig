@@ -109,8 +109,11 @@ pub const Game = struct {
                 var ui = &self.renderer.ui;
 
                 ui.beginFrame(.{ .x = mouse_x, .y = mouse_y }, left_mouse_action);
+
+                // background
                 try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h });
 
+                // side panel
                 try ui.panel(.{ .x = 10, .y = 10, .w = 200, .h = 300 });
 
                 if (try ui.button(.{ .x = 20, .y = 20, .w = 180, .h = 32 }, "Hull")) {
@@ -118,6 +121,9 @@ pub const Game = struct {
                 }
 
                 ui.endFrame(pass, &self.renderer.global);
+
+                try self.renderer.sprite.writeBuffers(&self.world);
+                self.renderer.sprite.draw(pass, &self.renderer.global);
             },
         }
     }
