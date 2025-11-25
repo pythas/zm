@@ -6,12 +6,20 @@ const shader_utils = @import("../shader_utils.zig");
 
 const World = @import("../world.zig").World;
 const Map = @import("../map.zig").Map;
+const tilemapWidth = @import("../tile.zig").tilemapWidth;
+const tilemapHeight = @import("../tile.zig").tilemapHeight;
 const Tile = @import("../tile.zig").Tile;
 const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
 const Player = @import("../player.zig").Player;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
+
+pub const SpriteRenderData = struct {
+    wh: [4]f32,
+    position: [4]f32,
+    rotation: [4]f32,
+};
 
 pub const SpriteRenderer = struct {
     const Self = @This();
@@ -25,11 +33,7 @@ pub const SpriteRenderer = struct {
     tilemap: zgpu.TextureHandle,
     bind_group: zgpu.BindGroupHandle,
 
-    pub const SpriteRenderData = struct {
-        wh: [4]f32,
-        position: [4]f32,
-        rotation: [4]f32,
-    };
+    instance_count: u32 = 0,
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -58,8 +62,8 @@ pub const SpriteRenderer = struct {
         const tilemap = gctx.createTexture(.{
             .usage = .{ .texture_binding = true, .copy_dst = true },
             .size = .{
-                .width = 8,
-                .height = 8,
+                .width = tilemapWidth,
+                .height = tilemapHeight,
                 .depth_or_array_layers = 1,
             },
             .format = wgpu.TextureFormat.r32_uint,
@@ -86,52 +90,48 @@ pub const SpriteRenderer = struct {
         _ = self;
     }
 
-    pub fn writeBuffers(self: *Self, world: *const World) !void {
-        const count = 1;
-
-        var sprites = try self.allocator.alloc(SpriteRenderData, count);
-        defer self.allocator.free(sprites);
-
-        // player
-        sprites[0] = .{
-            .wh = .{ Player.playerWidth, Player.playerHeight, 0, 0 },
+    pub fn buildPlayerInstance(world: *const World) SpriteRenderData {
+        return .{
+            .wh = .{ tilemapWidth, tilemapHeight, 0, 0 },
             .position = .{ world.player.position.x, world.player.position.y, 0, 0 },
             .rotation = .{ world.player.rotation, 0, 0, 0 },
         };
+    }
+
+    pub fn writeInstances(
+        self: *Self,
+        instances: []const SpriteRenderData,
+    ) !void {
+        if (instances.len > maxInstances) {
+            return error.TooManyInstances;
+        }
+
+        self.instance_count = @intCast(instances.len);
 
         self.gctx.queue.writeBuffer(
             self.gctx.lookupResource(self.buffer).?,
             0,
             u8,
-            std.mem.sliceAsBytes(sprites),
+            std.mem.sliceAsBytes(instances),
         );
     }
 
-    pub fn writeTilemap(self: *Self, world: *const World) !void {
-        const width = 8;
-        const height = 8;
-
-        const data = try self.allocator.alloc(u32, width * height);
+    pub fn writeTilemap(self: *Self, grid: [tilemapWidth][tilemapHeight]Tile) !void {
+        const data = try self.allocator.alloc(u32, tilemapWidth * tilemapHeight);
         defer self.allocator.free(data);
 
-        for (0..height) |y| {
-            for (0..width) |x| {
-                data[y * width + x] = 0;
-            }
-        }
-
-        for (0..Player.playerHeight) |y| {
-            for (0..Player.playerWidth) |x| {
-                const tile = world.player.tiles[@intCast(x)][@intCast(y)];
+        for (0..tilemapWidth) |x| {
+            for (0..tilemapHeight) |y| {
+                const tile = grid[x][y];
                 const id = packTileForGpu(tile);
-                data[(y * width) + x] = id;
+                data[y * tilemapWidth + x] = id;
             }
         }
 
         self.gctx.queue.writeTexture(
             .{ .texture = self.gctx.lookupResource(self.tilemap).? },
-            .{ .bytes_per_row = width * @sizeOf(u32), .rows_per_image = height },
-            .{ .width = width, .height = height },
+            .{ .bytes_per_row = tilemapWidth * @sizeOf(u32), .rows_per_image = tilemapHeight },
+            .{ .width = tilemapWidth, .height = tilemapHeight },
             u32,
             data,
         );
@@ -147,13 +147,11 @@ pub const SpriteRenderer = struct {
         const bind_group = self.gctx.lookupResource(self.bind_group).?;
         const buffer = self.gctx.lookupResource(self.buffer).?;
 
-        const count = 1;
-
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, global_bind_group, null);
         pass.setBindGroup(1, bind_group, null);
-        pass.setVertexBuffer(0, buffer, 0, @sizeOf(SpriteRenderData) * count);
-        pass.draw(6, 1, 0, 0);
+        pass.setVertexBuffer(0, buffer, 0, @sizeOf(SpriteRenderData) * self.instance_count);
+        pass.draw(6, self.instance_count, 0, 0);
     }
 };
 
@@ -197,24 +195,24 @@ fn createPipeline(
     const vertex_attrs = [_]wgpu.VertexAttribute{
         .{
             .format = .float32x4,
-            .offset = @offsetOf(SpriteRenderer.SpriteRenderData, "wh"),
+            .offset = @offsetOf(SpriteRenderData, "wh"),
             .shader_location = 0,
         },
         .{
             .format = .float32x4,
-            .offset = @offsetOf(SpriteRenderer.SpriteRenderData, "position"),
+            .offset = @offsetOf(SpriteRenderData, "position"),
             .shader_location = 1,
         },
         .{
             .format = .float32x4,
-            .offset = @offsetOf(SpriteRenderer.SpriteRenderData, "rotation"),
+            .offset = @offsetOf(SpriteRenderData, "rotation"),
             .shader_location = 2,
         },
     };
 
     const vertex_buffers = [_]wgpu.VertexBufferLayout{
         .{
-            .array_stride = @sizeOf(SpriteRenderer.SpriteRenderData),
+            .array_stride = @sizeOf(SpriteRenderData),
             .step_mode = .instance,
             .attribute_count = vertex_attrs.len,
             .attributes = &vertex_attrs,

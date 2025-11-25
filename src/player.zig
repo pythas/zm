@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const Vec2 = @import("vec2.zig").Vec2;
+const tile = @import("tile.zig");
 const Tile = @import("tile.zig").Tile;
 const TileReference = @import("tile.zig").TileReference;
 const Map = @import("map.zig").Map;
@@ -37,8 +38,8 @@ pub const TileAction = struct {
 
 pub const Player = struct {
     const Self = @This();
-    pub const playerWidth = 4;
-    pub const playerHeight = 8;
+    // pub const playerWidth = 4;
+    // pub const playerHeight = 8;
     pub const tileActionMineDuration = 10.0;
 
     position: Vec2,
@@ -53,7 +54,8 @@ pub const Player = struct {
     velocity_damping: f32,
     angular_damping: f32,
 
-    tiles: [playerWidth][playerHeight]Tile,
+    // tiles: [playerWidth][playerHeight]Tile,
+    tiles: [tile.tilemapWidth][tile.tilemapHeight]Tile,
 
     tile_actions: std.ArrayList(TileAction),
 
@@ -67,7 +69,8 @@ pub const Player = struct {
         // const tiles: [playerWidth][playerHeight]Tile =
         //     .{.{Tile.init(.Hull, .Ships, 0)} ** playerHeight} ** playerWidth;
 
-        var tiles: [playerWidth][playerHeight]Tile = undefined;
+        // var tiles: [playerWidth][playerHeight]Tile = undefined;
+        var tiles: [tile.tilemapWidth][tile.tilemapHeight]Tile = undefined;
 
         tiles[0][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 0);
         tiles[1][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);

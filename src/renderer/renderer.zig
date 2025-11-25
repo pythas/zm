@@ -51,28 +51,28 @@ pub const Renderer = struct {
         };
     }
 
-    pub fn update(
-        self: Self,
-        window: *zglfw.Window,
-        world: *World,
-        dt: f32,
-        t: f32,
-    ) void {
-        self.global.write(window, world, dt, t);
-    }
+    // pub fn update(
+    //     self: Self,
+    //     window: *zglfw.Window,
+    //     world: *World,
+    //     dt: f32,
+    //     t: f32,
+    // ) void {
+    //     self.global.write(window, world, dt, t);
+    // }
 
-    pub fn draw(
-        self: *Self,
-        pass: zgpu.wgpu.RenderPassEncoder,
-        world: *World,
-    ) !void {
-        try self.world.writeTextures(world);
-        self.world.draw(pass, &self.global, world);
-
-        try self.sprite.writeBuffers(world);
-        self.sprite.draw(pass, &self.global);
-
-        const beam_instance_count = try self.beam.writeBuffers(world);
-        self.beam.draw(pass, &self.global, beam_instance_count);
-    }
+    // pub fn draw(
+    //     self: *Self,
+    //     pass: zgpu.wgpu.RenderPassEncoder,
+    //     world: *World,
+    // ) !void {
+    //     try self.world.writeTextures(world);
+    //     self.world.draw(pass, &self.global, world);
+    //
+    //     // try self.sprite.writeBuffers(world);
+    //     self.sprite.draw(pass, &self.global);
+    //
+    //     const beam_instance_count = try self.beam.writeBuffers(world);
+    //     self.beam.draw(pass, &self.global, beam_instance_count);
+    // }
 };

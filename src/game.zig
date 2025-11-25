@@ -6,6 +6,8 @@ const World = @import("world.zig").World;
 const Map = @import("map.zig").Map;
 const KeyboardState = @import("input.zig").KeyboardState;
 const Renderer = @import("renderer/renderer.zig").Renderer;
+const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
+const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
 const scrollCallback = @import("world.zig").scrollCallback;
 
 pub const GameMode = enum {
@@ -39,8 +41,6 @@ pub const Game = struct {
             .world = world,
             .keyboard_state = KeyboardState.init(window),
         };
-
-        try self.renderer.sprite.writeTilemap(&self.world);
 
         for (self.world.map.chunks.items) |*chunk| {
             try self.renderer.world.createChunkRenderData(chunk);
@@ -82,7 +82,7 @@ pub const Game = struct {
                     self.world.map.is_dirty = false;
                 }
 
-                self.renderer.update(self.window, &self.world, dt, t);
+                self.renderer.global.write(self.window, &self.world, dt, t);
             },
             .ShipEditor => {},
         }
@@ -94,7 +94,21 @@ pub const Game = struct {
     ) !void {
         switch (self.mode) {
             .InWorld => {
-                try self.renderer.draw(pass, &self.world);
+                const global = &self.renderer.global;
+                const world = &self.world;
+
+                try self.renderer.world.writeTextures(world);
+                self.renderer.world.draw(pass, global, world);
+
+                const instances = [_]SpriteRenderData{
+                    SpriteRenderer.buildPlayerInstance(world),
+                };
+                try self.renderer.sprite.writeInstances(&instances);
+                try self.renderer.sprite.writeTilemap(world.player.tiles);
+                self.renderer.sprite.draw(pass, global);
+
+                const beam_instance_count = try self.renderer.beam.writeBuffers(world);
+                self.renderer.beam.draw(pass, global, beam_instance_count);
             },
             .ShipEditor => {
                 const wh = self.window.getFramebufferSize();
@@ -122,8 +136,8 @@ pub const Game = struct {
 
                 ui.endFrame(pass, &self.renderer.global);
 
-                try self.renderer.sprite.writeBuffers(&self.world);
-                self.renderer.sprite.draw(pass, &self.renderer.global);
+                // try self.renderer.sprite.writeBuffers(&self.world);
+                // self.renderer.sprite.draw(pass, &self.renderer.global);
             },
         }
     }
