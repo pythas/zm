@@ -14,13 +14,15 @@ const GameMode = @import("../game.zig").GameMode;
 pub const GlobalUniforms = extern struct {
     dt: f32,
     t: f32,
-    mode: f32,
+    mode: u32,
     _pad0: f32,
-
     screen_wh: [4]f32,
     camera_xy: [4]f32,
     camera_zoom: f32,
     tile_size: f32,
+    _pad1: f32,
+    _pad2: f32,
+    hover_xy: [4]f32,
 };
 
 pub const GlobalRenderState = struct {
@@ -65,18 +67,35 @@ pub const GlobalRenderState = struct {
         };
     }
 
-    pub fn write(self: Self, window: *zglfw.Window, world: *const World, dt: f32, t: f32, mode: GameMode) void {
+    pub fn write(
+        self: Self,
+        window: *zglfw.Window,
+        world: *const World,
+        dt: f32,
+        t: f32,
+        mode: GameMode,
+        hover_x: i32,
+        hover_y: i32,
+    ) void {
         const wh = window.getFramebufferSize();
 
         var uniform_data = GlobalUniforms{
             .dt = dt,
             .t = t,
-            .mode = @floatFromInt(@intFromEnum(mode)),
+            .mode = @intFromEnum(mode),
             ._pad0 = 0.0,
             .screen_wh = .{ @floatFromInt(wh[0]), @floatFromInt(wh[1]), 0, 0 },
             .camera_xy = .{ world.camera.position.x, world.camera.position.y, 0, 0 },
             .camera_zoom = world.camera.zoom,
             .tile_size = Tile.tileSize,
+            ._pad1 = 0.0,
+            ._pad2 = 0.0,
+            .hover_xy = .{
+                @floatFromInt(hover_x),
+                @floatFromInt(hover_y),
+                if (hover_x >= 0) 1.0 else 0.0,
+                0,
+            },
         };
 
         self.gctx.queue.writeBuffer(

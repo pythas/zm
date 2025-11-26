@@ -19,6 +19,7 @@ pub const SpriteRenderData = struct {
     wh: [4]f32,
     position: [4]f32,
     rotation: [4]f32,
+    scale: f32,
 };
 
 pub const SpriteRenderer = struct {
@@ -95,6 +96,7 @@ pub const SpriteRenderer = struct {
             .wh = .{ tilemapWidth, tilemapHeight, 0, 0 },
             .position = .{ world.player.position.x, world.player.position.y, 0, 0 },
             .rotation = .{ world.player.rotation, 0, 0, 0 },
+            .scale = 1.0,
         };
     }
 
@@ -207,6 +209,11 @@ fn createPipeline(
             .format = .float32x4,
             .offset = @offsetOf(SpriteRenderData, "rotation"),
             .shader_location = 2,
+        },
+        .{
+            .format = .float32,
+            .offset = @offsetOf(SpriteRenderData, "scale"),
+            .shader_location = 3,
         },
     };
 

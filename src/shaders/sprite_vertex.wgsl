@@ -2,6 +2,7 @@ struct VertexInput {
   @location(0) size: vec4<f32>,
   @location(1) position: vec4<f32>,
   @location(2) rotation: vec4<f32>,
+  @location(3) scale: f32,
 };
 
 struct VertexOutput {
@@ -47,7 +48,9 @@ fn main(
   } else {
     final_sprite_size = sprite_size * globals.tile_size;
   }
-  
+
+  final_sprite_size *= input.scale;
+
   let world_pos = sprite_position + rotated_pos * final_sprite_size;
   var ndc_pos: vec2<f32>;
 
