@@ -4,6 +4,7 @@ const wgpu = zgpu.wgpu;
 const zglfw = @import("zglfw");
 const shader_utils = @import("../shader_utils.zig");
 
+const MouseState = @import("../input.zig").MouseState;
 const World = @import("../world.zig").World;
 const Map = @import("../map.zig").Map;
 const Tile = @import("../tile.zig").Tile;
@@ -53,17 +54,14 @@ pub const UiRenderer = struct {
     pipeline_layout: zgpu.PipelineLayoutHandle,
     pipeline: zgpu.RenderPipelineHandle,
     buffer: zgpu.BufferHandle,
-
-    mouse_position: UiVec2,
-
-    last_mouse_left_action: zglfw.Action,
-    is_left_mouse_clicked: bool,
-
     vertices: std.ArrayList(UiVertex),
+
+    mouse: MouseState,
 
     pub fn init(
         allocator: std.mem.Allocator,
         gctx: *zgpu.GraphicsContext,
+        window: *zglfw.Window,
         global: *GlobalRenderState,
     ) !Self {
         const buffer = gctx.createBuffer(.{
@@ -88,24 +86,16 @@ pub const UiRenderer = struct {
             .pipeline_layout = pipeline_layout,
             .pipeline = pipeline,
             .buffer = buffer,
-            .mouse_position = .{ .x = 0, .y = 0 },
-            .last_mouse_left_action = .press,
-            .is_left_mouse_clicked = false,
             .vertices = vertices,
+            .mouse = MouseState.init(window),
         };
     }
 
     pub fn beginFrame(
         self: *Self,
-        mouse_position: UiVec2,
-        left_mouse_action: zglfw.Action,
     ) void {
         self.vertices.clearRetainingCapacity();
-        self.mouse_position = mouse_position;
-
-        self.is_left_mouse_clicked = left_mouse_action == .release and self.last_mouse_left_action == .press;
-
-        self.last_mouse_left_action = left_mouse_action;
+        self.mouse.update();
     }
 
     fn pushQuad(self: *Self, rect: UiRect, color: UiVec4) !void {
@@ -129,7 +119,7 @@ pub const UiRenderer = struct {
     pub fn button(self: *Self, rect: UiRect, label_text: []const u8) !bool {
         _ = label_text;
 
-        const is_hovered = rect.contains(self.mouse_position);
+        const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
         const color = if (is_hovered)
             UiVec4{ .r = 0.25, .g = 0.25, .b = 0.35, .a = 1.0 }
         else
@@ -140,7 +130,7 @@ pub const UiRenderer = struct {
         // TODO: Add label
         // self.label(...)
 
-        return is_hovered and self.is_left_mouse_clicked;
+        return is_hovered and self.mouse.is_left_clicked;
     }
 
     pub fn label(self: *Self, pos: UiVec2, text: []const u8) void {

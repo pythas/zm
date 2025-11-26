@@ -38,7 +38,7 @@ pub const Renderer = struct {
         const sprite = try SpriteRenderer.init(allocator, gctx, &global);
         const effect = try EffectRenderer.init(allocator, gctx, &global);
         const beam = try BeamRenderer.init(allocator, gctx, &global);
-        const ui = try UiRenderer.init(allocator, gctx, &global);
+        const ui = try UiRenderer.init(allocator, gctx, window, &global);
 
         return .{
             .atlas = atlas,

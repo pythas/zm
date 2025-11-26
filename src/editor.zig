@@ -2,6 +2,7 @@ const std = @import("std");
 const zgpu = @import("zgpu");
 const zglfw = @import("zglfw");
 
+const MouseState = @import("input.zig").MouseState;
 const World = @import("world.zig").World;
 const Renderer = @import("renderer/renderer.zig").Renderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
@@ -67,14 +68,22 @@ const EditorLayout = struct {
     }
 };
 
+pub const EditorPalette = enum {
+    Hull,
+};
+
 pub const Editor = struct {
     const Self = @This();
 
     window: *zglfw.Window,
+    mouse: MouseState,
+    current_palette: EditorPalette,
 
     pub fn init(window: *zglfw.Window) Self {
         return .{
             .window = window,
+            .mouse = MouseState.init(window),
+            .current_palette = .Hull,
         };
     }
 
@@ -89,28 +98,25 @@ pub const Editor = struct {
         const screen_w: f32 = @floatFromInt(wh[0]);
         const screen_h: f32 = @floatFromInt(wh[1]);
 
-        const mouse_pos = self.window.getCursorPos();
-        const mouse_x: f32 = @floatCast(mouse_pos[0]);
-        const mouse_y: f32 = @floatCast(mouse_pos[1]);
+        self.mouse.update();
 
         const layout = EditorLayout.compute(screen_w, screen_h);
 
         var hover_x: i32 = -1;
         var hover_y: i32 = -1;
 
-        if (layout.getHoveredTile(mouse_x, mouse_y)) |tile_pos| {
+        if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
             hover_x = tile_pos.x;
             hover_y = tile_pos.y;
 
-            if (self.window.getMouseButton(.left) == .press) {
-                std.debug.print("DANK", .{});
-
-                // self.world.player.tiles.set(
-                //     hover_x,
-                //     hover_y,
-                //     selected_tile,
-                // );
-            }
+            // if (self.window.getMouseButton(.left) == .press) {
+            //
+            //     // self.world.player.tiles.set(
+            //     //     hover_x,
+            //     //     hover_y,
+            //     //     selected_tile,
+            //     // );
+            // }
         }
 
         renderer.global.write(
@@ -136,13 +142,8 @@ pub const Editor = struct {
 
         const layout = EditorLayout.compute(screen_w, screen_h);
 
-        const mouse_pos = self.window.getCursorPos();
-        const mouse_x: f32 = @floatCast(mouse_pos[0]);
-        const mouse_y: f32 = @floatCast(mouse_pos[1]);
-        const left_mouse_action = self.window.getMouseButton(.left);
-
         var ui = &renderer.ui;
-        ui.beginFrame(.{ .x = mouse_x, .y = mouse_y }, left_mouse_action);
+        ui.beginFrame();
 
         // Background
         try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h });

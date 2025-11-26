@@ -70,3 +70,35 @@ pub const KeyboardState = struct {
         return @as(u16, 1) << @intFromEnum(k);
     }
 };
+
+pub const MouseState = struct {
+    const Self = @This();
+
+    window: *zglfw.Window,
+
+    x: f32 = 0.0,
+    y: f32 = 0.0,
+
+    last_left_action: zglfw.Action = .press,
+    is_left_clicked: bool = false,
+
+    pub fn init(window: *zglfw.Window) Self {
+        const mouse_pos = window.getCursorPos();
+
+        return .{
+            .window = window,
+            .x = @floatCast(mouse_pos[0]),
+            .y = @floatCast(mouse_pos[1]),
+        };
+    }
+
+    pub fn update(self: *Self) void {
+        const left_action = self.window.getMouseButton(.left);
+        self.is_left_clicked = left_action == .release and self.last_left_action == .press;
+        self.last_left_action = left_action;
+
+        const mouse_pos = self.window.getCursorPos();
+        self.x = @floatCast(mouse_pos[0]);
+        self.y = @floatCast(mouse_pos[1]);
+    }
+};
