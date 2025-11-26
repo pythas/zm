@@ -116,14 +116,19 @@ pub const UiRenderer = struct {
         try self.pushQuad(rect, .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 });
     }
 
-    pub fn button(self: *Self, rect: UiRect, label_text: []const u8) !bool {
+    pub fn button(self: *Self, rect: UiRect, is_active: bool, label_text: []const u8) !bool {
         _ = label_text;
 
         const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
-        const color = if (is_hovered)
+        var color = if (is_active)
             UiVec4{ .r = 0.25, .g = 0.25, .b = 0.35, .a = 1.0 }
         else
             UiVec4{ .r = 0.18, .g = 0.18, .b = 0.22, .a = 1.0 };
+
+        color = if (is_hovered)
+            UiVec4{ .r = 0.35, .g = 0.35, .b = 0.45, .a = 1.0 }
+        else
+            color;
 
         try self.pushQuad(rect, color);
 

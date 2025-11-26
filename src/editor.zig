@@ -70,6 +70,7 @@ const EditorLayout = struct {
 
 pub const EditorPalette = enum {
     Hull,
+    MiningLaser,
 };
 
 pub const Editor = struct {
@@ -109,14 +110,9 @@ pub const Editor = struct {
             hover_x = tile_pos.x;
             hover_y = tile_pos.y;
 
-            // if (self.window.getMouseButton(.left) == .press) {
-            //
-            //     // self.world.player.tiles.set(
-            //     //     hover_x,
-            //     //     hover_y,
-            //     //     selected_tile,
-            //     // );
-            // }
+            if (self.mouse.is_left_clicked) {
+                // TODO: Do stuff
+            }
         }
 
         renderer.global.write(
@@ -151,8 +147,25 @@ pub const Editor = struct {
         // Palette
         try ui.panel(layout.palette_rect);
 
-        if (try ui.button(.{ .x = layout.palette_rect.x + 10, .y = layout.palette_rect.y + 10, .w = 30, .h = 30 }, "Hull")) {
-            std.debug.print("HULL\n", .{});
+        var btn_x = layout.palette_rect.x + 10;
+        const btn_y = layout.palette_rect.y + 10;
+        const btn_s = 30;
+
+        if (try ui.button(
+            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
+            self.current_palette == .Hull,
+            "Hull",
+        )) {
+            self.current_palette = .Hull;
+        }
+
+        btn_x += btn_s + 10;
+        if (try ui.button(
+            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
+            self.current_palette == .MiningLaser,
+            "Hull",
+        )) {
+            self.current_palette = .MiningLaser;
         }
 
         // Ship
