@@ -79,8 +79,14 @@ pub const MouseState = struct {
     x: f32 = 0.0,
     y: f32 = 0.0,
 
-    last_left_action: zglfw.Action = .press,
+    last_left_action: zglfw.Action,
+    last_right_action: zglfw.Action,
+
     is_left_clicked: bool = false,
+    is_right_clicked: bool = false,
+
+    is_left_down: bool = false,
+    is_right_down: bool = false,
 
     pub fn init(window: *zglfw.Window) Self {
         const mouse_pos = window.getCursorPos();
@@ -89,13 +95,21 @@ pub const MouseState = struct {
             .window = window,
             .x = @floatCast(mouse_pos[0]),
             .y = @floatCast(mouse_pos[1]),
+            .last_left_action = window.getMouseButton(.left),
+            .last_right_action = window.getMouseButton(.right),
         };
     }
 
     pub fn update(self: *Self) void {
         const left_action = self.window.getMouseButton(.left);
         self.is_left_clicked = left_action == .release and self.last_left_action == .press;
+        self.is_left_down = left_action == .press;
         self.last_left_action = left_action;
+
+        const right_action = self.window.getMouseButton(.right);
+        self.is_right_clicked = right_action == .release and self.last_right_action == .press;
+        self.is_right_down = right_action == .press;
+        self.last_right_action = right_action;
 
         const mouse_pos = self.window.getCursorPos();
         self.x = @floatCast(mouse_pos[0]);

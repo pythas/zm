@@ -68,44 +68,44 @@ pub const Player = struct {
 
         var tiles: [tile.tilemapWidth][tile.tilemapHeight]Tile = undefined;
 
-        // for (0..tile.tilemapHeight) |y| {
-        //     for (0..tile.tilemapWidth) |x| {
-        //         tiles[x][y] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        //     }
-        // }
+        for (0..tile.tilemapHeight) |y| {
+            for (0..tile.tilemapWidth) |x| {
+                tiles[x][y] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+            }
+        }
 
-        tiles[0][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 0);
-        tiles[1][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);
-        tiles[2][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);
-        tiles[3][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 1);
-        tiles[0][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        tiles[0][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        tiles[0][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        tiles[0][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        tiles[0][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        tiles[0][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        tiles[1][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[1][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[1][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[1][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[1][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[1][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[2][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[2][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[2][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[2][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[2][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[2][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        tiles[3][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        tiles[3][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        tiles[3][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        tiles[3][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        tiles[3][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        tiles[3][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        tiles[0][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 2);
-        tiles[1][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 35);
-        tiles[2][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 35);
-        tiles[3][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 3);
+        // tiles[0][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 0);
+        // tiles[1][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);
+        // tiles[2][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);
+        // tiles[3][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 1);
+        // tiles[0][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        // tiles[0][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        // tiles[0][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        // tiles[0][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        // tiles[0][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        // tiles[0][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
+        // tiles[1][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[1][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[1][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[1][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[1][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[1][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[2][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[2][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[2][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[2][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[2][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[2][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
+        // tiles[3][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        // tiles[3][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        // tiles[3][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        // tiles[3][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        // tiles[3][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        // tiles[3][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        // tiles[0][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 2);
+        // tiles[1][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 35);
+        // tiles[2][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 35);
+        // tiles[3][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 3);
 
         return .{
             .position = position,

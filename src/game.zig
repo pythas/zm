@@ -40,7 +40,7 @@ pub const Game = struct {
     ) !Self {
         const world = try World.init(allocator, map);
         const renderer = try Renderer.init(allocator, gctx, window);
-        const editor = Editor.init(window);
+        const editor = Editor.init(allocator, window);
 
         var self = Self{
             .allocator = allocator,

@@ -7,6 +7,7 @@ const World = @import("world.zig").World;
 const Renderer = @import("renderer/renderer.zig").Renderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
+const Tile = @import("tile.zig").Tile;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
@@ -76,12 +77,14 @@ pub const EditorPalette = enum {
 pub const Editor = struct {
     const Self = @This();
 
+    allocator: std.mem.Allocator,
     window: *zglfw.Window,
     mouse: MouseState,
     current_palette: EditorPalette,
 
-    pub fn init(window: *zglfw.Window) Self {
+    pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) Self {
         return .{
+            .allocator = allocator,
             .window = window,
             .mouse = MouseState.init(window),
             .current_palette = .Hull,
@@ -110,8 +113,23 @@ pub const Editor = struct {
             hover_x = tile_pos.x;
             hover_y = tile_pos.y;
 
-            if (self.mouse.is_left_clicked) {
-                // TODO: Do stuff
+            const tile_x: usize = @intCast(hover_x);
+            const tile_y: usize = @intCast(hover_y);
+
+            if (self.mouse.is_left_down) {
+                world.player.tiles[tile_x][tile_y] = try Tile.init(
+                    self.allocator,
+                    .Hull,
+                    .Metal,
+                    .Ships,
+                    36,
+                );
+            }
+
+            if (self.mouse.is_right_down) {
+                world.player.tiles[tile_x][tile_y] = try Tile.initEmpty(
+                    self.allocator,
+                );
             }
         }
 
@@ -163,7 +181,7 @@ pub const Editor = struct {
         if (try ui.button(
             .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
             self.current_palette == .MiningLaser,
-            "Hull",
+            "Mining laser",
         )) {
             self.current_palette = .MiningLaser;
         }

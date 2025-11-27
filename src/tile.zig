@@ -75,6 +75,8 @@ pub const Category = enum(u8) {
     Empty,
     Terrain,
     Hull,
+    Engine,
+    Laser,
 };
 
 pub const BaseMaterial = enum(u8) {
