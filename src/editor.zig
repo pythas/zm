@@ -8,6 +8,8 @@ const Renderer = @import("renderer/renderer.zig").Renderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
 const Tile = @import("tile.zig").Tile;
+const Direction = @import("tile.zig").Direction;
+const Directions = @import("tile.zig").Directions;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
@@ -71,7 +73,9 @@ const EditorLayout = struct {
 
 pub const EditorPalette = enum {
     Hull,
-    MiningLaser,
+    Engine,
+    RCS,
+    Laser,
 };
 
 pub const Editor = struct {
@@ -116,14 +120,81 @@ pub const Editor = struct {
             const tile_x: usize = @intCast(hover_x);
             const tile_y: usize = @intCast(hover_y);
 
+            // TODO: Make sure tile is connected
+
             if (self.mouse.is_left_down) {
-                world.player.tiles[tile_x][tile_y] = try Tile.init(
-                    self.allocator,
-                    .Hull,
-                    .Metal,
-                    .Ships,
-                    36,
-                );
+                switch (self.current_palette) {
+                    .Hull => {
+                        world.player.tiles[tile_x][tile_y] = try Tile.init(
+                            self.allocator,
+                            .Hull,
+                            .Metal,
+                            .Ships,
+                            36,
+                        );
+                    },
+                    .Engine => {
+                        var engine_dir: ?Direction = null;
+                        var is_connected = false;
+
+                        for (Directions) |d| {
+                            const n = world.player.getNeighbouringTile(tile_x, tile_y, d.direction) orelse continue;
+
+                            if (n.category == .Empty) {
+                                if (engine_dir == null) {
+                                    engine_dir = d.direction;
+                                }
+                            } else {
+                                is_connected = true;
+                            }
+                        }
+
+                        if (is_connected) {
+                            if (engine_dir) |ed| {
+                                var et = try Tile.init(self.allocator, .Engine, .Metal, .Ships, switch (ed) {
+                                    .North => 64,
+                                    .East => 65,
+                                    .South => 66,
+                                    .West => 67,
+                                });
+                                et.rotation = ed;
+
+                                world.player.tiles[tile_x][tile_y] = et;
+                            }
+                        }
+                    },
+                    .RCS => {
+                        var engine_dir: ?Direction = null;
+                        var is_connected = false;
+
+                        for (Directions) |d| {
+                            const n = world.player.getNeighbouringTile(tile_x, tile_y, d.direction) orelse continue;
+
+                            if (n.category == .Empty) {
+                                if (engine_dir == null) {
+                                    engine_dir = d.direction;
+                                }
+                            } else {
+                                is_connected = true;
+                            }
+                        }
+
+                        if (is_connected) {
+                            if (engine_dir) |ed| {
+                                var et = try Tile.init(self.allocator, .RCS, .Metal, .Ships, switch (ed) {
+                                    .North => 96,
+                                    .East => 97,
+                                    .South => 99,
+                                    .West => 99,
+                                });
+                                et.rotation = ed;
+
+                                world.player.tiles[tile_x][tile_y] = et;
+                            }
+                        }
+                    },
+                    .Laser => {},
+                }
             }
 
             if (self.mouse.is_right_down) {
@@ -180,10 +251,19 @@ pub const Editor = struct {
         btn_x += btn_s + 10;
         if (try ui.button(
             .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .MiningLaser,
-            "Mining laser",
+            self.current_palette == .Engine,
+            "Engine",
         )) {
-            self.current_palette = .MiningLaser;
+            self.current_palette = .Engine;
+        }
+
+        btn_x += btn_s + 10;
+        if (try ui.button(
+            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
+            self.current_palette == .RCS,
+            "RCS",
+        )) {
+            self.current_palette = .RCS;
         }
 
         // Ship

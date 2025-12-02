@@ -74,6 +74,7 @@ pub const Game = struct {
             if (self.mode == .InWorld) {
                 self.mode = .ShipEditor;
             } else {
+                self.world.player.recalculateStats();
                 self.mode = .InWorld;
             }
         }

@@ -76,6 +76,7 @@ pub const Category = enum(u8) {
     Terrain,
     Hull,
     Engine,
+    RCS,
     Laser,
 };
 
@@ -145,6 +146,29 @@ pub const SpriteSheet = enum(u8) {
     Ships = 2,
 };
 
+pub const Direction = enum(u8) {
+    North = 0,
+    East = 1,
+    South = 2,
+    West = 3,
+};
+
+pub const Directions: []const struct {
+    direction: Direction,
+    dx: i32,
+    dy: i32,
+} = &.{
+    .{ .direction = Direction.North, .dx = 0, .dy = -1 },
+    .{ .direction = Direction.South, .dx = 0, .dy = 1 },
+    .{ .direction = Direction.East, .dx = 1, .dy = 0 },
+    .{ .direction = Direction.West, .dx = -1, .dy = 0 },
+};
+
+pub const Offset = struct {
+    dx: isize,
+    dy: isize,
+};
+
 pub const Tile = struct {
     const Self = @This();
     pub const tileSize: usize = 8;
@@ -153,6 +177,7 @@ pub const Tile = struct {
     composition: Composition,
     sheet: SpriteSheet,
     sprite: u16,
+    rotation: Direction = .North,
 
     pub fn init(
         allocator: std.mem.Allocator,

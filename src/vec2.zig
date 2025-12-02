@@ -22,8 +22,18 @@ pub const Vec2 = struct {
         return .{ .x = self.x * scalar, .y = self.y * scalar };
     }
 
+    pub fn divScalar(self: Self, scalar: f32) Self {
+        return .{ .x = self.x / scalar, .y = self.y / scalar };
+    }
+
     pub fn len(self: Self) f32 {
         return std.math.sqrt(self.x * self.x + self.y * self.y);
+    }
+
+    pub fn lenSquared(self: Self) f32 {
+        const l = self.len();
+
+        return l * l;
     }
 
     pub fn normalize(self: Self) Self {

@@ -33,8 +33,6 @@ pub const World = struct {
             allocator,
             Vec2.init(0, 0),
             0 * std.math.pi / 180.0,
-            8.0,
-            0.4,
         );
 
         return .{
@@ -74,19 +72,19 @@ pub const World = struct {
         const torque = 6.0;
 
         if (keyboard_state.isDown(.w)) {
-            self.player.applyThrust(dt, -thrust);
-        }
-
-        if (keyboard_state.isDown(.s)) {
             self.player.applyThrust(dt, thrust);
         }
 
+        if (keyboard_state.isDown(.s)) {
+            self.player.applyThrust(dt, -thrust);
+        }
+
         if (keyboard_state.isDown(.a)) {
-            self.player.applyTorque(dt, -torque);
+            self.player.applyTorque(dt, torque);
         }
 
         if (keyboard_state.isDown(.d)) {
-            self.player.applyTorque(dt, torque);
+            self.player.applyTorque(dt, -torque);
         }
 
         if (keyboard_state.isDown(.q)) {
@@ -101,10 +99,6 @@ pub const World = struct {
             if (self.getTile(mouse_x_relative, mouse_y_relative)) |tile_ref| {
                 if (tile_ref.getTile(&self.map)) |tile| {
                     if (tile.category != .Empty) {
-                        const world_pos = self.camera.screenToWorld(.{ .x = mouse_x_relative, .y = mouse_y_relative }, @floatFromInt(Tile.tileSize));
-                        const tile_center = tile_ref.worldCenter();
-                        std.debug.print("mouse: {d:.1} {d:.1} -> world: {d:.1} {d:.1} -> tile: {d} {d} -> center: {d:.1} {d:.1}\n", .{ mouse_x_relative, mouse_y_relative, world_pos.x, world_pos.y, tile_ref.tile_x, tile_ref.tile_y, tile_center.x, tile_center.y });
-
                         try self.player.startTileAction(.Mine, tile_ref);
                     }
                 }

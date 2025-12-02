@@ -1,10 +1,14 @@
 const std = @import("std");
 
 const Vec2 = @import("vec2.zig").Vec2;
-const tile = @import("tile.zig");
 const Tile = @import("tile.zig").Tile;
 const TileReference = @import("tile.zig").TileReference;
+const Direction = @import("tile.zig").Direction;
+const Offset = @import("tile.zig").Offset;
 const Map = @import("map.zig").Map;
+
+const tilemapWidth = @import("tile.zig").tilemapWidth;
+const tilemapHeight = @import("tile.zig").tilemapHeight;
 
 pub const TileAction = struct {
     const Self = @This();
@@ -39,6 +43,8 @@ pub const TileAction = struct {
 pub const Player = struct {
     const Self = @This();
     pub const tileActionMineDuration = 10.0;
+    const enginePower: f32 = 500.0;
+    const rcsPower: f32 = 50.0;
 
     position: Vec2,
     velocity: Vec2,
@@ -46,79 +52,69 @@ pub const Player = struct {
     rotation: f32,
     angular_velocity: f32,
 
-    thrust: f32,
-    torque: f32,
-
     velocity_damping: f32,
     angular_damping: f32,
 
-    tiles: [tile.tilemapWidth][tile.tilemapHeight]Tile,
+    tiles: [tilemapWidth][tilemapHeight]Tile,
 
     tile_actions: std.ArrayList(TileAction),
+
+    mass: f32 = 1.0,
+    moment_of_inertia: f32 = 1.0,
+    center_of_mass: Vec2 = Vec2.init(0, 0),
+
+    force_forward: f32 = 0.0,
+    force_backward: f32 = 0.0,
+
+    force_side_left: f32 = 0.0,
+    force_side_right: f32 = 0.0,
+    engine_imbalance_torque: f32 = 0.0,
+    side_imbalance_torque: f32 = 0.0,
+    rcs_torque: f32 = 0.0,
 
     pub fn init(
         allocator: std.mem.Allocator,
         position: Vec2,
         rotation: f32,
-        thrust: f32,
-        torque: f32,
     ) Self {
         // const tiles: [playerWidth][playerHeight]Tile =
         //     .{.{Tile.init(.Hull, .Ships, 0)} ** playerHeight} ** playerWidth;
 
-        var tiles: [tile.tilemapWidth][tile.tilemapHeight]Tile = undefined;
+        var tiles: [tilemapWidth][tilemapHeight]Tile = undefined;
 
-        for (0..tile.tilemapHeight) |y| {
-            for (0..tile.tilemapWidth) |x| {
+        for (0..tilemapHeight) |y| {
+            for (0..tilemapWidth) |x| {
+                tiles[x][y] = try Tile.initEmpty(allocator);
+            }
+        }
+
+        for (2..tilemapHeight - 2) |y| {
+            for (2..tilemapWidth - 2) |x| {
                 tiles[x][y] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
             }
         }
 
-        // tiles[0][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 0);
-        // tiles[1][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);
-        // tiles[2][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 33);
-        // tiles[3][0] = try Tile.init(allocator, .Hull, .Metal, .Ships, 1);
-        // tiles[0][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        // tiles[0][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        // tiles[0][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        // tiles[0][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        // tiles[0][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        // tiles[0][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 32);
-        // tiles[1][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[1][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[1][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[1][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[1][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[1][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[2][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[2][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[2][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[2][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[2][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[2][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        // tiles[3][1] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        // tiles[3][2] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        // tiles[3][3] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        // tiles[3][4] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        // tiles[3][5] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        // tiles[3][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        // tiles[0][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 2);
-        // tiles[1][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 35);
-        // tiles[2][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 35);
-        // tiles[3][6] = try Tile.init(allocator, .Hull, .Metal, .Ships, 3);
+        // var t1 = try Tile.init(allocator, .Engine, .Metal, .Ships, 0);
+        // t1.rotation = .South;
+        // tiles[4][7] = t1;
+        // var t2 = try Tile.init(allocator, .Engine, .Metal, .Ships, 0);
+        // t2.rotation = .North;
+        // tiles[2][0] = t2;
 
-        return .{
+        var self = Self{
             .position = position,
             .velocity = Vec2.init(0, 0),
             .rotation = rotation,
             .angular_velocity = 0,
-            .thrust = thrust,
-            .torque = torque,
             .velocity_damping = 0.1,
             .angular_damping = 0.9,
             .tiles = tiles,
             .tile_actions = std.ArrayList(TileAction).init(allocator),
         };
+
+        self.recalculateStats();
+
+        return self;
     }
 
     pub fn update(self: *Self, dt: f32, map: *Map) !void {
@@ -154,24 +150,141 @@ pub const Player = struct {
     }
 
     // Movement
-    pub fn applyThrust(self: *Self, dt: f32, input_thrust: f32) void {
-        const direction = Vec2.init(-@sin(self.rotation), @cos(self.rotation));
-        const acceleration = direction.mulScalar(input_thrust * self.thrust);
+    pub fn applyThrust(self: *Self, dt: f32, input_y: f32) void {
+        var force_magnitude: f32 = 0.0;
+        var induced_torque: f32 = 0.0;
 
-        self.velocity = self.velocity.add(acceleration.mulScalar(dt));
+        if (input_y > 0) {
+            force_magnitude = self.force_forward;
+            induced_torque = self.engine_imbalance_torque;
+        } else if (input_y < 0) {
+            force_magnitude = -self.force_backward;
+        }
+
+        const accel_magnitude = force_magnitude / self.mass;
+        const dir = Vec2.init(@sin(self.rotation), -@cos(self.rotation));
+        self.velocity = self.velocity.add(dir.mulScalar(accel_magnitude * dt));
+
+        const angular_accel = induced_torque / self.moment_of_inertia;
+        self.angular_velocity += angular_accel * dt;
     }
 
-    pub fn applyTorque(self: *Self, dt: f32, input_torque: f32) void {
-        const acceleration = input_torque * self.torque;
+    pub fn applyTorque(self: *Self, dt: f32, input_x: f32) void {
+        const torque = -input_x * self.rcs_torque;
 
-        self.angular_velocity = self.angular_velocity + acceleration * dt;
+        const angular_accel = torque / self.moment_of_inertia;
+        self.angular_velocity += angular_accel * dt;
     }
 
     pub fn applySideThrust(self: *Self, dt: f32, input_strafe: f32) void {
-        const right = Vec2.init(@cos(self.rotation), @sin(self.rotation));
+        var force_magnitude: f32 = 0.0;
+        var induced_torque: f32 = 0.0;
 
-        const acceleration = right.mulScalar(input_strafe * self.thrust);
-        self.velocity = self.velocity.add(acceleration.mulScalar(dt));
+        if (input_strafe < 0) {
+            force_magnitude = -self.force_side_left;
+            induced_torque = self.side_imbalance_torque;
+        } else if (input_strafe > 0) {
+            force_magnitude = self.force_side_right;
+        }
+
+        const dir = Vec2.init(@cos(self.rotation), @sin(self.rotation));
+        const accel_magnitude = force_magnitude / self.mass;
+
+        self.velocity = self.velocity.add(dir.mulScalar(accel_magnitude * dt));
+
+        if (induced_torque != 0.0) {
+            const angular_accel = induced_torque / self.moment_of_inertia;
+            self.angular_velocity += angular_accel * dt;
+        }
+    }
+
+    pub fn recalculateStats(self: *Self) void {
+        var total_mass: f32 = 0.0;
+        var weighted_pos = Vec2.init(0, 0);
+
+        for (0..tilemapWidth) |x| {
+            for (0..tilemapHeight) |y| {
+                const tile = self.tiles[x][y];
+                if (tile.category == .Empty) continue;
+
+                const mass: f32 = switch (tile.category) {
+                    .Engine => 20.0,
+                    .RCS => 5.0,
+                    else => 10.0,
+                };
+                total_mass += mass;
+
+                const pos = Vec2.init(@floatFromInt(x), @floatFromInt(y));
+                weighted_pos = weighted_pos.add(pos.mulScalar(mass));
+            }
+        }
+
+        self.mass = @max(1.0, total_mass);
+        self.center_of_mass = weighted_pos.divScalar(self.mass);
+
+        var inertia: f32 = 0.0;
+
+        self.force_forward = 0.0;
+        self.force_backward = 0.0;
+        self.force_side_left = 0.0;
+        self.force_side_right = 0.0;
+
+        self.rcs_torque = 0.0;
+        self.engine_imbalance_torque = 0.0;
+        self.side_imbalance_torque = 0.0;
+
+        for (0..tilemapWidth) |x| {
+            for (0..tilemapHeight) |y| {
+                const tile = self.tiles[x][y];
+
+                if (tile.category == .Empty) {
+                    continue;
+                }
+
+                const pos = Vec2.init(@floatFromInt(x), @floatFromInt(y));
+                const delta_com = pos.sub(self.center_of_mass);
+
+                const mass: f32 = switch (tile.category) {
+                    .Engine => 20.0,
+                    .RCS => 5.0,
+                    else => 10.0,
+                };
+                inertia += mass * delta_com.lenSquared();
+
+                const dir = switch (tile.rotation) {
+                    .North => Vec2.init(0, 1),
+                    .South => Vec2.init(0, -1),
+                    .East => Vec2.init(-1, 0),
+                    .West => Vec2.init(1, 0),
+                };
+
+                const torque_arm = (delta_com.x * dir.y) - (delta_com.y * dir.x);
+
+                if (tile.category == .Engine) {
+                    if (dir.y < -0.1) {
+                        self.force_forward += enginePower;
+                        self.engine_imbalance_torque += torque_arm * enginePower;
+                    } else if (dir.y > 0.1) {
+                        self.force_backward += enginePower;
+                    }
+
+                    if (dir.x < -0.1) {
+                        self.force_side_left += enginePower;
+                        self.side_imbalance_torque += torque_arm * enginePower;
+                    } else if (dir.x > 0.1) {
+                        self.force_side_right += enginePower;
+                    }
+                } else if (tile.category == .RCS) {
+                    self.rcs_torque += @abs(torque_arm * rcsPower);
+
+                    if (dir.x < -0.1) self.force_side_left += rcsPower;
+                    if (dir.x > 0.1) self.force_side_right += rcsPower;
+                    if (dir.y < -0.1) self.force_forward += rcsPower;
+                    if (dir.y > 0.1) self.force_backward += rcsPower;
+                }
+            }
+        }
+        self.moment_of_inertia = @max(1.0, inertia);
     }
 
     // Actions
@@ -181,5 +294,29 @@ pub const Player = struct {
             tile_ref,
             tileActionMineDuration,
         ));
+    }
+
+    // Stuff
+    pub fn getNeighbouringTile(
+        self: Self,
+        x: usize,
+        y: usize,
+        direction: Direction,
+    ) ?Tile {
+        const delta: Offset = switch (direction) {
+            .North => .{ .dx = 0, .dy = -1 },
+            .East => .{ .dx = 1, .dy = 0 },
+            .South => .{ .dx = 0, .dy = 1 },
+            .West => .{ .dx = -1, .dy = 0 },
+        };
+
+        const nx = @as(isize, @intCast(x)) + delta.dx;
+        const ny = @as(isize, @intCast(y)) + delta.dy;
+
+        if (nx < 0 or ny < 0 or nx >= tilemapWidth or ny >= tilemapHeight) {
+            return null;
+        }
+
+        return self.tiles[@intCast(nx)][@intCast(ny)];
     }
 };
