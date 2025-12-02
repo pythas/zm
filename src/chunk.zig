@@ -5,10 +5,30 @@ const Map = @import("map.zig").Map;
 const Tile = @import("tile.zig").Tile;
 const TileReference = @import("tile.zig").TileReference;
 const Vec2 = @import("vec2.zig").Vec2;
+const tileSize = @import("tile.zig").tileSize;
+
+pub const chunkSize = 64;
+pub const chunkPixelSize = chunkSize * tileSize;
+
+pub const ChunkReference = struct {
+    const Self = @This();
+
+    chunk_x: i32,
+    chunk_y: i32,
+
+    pub fn getChunk(self: Self, map: *Map) ?*Chunk {
+        for (map.chunks.items) |*chunk| {
+            if (chunk.x == self.chunk_x and chunk.y == self.chunk_y) {
+                return chunk;
+            }
+        }
+
+        return null;
+    }
+};
 
 pub const Chunk = struct {
     const Self = @This();
-    pub const chunkSize: usize = 64;
 
     pub const RenderData = struct {
         tilemap: zgpu.TextureHandle,
@@ -42,34 +62,36 @@ pub const Chunk = struct {
             }
         }
 
+        tiles[31][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+
         // tiles[0][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
         // tiles[63][0] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
         // tiles[63][63] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
         // tiles[0][63] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
 
-        tiles[51][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[52][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[53][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[50][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[51][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[52][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[53][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[54][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[50][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        var tile = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 1);
-        try tile.composition.setOre(.Iron, 255);
-        tiles[51][52] = tile;
-        tiles[52][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[53][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[54][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[50][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[51][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[52][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[53][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[54][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[51][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[52][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
-        tiles[53][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[51][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[52][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][50] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[50][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[51][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[52][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[54][51] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[50][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // var tile = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 1);
+        // try tile.composition.setOre(.Iron, 255);
+        // tiles[51][52] = tile;
+        // tiles[52][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[54][52] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[50][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[51][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[52][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[54][53] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[51][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[52][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
+        // tiles[53][54] = try Tile.init(allocator, .Terrain, .Rock, .Asteroids, 0);
 
         return .{
             .x = x,
@@ -78,16 +100,16 @@ pub const Chunk = struct {
         };
     }
 
-    pub fn worldCenter(self: Chunk, chunk_size: f32) Vec2 {
+    pub fn worldCenter(self: Chunk) Vec2 {
         return .{
-            .x = @as(f32, @floatFromInt(self.x)) * chunk_size,
-            .y = @as(f32, @floatFromInt(self.y)) * chunk_size,
+            .x = @as(f32, @floatFromInt(self.x)) * chunkPixelSize,
+            .y = @as(f32, @floatFromInt(self.y)) * chunkPixelSize,
         };
     }
 
-    pub fn containsWorld(self: Self, world: Vec2, chunk_size: f32) bool {
-        const half = chunk_size / 2.0;
-        const center = self.worldCenter(chunk_size);
+    pub fn containsWorld(self: Self, world: Vec2) bool {
+        const half = chunkPixelSize / 2.0;
+        const center = self.worldCenter();
         const left = center.x - half;
         const right = center.x + half;
         const top = center.y - half;
@@ -97,19 +119,19 @@ pub const Chunk = struct {
             world.y >= top and world.y < bottom;
     }
 
-    pub fn tileAtWorld(self: *Self, world: Vec2, tile_size: f32, chunk_size: f32) ?TileReference {
-        const half = chunk_size / 2.0;
-        const center = self.worldCenter(chunk_size);
+    pub fn tileAtWorld(self: *Self, world: Vec2) ?TileReference {
+        const half = chunkPixelSize / 2.0;
+        const center = self.worldCenter();
         const left = center.x - half;
         const top = center.y - half;
 
         const rel_x = world.x - left;
         const rel_y = world.y - top;
 
-        const tile_x: u32 = @intFromFloat(rel_x / tile_size);
-        const tile_y: u32 = @intFromFloat(rel_y / tile_size);
+        const tile_x: u32 = @intFromFloat(rel_x / tileSize);
+        const tile_y: u32 = @intFromFloat(rel_y / tileSize);
 
-        if (tile_x >= Self.chunkSize or tile_y >= Self.chunkSize) {
+        if (tile_x >= chunkSize or tile_y >= chunkSize) {
             return null;
         }
 

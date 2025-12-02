@@ -14,6 +14,8 @@ const Vec2 = @import("../vec2.zig").Vec2;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
 
+const tileSize = @import("../tile.zig").tileSize;
+
 pub const BeamRenderer = struct {
     const Self = @This();
     const maxInstances = 128;
@@ -92,7 +94,7 @@ pub const BeamRenderer = struct {
             const start = player.body.position;
 
             const tile_world_pos = action.tile_ref.worldCenter();
-            const tile_size = @as(f32, @floatFromInt(Tile.tileSize));
+            const tile_size = @as(f32, @floatFromInt(tileSize));
             const tile_pos = Vec2.init(tile_world_pos.x / tile_size, tile_world_pos.y / tile_size);
 
             const base_width: f32 = 6.0;

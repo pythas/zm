@@ -4,6 +4,7 @@ const zgpu = @import("zgpu");
 
 const Tile = @import("tile.zig").Tile;
 const TileReference = @import("tile.zig").TileReference;
+const ChunkReference = @import("chunk.zig").ChunkReference;
 const Vec2 = @import("vec2.zig").Vec2;
 const Chunk = @import("chunk.zig").Chunk;
 
@@ -47,12 +48,23 @@ pub const Map = struct {
         self.chunks.deinit();
     }
 
-    pub fn getTileAtWorld(self: *Self, world: Vec2, tile_size: f32) ?TileReference {
-        const chunk_size = @as(f32, @floatFromInt(Chunk.chunkSize)) * tile_size;
-
+    pub fn getTileAtWorld(self: *Self, world: Vec2) ?TileReference {
         for (self.chunks.items) |*chunk| {
-            if (chunk.containsWorld(world, chunk_size)) {
-                return chunk.tileAtWorld(world, tile_size, chunk_size);
+            if (chunk.containsWorld(world)) {
+                return chunk.tileAtWorld(world);
+            }
+        }
+
+        return null;
+    }
+
+    pub fn getChunkAtWorld(self: *Self, world: Vec2) ?ChunkReference {
+        for (self.chunks.items) |*chunk| {
+            if (chunk.containsWorld(world)) {
+                return .{
+                    .chunk_x = chunk.x,
+                    .chunk_y = chunk.y,
+                };
             }
         }
 

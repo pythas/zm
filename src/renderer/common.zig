@@ -11,6 +11,8 @@ const Texture = @import("../texture.zig").Texture;
 const Player = @import("../player.zig").Player;
 const GameMode = @import("../game.zig").GameMode;
 
+const tileSize = @import("../tile.zig").tileSize;
+
 pub const GlobalUniforms = extern struct {
     dt: f32,
     t: f32,
@@ -87,7 +89,7 @@ pub const GlobalRenderState = struct {
             .screen_wh = .{ @floatFromInt(wh[0]), @floatFromInt(wh[1]), 0, 0 },
             .camera_xy = .{ world.camera.position.x, world.camera.position.y, 0, 0 },
             .camera_zoom = world.camera.zoom,
-            .tile_size = Tile.tileSize,
+            .tile_size = tileSize,
             ._pad1 = 0.0,
             ._pad2 = 0.0,
             .hover_xy = .{

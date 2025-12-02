@@ -58,7 +58,7 @@ pub const Player = struct {
     const Self = @This();
     pub const tileActionMineDuration = 10.0;
     const enginePower: f32 = 500.0;
-    const rcsPower: f32 = 50.0;
+    const rcsPower: f32 = 100.0;
 
     body: RigidBody,
     stats: ShipStats,
@@ -103,7 +103,7 @@ pub const Player = struct {
     pub fn update(self: *Self, dt: f32, map: *Map) !void {
         self.body.update(dt);
 
-        // Actions
+        // actions
         var i: usize = self.tile_actions.items.len;
         while (i > 0) {
             i -= 1;
@@ -124,7 +124,7 @@ pub const Player = struct {
         }
     }
 
-    // Movement
+    // movement
     pub fn applyInputThrust(self: *Self, dt: f32, input: f32) void {
         var force: f32 = 0.0;
         var torque_penalty: f32 = 0.0;
@@ -257,7 +257,7 @@ pub const Player = struct {
         self.body.moment_of_inertia = @max(1.0, inertia);
     }
 
-    // Actions
+    // actions
     pub fn startTileAction(self: *Self, kind: TileAction.Kind, tile_ref: TileReference) !void {
         try self.tile_actions.append(TileAction.init(
             kind,
@@ -266,7 +266,7 @@ pub const Player = struct {
         ));
     }
 
-    // Stuff
+    //
     pub fn getNeighbouringTile(
         self: Self,
         x: usize,

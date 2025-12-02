@@ -13,6 +13,8 @@ const Player = @import("../player.zig").Player;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
 
+const chunkSize = @import("../chunk.zig").chunkSize;
+
 pub const ChunkUniforms = extern struct {
     chunk_xy: [4]f32,
     chunk_wh: [4]f32,
@@ -76,7 +78,7 @@ pub const WorldRenderer = struct {
 
         var uniform_data = ChunkUniforms{
             .chunk_xy = .{ @floatFromInt(chunk.x), @floatFromInt(chunk.y), 0, 0 },
-            .chunk_wh = .{ @floatFromInt(Chunk.chunkSize), @floatFromInt(Chunk.chunkSize), 0, 0 },
+            .chunk_wh = .{ @floatFromInt(chunkSize), @floatFromInt(chunkSize), 0, 0 },
         };
 
         self.gctx.queue.writeBuffer(
@@ -91,8 +93,8 @@ pub const WorldRenderer = struct {
         const tilemap = self.gctx.createTexture(.{
             .usage = .{ .texture_binding = true, .copy_dst = true },
             .size = .{
-                .width = Chunk.chunkSize,
-                .height = Chunk.chunkSize,
+                .width = chunkSize,
+                .height = chunkSize,
                 .depth_or_array_layers = 1,
             },
             .format = wgpu.TextureFormat.r32_uint,
@@ -110,21 +112,21 @@ pub const WorldRenderer = struct {
             .{ .binding = 1, .texture_view_handle = tilemap_view },
         });
 
-        const chunk_data = try self.allocator.alloc(u32, Chunk.chunkSize * Chunk.chunkSize);
+        const chunk_data = try self.allocator.alloc(u32, chunkSize * chunkSize);
         defer self.allocator.free(chunk_data);
 
-        for (0..Chunk.chunkSize) |y| {
-            for (0..Chunk.chunkSize) |x| {
+        for (0..chunkSize) |y| {
+            for (0..chunkSize) |x| {
                 const tile = chunk.tiles[x][y];
                 const id = packTileForGpu(tile);
-                chunk_data[(y * Chunk.chunkSize) + x] = id;
+                chunk_data[(y * chunkSize) + x] = id;
             }
         }
 
         self.gctx.queue.writeTexture(
             .{ .texture = self.gctx.lookupResource(tilemap).? },
-            .{ .bytes_per_row = Chunk.chunkSize * @sizeOf(u32), .rows_per_image = Chunk.chunkSize },
-            .{ .width = Chunk.chunkSize, .height = Chunk.chunkSize },
+            .{ .bytes_per_row = chunkSize * @sizeOf(u32), .rows_per_image = chunkSize },
+            .{ .width = chunkSize, .height = chunkSize },
             u32,
             chunk_data,
         );
