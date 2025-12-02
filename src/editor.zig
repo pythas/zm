@@ -34,12 +34,12 @@ const EditorLayout = struct {
 
         const tile_size = tile_size_base * scaling;
 
-        const pal_w = (tile_size_base * 8 * scaling) + (padding * 2);
+        const pal_w = (tile_size_base * tilemapWidth * scaling) + (padding * 2);
         const pal_h = header_height;
         const pal_rect = UiRect{ .x = padding, .y = padding, .w = pal_w, .h = pal_h };
 
-        const ship_w = (tile_size_base * 8 * scaling) + (padding * 2);
-        const ship_h = (tile_size_base * 8 * scaling) + (padding * 2);
+        const ship_w = (tile_size_base * tilemapWidth * scaling) + (padding * 2);
+        const ship_h = (tile_size_base * tilemapWidth * scaling) + (padding * 2);
         const ship_y = pal_rect.y + pal_rect.h + padding;
         const ship_rect = UiRect{ .x = padding, .y = ship_y, .w = ship_w, .h = ship_h };
 
