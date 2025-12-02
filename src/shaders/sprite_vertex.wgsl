@@ -38,8 +38,7 @@ fn main(
 
   let rotated_pos = rotation_matrix * (quad_pos - vec2<f32>(0.5, 0.5));
   
-  // let sprite_size = input.size.xy;
-  let sprite_size = vec2<f32>(8.0);
+  let sprite_size = input.size.xy;
   let sprite_position = input.position.xy;
   
   var final_sprite_size: vec2<f32>;

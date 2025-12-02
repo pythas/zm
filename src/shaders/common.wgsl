@@ -25,8 +25,8 @@ struct Tile {
 
 const CHUNK_W = 64;
 const CHUNK_H = 64;
-const MAX_TILE_WIDTH = 8;
-const MAX_TILE_HEIGHT = 8;
+const MAX_TILE_WIDTH = 16;
+const MAX_TILE_HEIGHT = 16;
 
 @group(0) @binding(0)
 var<uniform> globals: GlobalUniforms;
@@ -35,6 +35,7 @@ fn unpack_tile(id: u32) -> Tile {
   let sprite: u32 = id & 0x3FFu;
   let category: u32 = (id >> 10u) & 0x0Fu;
   let sheet: u32 = (id >> 14u) & 0x0Fu;
+
   return Tile(category, sheet, sprite);
 }
 

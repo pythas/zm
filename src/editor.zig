@@ -230,10 +230,10 @@ pub const Editor = struct {
         var ui = &renderer.ui;
         ui.beginFrame();
 
-        // Background
+        // background
         try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h });
 
-        // Palette
+        // palette
         try ui.panel(layout.palette_rect);
 
         var btn_x = layout.palette_rect.x + 10;
@@ -266,12 +266,12 @@ pub const Editor = struct {
             self.current_palette = .RCS;
         }
 
-        // Ship
+        // ship
         try ui.panel(layout.ship_panel_rect);
 
         ui.endFrame(pass, &renderer.global);
 
-        // Grid sprites
+        // grid sprites
         const instances = [_]SpriteRenderData{
             .{
                 .wh = .{ tilemapWidth, tilemapHeight, 0, 0 },

@@ -21,7 +21,7 @@ fn grid(tile_uv: vec2<f32>) -> vec4<f32> {
       min(tile_uv.x, 1.0 - tile_uv.x),
       min(tile_uv.y, 1.0 - tile_uv.y),
   );
-  let grid_thickness = 0.03;
+  let grid_thickness = 0.06;
   let grid_mask = step(edge, grid_thickness);
   let grid_color = vec4<f32>(0.3, 0.3, 0.3, 1.0);
   let base = vec4<f32>(0.0, 0.0, 0.0, 1.0);
@@ -36,13 +36,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 
   let tile = fetch_tile(vec2<f32>(f32(tile_x), f32(tile_y)));
 
-  if (tile.category == 0u) {
-      return vec4<f32>(0.0);
-  }
-
   let tile_uv = fract(input.uv * vec2<f32>(f32(MAX_TILE_WIDTH), f32(MAX_TILE_HEIGHT)));
   let uv = get_sprite_uv(tile, tile_uv);
   var color = textureSampleLevel(atlas_texture, atlas_sampler, uv, tile.sheet, 0.0);
+
+  if (tile.category == 0u) {
+      color = vec4<f32>(0.0);
+  }
 
   if globals.mode == 1u {
     let grid_color = grid(tile_uv);
@@ -59,7 +59,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
           min(tile_uv.x, 1.0 - tile_uv.x),
           min(tile_uv.y, 1.0 - tile_uv.y),
       );
-      let highlight_thickness = 0.03;
+      let highlight_thickness = 0.06;
       let highlight_mask = step(edge, highlight_thickness);
 
       color = mix(color, highlight, highlight_mask);

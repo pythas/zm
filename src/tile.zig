@@ -4,8 +4,8 @@ const Map = @import("map.zig").Map;
 const Chunk = @import("chunk.zig").Chunk;
 const Vec2 = @import("vec2.zig").Vec2;
 
-pub const tilemapWidth = 8;
-pub const tilemapHeight = 8;
+pub const tilemapWidth = 16;
+pub const tilemapHeight = 16;
 
 pub const TileReference = struct {
     const Self = @This();
