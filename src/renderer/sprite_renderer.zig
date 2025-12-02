@@ -94,8 +94,8 @@ pub const SpriteRenderer = struct {
     pub fn buildPlayerInstance(world: *const World) SpriteRenderData {
         return .{
             .wh = .{ tilemapWidth, tilemapHeight, 0, 0 },
-            .position = .{ world.player.position.x, world.player.position.y, 0, 0 },
-            .rotation = .{ world.player.rotation, 0, 0, 0 },
+            .position = .{ world.player.body.position.x, world.player.body.position.y, 0, 0 },
+            .rotation = .{ world.player.body.rotation, 0, 0, 0 },
             .scale = 1.0,
         };
     }

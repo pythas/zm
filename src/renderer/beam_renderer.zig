@@ -89,7 +89,7 @@ pub const BeamRenderer = struct {
 
             const p = action.getProgress();
 
-            const start = player.position;
+            const start = player.body.position;
 
             const tile_world_pos = action.tile_ref.worldCenter();
             const tile_size = @as(f32, @floatFromInt(Tile.tileSize));

@@ -6,6 +6,7 @@ const TileReference = @import("tile.zig").TileReference;
 const Direction = @import("tile.zig").Direction;
 const Offset = @import("tile.zig").Offset;
 const Map = @import("map.zig").Map;
+const RigidBody = @import("rigid_body.zig").RigidBody;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
@@ -40,37 +41,30 @@ pub const TileAction = struct {
     }
 };
 
+// TODO: Move me
+pub const ShipStats = struct {
+    force_forward: f32 = 0.0,
+    force_backward: f32 = 0.0,
+    force_side_left: f32 = 0.0,
+    force_side_right: f32 = 0.0,
+
+    engine_imbalance_torque: f32 = 0.0,
+    side_imbalance_torque: f32 = 0.0,
+
+    rcs_torque: f32 = 0.0,
+};
+
 pub const Player = struct {
     const Self = @This();
     pub const tileActionMineDuration = 10.0;
     const enginePower: f32 = 500.0;
     const rcsPower: f32 = 50.0;
 
-    position: Vec2,
-    velocity: Vec2,
-
-    rotation: f32,
-    angular_velocity: f32,
-
-    velocity_damping: f32,
-    angular_damping: f32,
+    body: RigidBody,
+    stats: ShipStats,
 
     tiles: [tilemapWidth][tilemapHeight]Tile,
-
     tile_actions: std.ArrayList(TileAction),
-
-    mass: f32 = 1.0,
-    moment_of_inertia: f32 = 1.0,
-    center_of_mass: Vec2 = Vec2.init(0, 0),
-
-    force_forward: f32 = 0.0,
-    force_backward: f32 = 0.0,
-
-    force_side_left: f32 = 0.0,
-    force_side_right: f32 = 0.0,
-    engine_imbalance_torque: f32 = 0.0,
-    side_imbalance_torque: f32 = 0.0,
-    rcs_torque: f32 = 0.0,
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -94,20 +88,9 @@ pub const Player = struct {
             }
         }
 
-        // var t1 = try Tile.init(allocator, .Engine, .Metal, .Ships, 0);
-        // t1.rotation = .South;
-        // tiles[4][7] = t1;
-        // var t2 = try Tile.init(allocator, .Engine, .Metal, .Ships, 0);
-        // t2.rotation = .North;
-        // tiles[2][0] = t2;
-
         var self = Self{
-            .position = position,
-            .velocity = Vec2.init(0, 0),
-            .rotation = rotation,
-            .angular_velocity = 0,
-            .velocity_damping = 0.1,
-            .angular_damping = 0.9,
+            .body = RigidBody.init(position, rotation),
+            .stats = ShipStats{},
             .tiles = tiles,
             .tile_actions = std.ArrayList(TileAction).init(allocator),
         };
@@ -118,15 +101,7 @@ pub const Player = struct {
     }
 
     pub fn update(self: *Self, dt: f32, map: *Map) !void {
-        // Movement
-        self.position = self.position.add(self.velocity.mulScalar(dt));
-        self.rotation = self.rotation + self.angular_velocity * dt;
-
-        const v_factor = @max(0.0, 1.0 - self.velocity_damping * dt);
-        const a_factor = @max(0.0, 1.0 - self.angular_damping * dt);
-
-        self.velocity = self.velocity.mulScalar(v_factor);
-        self.angular_velocity *= a_factor;
+        self.body.update(dt);
 
         // Actions
         var i: usize = self.tile_actions.items.len;
@@ -150,51 +125,45 @@ pub const Player = struct {
     }
 
     // Movement
-    pub fn applyThrust(self: *Self, dt: f32, input_y: f32) void {
-        var force_magnitude: f32 = 0.0;
-        var induced_torque: f32 = 0.0;
+    pub fn applyInputThrust(self: *Self, dt: f32, input: f32) void {
+        var force: f32 = 0.0;
+        var torque_penalty: f32 = 0.0;
 
-        if (input_y > 0) {
-            force_magnitude = self.force_forward;
-            induced_torque = self.engine_imbalance_torque;
-        } else if (input_y < 0) {
-            force_magnitude = -self.force_backward;
+        if (input > 0) {
+            force = -self.stats.force_forward;
+            torque_penalty = self.stats.engine_imbalance_torque;
+        } else if (input < 0) {
+            force = self.stats.force_backward;
         }
 
-        const accel_magnitude = force_magnitude / self.mass;
-        const dir = Vec2.init(@sin(self.rotation), -@cos(self.rotation));
-        self.velocity = self.velocity.add(dir.mulScalar(accel_magnitude * dt));
+        self.body.addRelativeForce(dt, Vec2.init(0, force));
 
-        const angular_accel = induced_torque / self.moment_of_inertia;
-        self.angular_velocity += angular_accel * dt;
+        if (torque_penalty != 0) {
+            self.body.addTorque(dt, torque_penalty);
+        }
     }
 
-    pub fn applyTorque(self: *Self, dt: f32, input_x: f32) void {
-        const torque = -input_x * self.rcs_torque;
+    pub fn applyTorque(self: *Self, dt: f32, input: f32) void {
+        const torque = -input * self.stats.rcs_torque;
 
-        const angular_accel = torque / self.moment_of_inertia;
-        self.angular_velocity += angular_accel * dt;
+        self.body.addTorque(dt, torque);
     }
 
-    pub fn applySideThrust(self: *Self, dt: f32, input_strafe: f32) void {
-        var force_magnitude: f32 = 0.0;
-        var induced_torque: f32 = 0.0;
+    pub fn applySideThrust(self: *Self, dt: f32, input: f32) void {
+        var force: f32 = 0.0;
+        var torque_penalty: f32 = 0.0;
 
-        if (input_strafe < 0) {
-            force_magnitude = -self.force_side_left;
-            induced_torque = self.side_imbalance_torque;
-        } else if (input_strafe > 0) {
-            force_magnitude = self.force_side_right;
+        if (input < 0) {
+            force = -self.stats.force_side_left;
+            torque_penalty = self.stats.side_imbalance_torque;
+        } else if (input > 0) {
+            force = self.stats.force_side_right;
         }
 
-        const dir = Vec2.init(@cos(self.rotation), @sin(self.rotation));
-        const accel_magnitude = force_magnitude / self.mass;
+        self.body.addRelativeForce(dt, Vec2.init(force, 0));
 
-        self.velocity = self.velocity.add(dir.mulScalar(accel_magnitude * dt));
-
-        if (induced_torque != 0.0) {
-            const angular_accel = induced_torque / self.moment_of_inertia;
-            self.angular_velocity += angular_accel * dt;
+        if (torque_penalty != 0) {
+            self.body.addTorque(dt, torque_penalty);
         }
     }
 
@@ -219,19 +188,19 @@ pub const Player = struct {
             }
         }
 
-        self.mass = @max(1.0, total_mass);
-        self.center_of_mass = weighted_pos.divScalar(self.mass);
+        self.body.mass = @max(1.0, total_mass);
+        self.body.center_of_mass = weighted_pos.divScalar(self.body.mass);
 
         var inertia: f32 = 0.0;
 
-        self.force_forward = 0.0;
-        self.force_backward = 0.0;
-        self.force_side_left = 0.0;
-        self.force_side_right = 0.0;
+        self.stats.force_forward = 0.0;
+        self.stats.force_backward = 0.0;
+        self.stats.force_side_left = 0.0;
+        self.stats.force_side_right = 0.0;
 
-        self.rcs_torque = 0.0;
-        self.engine_imbalance_torque = 0.0;
-        self.side_imbalance_torque = 0.0;
+        self.stats.rcs_torque = 0.0;
+        self.stats.engine_imbalance_torque = 0.0;
+        self.stats.side_imbalance_torque = 0.0;
 
         for (0..tilemapWidth) |x| {
             for (0..tilemapHeight) |y| {
@@ -242,7 +211,7 @@ pub const Player = struct {
                 }
 
                 const pos = Vec2.init(@floatFromInt(x), @floatFromInt(y));
-                const delta_com = pos.sub(self.center_of_mass);
+                const delta_com = pos.sub(self.body.center_of_mass);
 
                 const mass: f32 = switch (tile.category) {
                     .Engine => 20.0,
@@ -262,29 +231,30 @@ pub const Player = struct {
 
                 if (tile.category == .Engine) {
                     if (dir.y < -0.1) {
-                        self.force_forward += enginePower;
-                        self.engine_imbalance_torque += torque_arm * enginePower;
+                        self.stats.force_forward += enginePower;
+                        self.stats.engine_imbalance_torque += torque_arm * enginePower;
                     } else if (dir.y > 0.1) {
-                        self.force_backward += enginePower;
+                        self.stats.force_backward += enginePower;
                     }
 
                     if (dir.x < -0.1) {
-                        self.force_side_left += enginePower;
-                        self.side_imbalance_torque += torque_arm * enginePower;
+                        self.stats.force_side_left += enginePower;
+                        self.stats.side_imbalance_torque += torque_arm * enginePower;
                     } else if (dir.x > 0.1) {
-                        self.force_side_right += enginePower;
+                        self.stats.force_side_right += enginePower;
                     }
                 } else if (tile.category == .RCS) {
-                    self.rcs_torque += @abs(torque_arm * rcsPower);
+                    self.stats.rcs_torque += @abs(torque_arm * rcsPower);
 
-                    if (dir.x < -0.1) self.force_side_left += rcsPower;
-                    if (dir.x > 0.1) self.force_side_right += rcsPower;
-                    if (dir.y < -0.1) self.force_forward += rcsPower;
-                    if (dir.y > 0.1) self.force_backward += rcsPower;
+                    if (dir.x < -0.1) self.stats.force_side_left += rcsPower;
+                    if (dir.x > 0.1) self.stats.force_side_right += rcsPower;
+                    if (dir.y < -0.1) self.stats.force_forward += rcsPower;
+                    if (dir.y > 0.1) self.stats.force_backward += rcsPower;
                 }
             }
         }
-        self.moment_of_inertia = @max(1.0, inertia);
+
+        self.body.moment_of_inertia = @max(1.0, inertia);
     }
 
     // Actions

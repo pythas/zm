@@ -72,11 +72,11 @@ pub const World = struct {
         const torque = 6.0;
 
         if (keyboard_state.isDown(.w)) {
-            self.player.applyThrust(dt, thrust);
+            self.player.applyInputThrust(dt, thrust);
         }
 
         if (keyboard_state.isDown(.s)) {
-            self.player.applyThrust(dt, -thrust);
+            self.player.applyInputThrust(dt, -thrust);
         }
 
         if (keyboard_state.isDown(.a)) {
@@ -110,7 +110,7 @@ pub const World = struct {
         }
 
         // sync camera with player
-        self.camera.position = self.player.position;
+        self.camera.position = self.player.body.position;
 
         try self.player.update(dt, &self.map);
 
