@@ -82,16 +82,7 @@ pub const WorldRenderer = struct {
             pass.setBindGroup(0, bind_group, null);
         }
 
-        // TODO: for each visible chunk
-        for (world.map.chunks.items) |chunk| {
-            const render_data = chunk.render_data orelse continue;
-            const bind_group = self.gctx.lookupResource(render_data.bind_group).?;
-
-            self.writeChunkBuffers(chunk);
-
-            pass.setBindGroup(1, bind_group, null);
-            pass.draw(6, 1, 0, 0);
-        }
+        _ = world;
     }
 };
 

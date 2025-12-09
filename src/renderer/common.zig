@@ -8,7 +8,7 @@ const Tile = @import("../tile.zig").Tile;
 const Texture = @import("../texture.zig").Texture;
 const GameMode = @import("../game.zig").GameMode;
 
-const tileSize = @import("../tile.zig").tileSize;
+// Removed tileSize import - now using direct pixel coordinates
 
 pub const GlobalUniforms = extern struct {
     dt: f32,
@@ -18,7 +18,7 @@ pub const GlobalUniforms = extern struct {
     screen_wh: [4]f32,
     camera_xy: [4]f32,
     camera_zoom: f32,
-    tile_size: f32,
+    _pad_removed_tile_size: f32,
     _pad1: f32,
     _pad2: f32,
     hover_xy: [4]f32,
@@ -86,7 +86,7 @@ pub const GlobalRenderState = struct {
             .screen_wh = .{ @floatFromInt(wh[0]), @floatFromInt(wh[1]), 0, 0 },
             .camera_xy = .{ world.camera.position.x, world.camera.position.y, 0, 0 },
             .camera_zoom = world.camera.zoom,
-            .tile_size = tileSize,
+            ._pad_removed_tile_size = 1.0,
             ._pad1 = 0.0,
             ._pad2 = 0.0,
             .hover_xy = .{

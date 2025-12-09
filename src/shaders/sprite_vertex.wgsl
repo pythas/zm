@@ -43,11 +43,7 @@ fn main(
   let sprite_position = input.position.xy;
   
   var final_sprite_size: vec2<f32>;
-  if globals.mode == 0u {
-    final_sprite_size = sprite_size;
-  } else {
-    final_sprite_size = sprite_size * globals.tile_size;
-  }
+  final_sprite_size = sprite_size;
 
   final_sprite_size *= input.scale;
 

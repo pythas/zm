@@ -22,8 +22,8 @@ pub const ShipCapabilities = struct {
 pub const TileObject = struct {
     const Self = @This();
 
-    const enginePower: f32 = 500.0;
-    const rcsPower: f32 = 100.0;
+    const enginePower: f32 = 5000.0;
+    const rcsPower: f32 = 1000.0;
 
     allocator: std.mem.Allocator,
 
@@ -31,6 +31,7 @@ pub const TileObject = struct {
 
     width: usize,
     height: usize,
+    radius: f32,
     tiles: []Tile,
 
     ship_stats: ?ShipCapabilities = null,
@@ -53,6 +54,7 @@ pub const TileObject = struct {
             .body = RigidBody.init(position, rotation),
             .width = width,
             .height = height,
+            .radius = 0.0,
             .tiles = tiles,
         };
     }
@@ -150,8 +152,6 @@ pub const TileObject = struct {
     }
 
     pub fn recalculatePhysics(self: *Self) void {
-        var stats = &(self.ship_stats orelse return);
-
         var total_mass: f32 = 0.0;
         var weighted_pos = Vec2.init(0, 0);
 
@@ -170,13 +170,32 @@ pub const TileObject = struct {
                 };
                 total_mass += mass;
 
-                const pos = Vec2.init(@floatFromInt(x), @floatFromInt(y));
+                const pos = Vec2.init(@floatFromInt(x * 8 + 4), @floatFromInt(y * 8 + 4));
                 weighted_pos = weighted_pos.add(pos.mulScalar(mass));
             }
         }
 
         self.body.mass = @max(1.0, total_mass);
         self.body.center_of_mass = weighted_pos.divScalar(self.body.mass);
+
+        // calc radius
+        var max_radius: f32 = 0.0;
+        for (0..self.width) |x| {
+            for (0..self.height) |y| {
+                const tile = self.getTile(x, y) orelse continue;
+                if (tile.category == .Empty) {
+                    continue;
+                }
+
+                const pos = Vec2.init(@floatFromInt(x * 8 + 4), @floatFromInt(y * 8 + 4));
+                const distance = pos.sub(self.body.center_of_mass).len() + 6.0;
+                max_radius = @max(max_radius, distance);
+            }
+        }
+        self.radius = max_radius;
+
+        // ship calcs
+        var stats = &(self.ship_stats orelse return);
 
         var inertia: f32 = 0.0;
 
@@ -197,7 +216,7 @@ pub const TileObject = struct {
                     continue;
                 }
 
-                const pos = Vec2.init(@floatFromInt(x), @floatFromInt(y));
+                const pos = Vec2.init(@floatFromInt(x * 8 + 4), @floatFromInt(y * 8 + 4));
                 const delta_com = pos.sub(self.body.center_of_mass);
 
                 const mass: f32 = switch (tile.category) {

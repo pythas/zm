@@ -4,7 +4,6 @@ const Vec2 = @import("vec2.zig").Vec2;
 
 pub const tilemapWidth = 16;
 pub const tilemapHeight = 16;
-pub const tileSize = 8;
 
 pub const Category = enum(u8) {
     Empty,

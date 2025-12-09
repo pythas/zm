@@ -27,6 +27,33 @@ pub const RigidBody = struct {
         };
     }
 
+    pub fn localToWorld(self: Self, local_point: Vec2) Vec2 {
+        const cos = @cos(self.rotation);
+        const sin = @sin(self.rotation);
+
+        // rotate
+        const rot_x = local_point.x * cos - local_point.y * sin;
+        const rot_y = local_point.x * sin + local_point.y * cos;
+
+        // translate
+        return self.position.add(Vec2.init(rot_x, rot_y));
+    }
+
+    pub fn worldToLocal(self: Self, world_point: Vec2) Vec2 {
+        // translate
+        const dx = world_point.x - self.position.x;
+        const dy = world_point.y - self.position.y;
+
+        // rotate
+        const cos = @cos(-self.rotation);
+        const sin = @sin(-self.rotation);
+
+        return Vec2{
+            .x = dx * cos - dy * sin,
+            .y = dx * sin + dy * cos,
+        };
+    }
+
     pub fn update(self: *Self, dt: f32) void {
         // integrate position
         self.position = self.position.add(self.velocity.mulScalar(dt));

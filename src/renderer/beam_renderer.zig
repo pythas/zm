@@ -11,8 +11,6 @@ const Vec2 = @import("../vec2.zig").Vec2;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
 
-const tileSize = @import("../tile.zig").tileSize;
-
 pub const BeamRenderer = struct {
     const Self = @This();
     const maxInstances = 128;

@@ -16,7 +16,7 @@ const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
 
 const EditorLayout = struct {
-    const scaling: f32 = 4.0;
+    const scaling: f32 = 3.0;
     const padding: f32 = 10.0;
     const tile_size_base: f32 = 8.0;
     const header_height: f32 = 50.0;
@@ -273,7 +273,7 @@ pub const Editor = struct {
 
         const instances = [_]SpriteRenderData{
             .{
-                .wh = .{ @floatFromInt(obj.width), @floatFromInt(obj.height), 0, 0 },
+                .wh = .{ @floatFromInt(obj.width * 8), @floatFromInt(obj.height * 8), 0, 0 },
                 .position = .{ layout.grid_rect.x + layout.grid_rect.w / 2, layout.grid_rect.y + layout.grid_rect.h / 2, 0, 0 },
                 .rotation = .{ 0, 0, 0, 0 },
                 .scale = layout.scale,
