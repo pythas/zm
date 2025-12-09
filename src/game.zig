@@ -3,16 +3,12 @@ const zgpu = @import("zgpu");
 const zglfw = @import("zglfw");
 
 const World = @import("world.zig").World;
-const Map = @import("map.zig").Map;
 const KeyboardState = @import("input.zig").KeyboardState;
 const Renderer = @import("renderer/renderer.zig").Renderer;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
 const Editor = @import("editor.zig").Editor;
-
-const tilemapWidth = @import("tile.zig").tilemapWidth;
-const tilemapHeight = @import("tile.zig").tilemapHeight;
 
 const scrollCallback = @import("world.zig").scrollCallback;
 
@@ -36,13 +32,12 @@ pub const Game = struct {
         allocator: std.mem.Allocator,
         gctx: *zgpu.GraphicsContext,
         window: *zglfw.Window,
-        map: Map,
     ) !Self {
-        const world = try World.init(allocator, map);
+        const world = try World.init(allocator);
         const renderer = try Renderer.init(allocator, gctx, window);
         const editor = Editor.init(allocator, window);
 
-        var self = Self{
+        return .{
             .allocator = allocator,
             .window = window,
             .renderer = renderer,
@@ -50,12 +45,6 @@ pub const Game = struct {
             .world = world,
             .keyboard_state = KeyboardState.init(window),
         };
-
-        for (self.world.map.chunks.items) |*chunk| {
-            try self.renderer.world.createChunkRenderData(chunk);
-        }
-
-        return self;
     }
 
     pub fn deinit(self: *Self) void {
@@ -74,7 +63,7 @@ pub const Game = struct {
             if (self.mode == .InWorld) {
                 self.mode = .ShipEditor;
             } else {
-                self.world.player.recalculateStats();
+                self.world.objects.items[0].recalculatePhysics();
                 self.mode = .InWorld;
             }
         }
@@ -84,15 +73,6 @@ pub const Game = struct {
                 self.renderer.global.write(self.window, &self.world, dt, t, self.mode, 0.0, 0.0);
 
                 try self.world.update(dt, &self.keyboard_state, self.window);
-
-                if (self.world.map.is_dirty) {
-                    // TODO: only for dirty chunks
-                    for (self.world.map.chunks.items) |*chunk| {
-                        try self.renderer.world.createChunkRenderData(chunk);
-                    }
-
-                    self.world.map.is_dirty = false;
-                }
             },
             .ShipEditor => {
                 self.editor.update(&self.renderer, &self.world, dt, t);
@@ -109,15 +89,16 @@ pub const Game = struct {
                 const global = &self.renderer.global;
                 const world = &self.world;
 
-                try self.renderer.world.writeTextures(world);
-                self.renderer.world.draw(pass, global, world);
+                var instances = std.ArrayList(SpriteRenderData).init(self.allocator);
+                defer instances.deinit();
 
-                const instances = [_]SpriteRenderData{
-                    SpriteRenderer.buildPlayerInstance(world),
-                };
-                try self.renderer.sprite.writeInstances(&instances);
-                try self.renderer.sprite.writeTilemap(world.player.tiles);
-                self.renderer.sprite.draw(pass, global);
+                for (self.world.objects.items) |*obj| {
+                    try self.renderer.sprite.prepareObject(obj);
+                    try instances.append(SpriteRenderer.buildInstance(obj));
+                }
+
+                try self.renderer.sprite.writeInstances(instances.items);
+                self.renderer.sprite.draw(pass, global, self.world.objects.items);
 
                 const beam_instance_count = try self.renderer.beam.writeBuffers(world);
                 self.renderer.beam.draw(pass, global, beam_instance_count);

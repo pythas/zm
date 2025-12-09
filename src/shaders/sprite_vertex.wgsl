@@ -13,6 +13,7 @@ struct VertexOutput {
 @vertex
 fn main(
   @builtin(vertex_index) vertex_index: u32,
+  @builtin(instance_index) instance_index: u32,
   input: VertexInput,
 ) -> VertexOutput {
   var output: VertexOutput;

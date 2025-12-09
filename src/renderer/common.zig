@@ -4,11 +4,8 @@ const wgpu = zgpu.wgpu;
 const zglfw = @import("zglfw");
 
 const World = @import("../world.zig").World;
-const Map = @import("../map.zig").Map;
 const Tile = @import("../tile.zig").Tile;
-const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
-const Player = @import("../player.zig").Player;
 const GameMode = @import("../game.zig").GameMode;
 
 const tileSize = @import("../tile.zig").tileSize;

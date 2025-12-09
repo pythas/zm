@@ -6,11 +6,8 @@ const shader_utils = @import("../shader_utils.zig");
 
 const MouseState = @import("../input.zig").MouseState;
 const World = @import("../world.zig").World;
-const Map = @import("../map.zig").Map;
 const Tile = @import("../tile.zig").Tile;
-const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
-const Player = @import("../player.zig").Player;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
 

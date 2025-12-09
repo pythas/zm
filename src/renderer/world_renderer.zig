@@ -5,15 +5,10 @@ const zglfw = @import("zglfw");
 const shader_utils = @import("../shader_utils.zig");
 
 const World = @import("../world.zig").World;
-const Map = @import("../map.zig").Map;
 const Tile = @import("../tile.zig").Tile;
-const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
-const Player = @import("../player.zig").Player;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
-
-const chunkSize = @import("../chunk.zig").chunkSize;
 
 pub const ChunkUniforms = extern struct {
     chunk_xy: [4]f32,
@@ -71,72 +66,6 @@ pub const WorldRenderer = struct {
     pub fn writeTextures(self: Self, world: *const World) !void {
         _ = self;
         _ = world;
-    }
-
-    pub fn writeChunkBuffers(self: Self, chunk: Chunk) void {
-        const render_data = chunk.render_data orelse return;
-
-        var uniform_data = ChunkUniforms{
-            .chunk_xy = .{ @floatFromInt(chunk.x), @floatFromInt(chunk.y), 0, 0 },
-            .chunk_wh = .{ @floatFromInt(chunkSize), @floatFromInt(chunkSize), 0, 0 },
-        };
-
-        self.gctx.queue.writeBuffer(
-            self.gctx.lookupResource(render_data.uniform_buffer).?,
-            0,
-            u8,
-            std.mem.asBytes(&uniform_data),
-        );
-    }
-
-    pub fn createChunkRenderData(self: Self, chunk: *Chunk) !void {
-        const tilemap = self.gctx.createTexture(.{
-            .usage = .{ .texture_binding = true, .copy_dst = true },
-            .size = .{
-                .width = chunkSize,
-                .height = chunkSize,
-                .depth_or_array_layers = 1,
-            },
-            .format = wgpu.TextureFormat.r32_uint,
-            .mip_level_count = 1,
-        });
-        const tilemap_view = self.gctx.createTextureView(tilemap, .{});
-
-        const uniform_buffer = self.gctx.createBuffer(.{
-            .usage = .{ .copy_dst = true, .uniform = true },
-            .size = @sizeOf(ChunkUniforms),
-        });
-
-        const bind_group = self.gctx.createBindGroup(self.chunk_bind_group_layout, &.{
-            .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = @sizeOf(ChunkUniforms) },
-            .{ .binding = 1, .texture_view_handle = tilemap_view },
-        });
-
-        const chunk_data = try self.allocator.alloc(u32, chunkSize * chunkSize);
-        defer self.allocator.free(chunk_data);
-
-        for (0..chunkSize) |y| {
-            for (0..chunkSize) |x| {
-                const tile = chunk.tiles[x][y];
-                const id = packTileForGpu(tile);
-                chunk_data[(y * chunkSize) + x] = id;
-            }
-        }
-
-        self.gctx.queue.writeTexture(
-            .{ .texture = self.gctx.lookupResource(tilemap).? },
-            .{ .bytes_per_row = chunkSize * @sizeOf(u32), .rows_per_image = chunkSize },
-            .{ .width = chunkSize, .height = chunkSize },
-            u32,
-            chunk_data,
-        );
-
-        chunk.render_data = .{
-            .tilemap = tilemap,
-            .tilemap_view = tilemap_view,
-            .uniform_buffer = uniform_buffer,
-            .bind_group = bind_group,
-        };
     }
 
     pub fn draw(

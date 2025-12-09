@@ -4,7 +4,6 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 
 const Game = @import("game.zig").Game;
-const Map = @import("map.zig").Map;
 
 pub fn main() !void {
     try initWindow();
@@ -57,14 +56,10 @@ fn runGameLoop(
 ) !void {
     var last_time: f64 = zglfw.getTime();
 
-    var map = try Map.init(allocator);
-    defer map.deinit();
-
     var game = try Game.init(
         allocator,
         gctx,
         window,
-        map,
     );
     defer game.deinit();
 

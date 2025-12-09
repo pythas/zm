@@ -5,15 +5,19 @@ const zglfw = @import("zglfw");
 const shader_utils = @import("../shader_utils.zig");
 
 const World = @import("../world.zig").World;
-const Map = @import("../map.zig").Map;
-const tilemapWidth = @import("../tile.zig").tilemapWidth;
-const tilemapHeight = @import("../tile.zig").tilemapHeight;
 const Tile = @import("../tile.zig").Tile;
-const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
-const Player = @import("../player.zig").Player;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
+const TileObject = @import("../tile_object.zig").TileObject;
+
+pub const GpuTileGrid = struct {
+    texture: zgpu.TextureHandle,
+    view: zgpu.TextureViewHandle,
+    bind_group: zgpu.BindGroupHandle,
+    width: u32,
+    height: u32,
+};
 
 pub const SpriteRenderData = struct {
     wh: [4]f32,
@@ -28,11 +32,10 @@ pub const SpriteRenderer = struct {
 
     allocator: std.mem.Allocator,
     gctx: *zgpu.GraphicsContext,
-    pipeline_layout: zgpu.PipelineLayoutHandle,
+
     pipeline: zgpu.RenderPipelineHandle,
-    buffer: zgpu.BufferHandle,
-    tilemap: zgpu.TextureHandle,
-    bind_group: zgpu.BindGroupHandle,
+    texture_bind_group_layout: zgpu.BindGroupLayoutHandle,
+    instance_buffer: zgpu.BufferHandle,
 
     instance_count: u32 = 0,
 
@@ -60,30 +63,12 @@ pub const SpriteRenderer = struct {
             pipeline_layout,
         );
 
-        const tilemap = gctx.createTexture(.{
-            .usage = .{ .texture_binding = true, .copy_dst = true },
-            .size = .{
-                .width = tilemapWidth,
-                .height = tilemapHeight,
-                .depth_or_array_layers = 1,
-            },
-            .format = wgpu.TextureFormat.r32_uint,
-            .mip_level_count = 1,
-        });
-        const tilemap_view = gctx.createTextureView(tilemap, .{});
-
-        const bind_group = gctx.createBindGroup(layout, &.{
-            .{ .binding = 0, .texture_view_handle = tilemap_view },
-        });
-
         return .{
             .allocator = allocator,
             .gctx = gctx,
-            .pipeline_layout = pipeline_layout,
             .pipeline = pipeline,
-            .buffer = instance_buffer,
-            .tilemap = tilemap,
-            .bind_group = bind_group,
+            .texture_bind_group_layout = layout,
+            .instance_buffer = instance_buffer,
         };
     }
 
@@ -91,51 +76,70 @@ pub const SpriteRenderer = struct {
         _ = self;
     }
 
-    pub fn buildPlayerInstance(world: *const World) SpriteRenderData {
-        return .{
-            .wh = .{ tilemapWidth, tilemapHeight, 0, 0 },
-            .position = .{ world.player.body.position.x, world.player.body.position.y, 0, 0 },
-            .rotation = .{ world.player.body.rotation, 0, 0, 0 },
-            .scale = 1.0,
-        };
+    pub fn prepareObject(self: *Self, object: *TileObject) !void {
+        if (object.gpu_grid == null) {
+            const width: u32 = @intCast(object.width);
+            const height: u32 = @intCast(object.height);
+
+            const texture = self.gctx.createTexture(.{
+                .usage = .{ .texture_binding = true, .copy_dst = true },
+                .size = .{
+                    .width = width,
+                    .height = height,
+                    .depth_or_array_layers = 1,
+                },
+                .format = wgpu.TextureFormat.r32_uint,
+                .mip_level_count = 1,
+            });
+            const view = self.gctx.createTextureView(texture, .{});
+
+            const bg = self.gctx.createBindGroup(self.texture_bind_group_layout, &.{
+                .{ .binding = 0, .texture_view_handle = view },
+            });
+
+            object.gpu_grid = GpuTileGrid{
+                .texture = texture,
+                .view = view,
+                .bind_group = bg,
+                .width = width,
+                .height = height,
+            };
+
+            object.dirty = true;
+        }
+
+        if (object.dirty) {
+            const grid = object.gpu_grid.?;
+            const data = try self.allocator.alloc(u32, object.width * object.height);
+            defer self.allocator.free(data);
+
+            for (0..object.width * object.height) |i| {
+                data[i] = packTileForGpu(object.tiles[i]);
+            }
+
+            self.gctx.queue.writeTexture(
+                .{ .texture = self.gctx.lookupResource(grid.texture).? },
+                .{ .bytes_per_row = grid.width * @sizeOf(u32), .rows_per_image = grid.height },
+                .{ .width = grid.width, .height = grid.height },
+                u32,
+                data,
+            );
+
+            object.dirty = false;
+        }
     }
 
-    pub fn writeInstances(
-        self: *Self,
-        instances: []const SpriteRenderData,
-    ) !void {
+    pub fn writeInstances(self: *Self, instances: []const SpriteRenderData) !void {
         if (instances.len > maxInstances) {
             return error.TooManyInstances;
         }
 
         self.instance_count = @intCast(instances.len);
-
         self.gctx.queue.writeBuffer(
-            self.gctx.lookupResource(self.buffer).?,
+            self.gctx.lookupResource(self.instance_buffer).?,
             0,
             u8,
             std.mem.sliceAsBytes(instances),
-        );
-    }
-
-    pub fn writeTilemap(self: *Self, grid: [tilemapWidth][tilemapHeight]Tile) !void {
-        const data = try self.allocator.alloc(u32, tilemapWidth * tilemapHeight);
-        defer self.allocator.free(data);
-
-        for (0..tilemapWidth) |x| {
-            for (0..tilemapHeight) |y| {
-                const tile = grid[x][y];
-                const id = packTileForGpu(tile);
-                data[y * tilemapWidth + x] = id;
-            }
-        }
-
-        self.gctx.queue.writeTexture(
-            .{ .texture = self.gctx.lookupResource(self.tilemap).? },
-            .{ .bytes_per_row = tilemapWidth * @sizeOf(u32), .rows_per_image = tilemapHeight },
-            .{ .width = tilemapWidth, .height = tilemapHeight },
-            u32,
-            data,
         );
     }
 
@@ -143,17 +147,34 @@ pub const SpriteRenderer = struct {
         self: Self,
         pass: zgpu.wgpu.RenderPassEncoder,
         global: *const GlobalRenderState,
+        objects: []TileObject,
     ) void {
         const pipeline = self.gctx.lookupResource(self.pipeline).?;
         const global_bind_group = self.gctx.lookupResource(global.bind_group).?;
-        const bind_group = self.gctx.lookupResource(self.bind_group).?;
-        const buffer = self.gctx.lookupResource(self.buffer).?;
+        const buffer = self.gctx.lookupResource(self.instance_buffer).?;
 
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, global_bind_group, null);
-        pass.setBindGroup(1, bind_group, null);
+
         pass.setVertexBuffer(0, buffer, 0, @sizeOf(SpriteRenderData) * self.instance_count);
-        pass.draw(6, self.instance_count, 0, 0);
+
+        for (objects, 0..) |obj, i| {
+            if (obj.gpu_grid) |grid| {
+                const bg = self.gctx.lookupResource(grid.bind_group).?;
+
+                pass.setBindGroup(1, bg, null);
+                pass.draw(6, 1, 0, @intCast(i));
+            }
+        }
+    }
+
+    pub fn buildInstance(object: *const TileObject) SpriteRenderData {
+        return .{
+            .wh = .{ @floatFromInt(object.width), @floatFromInt(object.height), 0, 0 },
+            .position = .{ object.body.position.x, object.body.position.y, 0, 0 },
+            .rotation = .{ object.body.rotation, 0, 0, 0 },
+            .scale = 1.0,
+        };
     }
 };
 
