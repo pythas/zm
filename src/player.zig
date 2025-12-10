@@ -4,9 +4,9 @@ const Vec2 = @import("vec2.zig").Vec2;
 const Tile = @import("tile.zig").Tile;
 const Direction = @import("tile.zig").Direction;
 const Offset = @import("tile.zig").Offset;
-const RigidBody = @import("rigid_body.zig").RigidBody;
 const TileObject = @import("tile_object.zig").TileObject;
 const KeyboardState = @import("input.zig").KeyboardState;
+const Physics = @import("physics.zig").Physics;
 
 pub const PlayerController = struct {
     const Self = @This();
@@ -28,6 +28,7 @@ pub const PlayerController = struct {
         dt: f32,
         objects: []TileObject,
         input: *const KeyboardState,
+        physics: *Physics,
     ) void {
         if (self.target_index >= objects.len) {
             return;
@@ -35,27 +36,38 @@ pub const PlayerController = struct {
 
         var ship = &objects[self.target_index];
 
-        if (input.isDown(.w)) {
-            ship.applyInputThrust(dt, 1.0);
-        }
-        if (input.isDown(.s)) {
-            ship.applyInputThrust(dt, -1.0);
-        }
+        if (!input.isDown(.left_shift)) {
+            if (input.isDown(.w)) {
+                ship.applyInputThrust(physics, .Forward);
+            }
 
-        if (input.isDown(.a)) {
-            ship.applyTorque(dt, 1.0);
-        }
+            if (input.isDown(.s)) {
+                ship.applyInputThrust(physics, .Backward);
+            }
 
-        if (input.isDown(.d)) {
-            ship.applyTorque(dt, -1.0);
-        }
+            if (input.isDown(.a)) {
+                ship.applyInputThrust(physics, .Left);
+            }
 
-        if (input.isDown(.q)) {
-            ship.applySideThrust(dt, -1.0);
-        }
+            if (input.isDown(.d)) {
+                ship.applyInputThrust(physics, .Right);
+            }
+        } else {
+            if (input.isDown(.w)) {
+                ship.applyInputThrust(physics, .SecondaryForward);
+            }
 
-        if (input.isDown(.e)) {
-            ship.applySideThrust(dt, 1.0);
+            if (input.isDown(.s)) {
+                ship.applyInputThrust(physics, .SecondaryBackward);
+            }
+
+            if (input.isDown(.a)) {
+                ship.applyInputThrust(physics, .SecondaryLeft);
+            }
+
+            if (input.isDown(.d)) {
+                ship.applyInputThrust(physics, .SecondaryRight);
+            }
         }
 
         // actions

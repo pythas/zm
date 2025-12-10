@@ -3,6 +3,7 @@ const zgpu = @import("zgpu");
 const zglfw = @import("zglfw");
 
 const MouseState = @import("input.zig").MouseState;
+const KeyboardState = @import("input.zig").KeyboardState;
 const World = @import("world.zig").World;
 const Renderer = @import("renderer/renderer.zig").Renderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
@@ -85,6 +86,7 @@ pub const Editor = struct {
     allocator: std.mem.Allocator,
     window: *zglfw.Window,
     mouse: MouseState,
+    keyboard: KeyboardState,
     current_palette: EditorPalette,
 
     pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) Self {
@@ -92,6 +94,7 @@ pub const Editor = struct {
             .allocator = allocator,
             .window = window,
             .mouse = MouseState.init(window),
+            .keyboard = KeyboardState.init(window),
             .current_palette = .Hull,
         };
     }
@@ -108,6 +111,7 @@ pub const Editor = struct {
         const screen_h: f32 = @floatFromInt(wh[1]);
 
         self.mouse.update();
+        self.keyboard.update();
 
         const layout = EditorLayout.compute(screen_w, screen_h);
 
@@ -123,6 +127,19 @@ pub const Editor = struct {
 
             // TODO: Make sure tile is connected
 
+            if (self.keyboard.isPressed(.r)) {
+                const tile = world.objects.items[0].getTile(tile_x, tile_y);
+
+                if (tile) |ti| {
+                    if (ti.category == .Engine) {
+                        var t2 = ti;
+                        t2.rotation = @enumFromInt((@intFromEnum(t2.rotation) + 1) % 4);
+                        t2.sprite = (t2.sprite - 64 + 1) % 4 + 64;
+                        world.objects.items[0].setTile(tile_x, tile_y, t2);
+                    }
+                }
+            }
+
             if (self.mouse.is_left_down) {
                 switch (self.current_palette) {
                     .Hull => {
@@ -135,7 +152,11 @@ pub const Editor = struct {
                         var is_connected = false;
 
                         for (Directions) |d| {
-                            const n = world.objects.items[0].getNeighbouringTile(tile_x, tile_y, d.direction) orelse continue;
+                            const n = world.objects.items[0].getNeighbouringTile(
+                                tile_x,
+                                tile_y,
+                                d.direction,
+                            ) orelse continue;
 
                             if (n.category == .Empty) {
                                 if (engine_dir == null) {
@@ -165,7 +186,11 @@ pub const Editor = struct {
                         var is_connected = false;
 
                         for (Directions) |d| {
-                            const n = world.objects.items[0].getNeighbouringTile(tile_x, tile_y, d.direction) orelse continue;
+                            const n = world.objects.items[0].getNeighbouringTile(
+                                tile_x,
+                                tile_y,
+                                d.direction,
+                            ) orelse continue;
 
                             if (n.category == .Empty) {
                                 if (engine_dir == null) {

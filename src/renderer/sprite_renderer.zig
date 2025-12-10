@@ -171,8 +171,8 @@ pub const SpriteRenderer = struct {
     pub fn buildInstance(object: *const TileObject) SpriteRenderData {
         return .{
             .wh = .{ @floatFromInt(object.width * 8), @floatFromInt(object.height * 8), 0, 0 },
-            .position = .{ object.body.position.x, object.body.position.y, 0, 0 },
-            .rotation = .{ object.body.rotation, 0, 0, 0 },
+            .position = .{ object.position.x, object.position.y, 0, 0 },
+            .rotation = .{ object.rotation, 0, 0, 0 },
             .scale = 1.0,
         };
     }

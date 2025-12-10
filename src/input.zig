@@ -1,5 +1,16 @@
 const zglfw = @import("zglfw");
 
+pub const InputState = enum {
+    Forward,
+    Backward,
+    Left,
+    Right,
+    SecondaryForward,
+    SecondaryBackward,
+    SecondaryLeft,
+    SecondaryRight,
+};
+
 pub const KeyboardState = struct {
     const Self = @This();
 
@@ -23,6 +34,7 @@ pub const KeyboardState = struct {
         left,
         right,
         space,
+        left_shift,
     };
 
     pub fn init(window: *zglfw.Window) Self {
@@ -31,7 +43,7 @@ pub const KeyboardState = struct {
         };
     }
 
-    pub fn beginFrame(self: *Self) void {
+    pub fn update(self: *Self) void {
         self.prev = self.curr;
         self.curr = 0;
 
@@ -49,6 +61,7 @@ pub const KeyboardState = struct {
         if (self.window.getKey(.left) == .press) self.curr |= bit(.left);
         if (self.window.getKey(.right) == .press) self.curr |= bit(.right);
         if (self.window.getKey(.space) == .press) self.curr |= bit(.space);
+        if (self.window.getKey(.left_shift) == .press) self.curr |= bit(.left_shift);
     }
 
     pub fn isDown(self: *const Self, k: Key) bool {
