@@ -22,14 +22,8 @@ pub const EffectRenderer = struct {
         gctx: *zgpu.GraphicsContext,
         global: *GlobalRenderState,
     ) !Self {
-        const layout = gctx.createBindGroupLayout(&.{
-            zgpu.bufferEntry(0, .{ .vertex = true, .fragment = true }, .uniform, false, 0),
-            zgpu.textureEntry(1, .{ .fragment = true }, .uint, .tvdim_2d, false),
-        });
-
         const pipeline_layout = gctx.createPipelineLayout(&.{
             global.layout,
-            layout,
         });
 
         const pipeline = try createPipeline(
@@ -57,10 +51,10 @@ pub const EffectRenderer = struct {
         global: *const GlobalRenderState,
     ) void {
         const pipeline = self.gctx.lookupResource(self.pipeline).?;
-        const bind_group = self.gctx.lookupResource(global.bind_group).?;
+        const global_bind_group = self.gctx.lookupResource(global.bind_group).?;
 
         pass.setPipeline(pipeline);
-        pass.setBindGroup(0, bind_group, null);
+        pass.setBindGroup(0, global_bind_group, null);
 
         pass.draw(6, 1, 0, 0);
     }
@@ -85,7 +79,22 @@ fn createPipeline(
     defer fs_module.release();
 
     const color_targets = [_]wgpu.ColorTargetState{
-        .{ .format = gctx.swapchain_descriptor.format },
+        .{
+            .format = gctx.swapchain_descriptor.format,
+            .blend = &wgpu.BlendState{
+                .color = .{
+                    .src_factor = .src_alpha,
+                    .dst_factor = .one_minus_src_alpha,
+                    .operation = .add,
+                },
+                .alpha = .{
+                    .src_factor = .one,
+                    .dst_factor = .one_minus_src_alpha,
+                    .operation = .add,
+                },
+            },
+            .write_mask = .all,
+        },
     };
 
     const pipeline_descriptor = wgpu.RenderPipelineDescriptor{

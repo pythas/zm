@@ -8,8 +8,6 @@ const Tile = @import("../tile.zig").Tile;
 const Texture = @import("../texture.zig").Texture;
 const GameMode = @import("../game.zig").GameMode;
 
-// Removed tileSize import - now using direct pixel coordinates
-
 pub const GlobalUniforms = extern struct {
     dt: f32,
     t: f32,

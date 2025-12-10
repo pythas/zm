@@ -200,7 +200,9 @@ pub const TileObject = struct {
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 const tile = self.getTile(x, y) orelse continue;
-                if (tile.category == .Empty) continue;
+                if (tile.category == .Empty) {
+                    continue;
+                }
 
                 const box_settings = try zphy.BoxShapeSettings.create(.{ 4.0, 4.0, 1.0 });
                 defer box_settings.asShapeSettings().release();

@@ -102,6 +102,8 @@ pub const Game = struct {
 
                 const beam_instance_count = try self.renderer.beam.writeBuffers(world);
                 self.renderer.beam.draw(pass, global, beam_instance_count);
+
+                // self.renderer.effect.draw(pass, global);
             },
             .ShipEditor => {
                 try self.editor.draw(&self.renderer, &self.world, pass);
