@@ -213,8 +213,10 @@ pub const TileObject = struct {
                     else => 1.0,
                 });
 
-                const x_pos = @as(f32, @floatFromInt(x)) * 8.0 + 4.0;
-                const y_pos = @as(f32, @floatFromInt(y)) * 8.0 + 4.0;
+                const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
+                const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
+                const x_pos = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
+                const y_pos = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
 
                 compound_settings.addShape(
                     .{ x_pos, y_pos, 0.0 },
@@ -228,7 +230,6 @@ pub const TileObject = struct {
         const shape = try compound_settings.asShapeSettings().createShape();
         defer shape.release();
 
-        // Allow X/Y translation, Z translation for collision detection, and Z rotation for 2D gameplay
         const mask: u32 = 1 + 2 + 4 + 32; // TRANSLATION_X + TRANSLATION_Y + TRANSLATION_Z + ROTATION_Z = 39
         const allowed_dofs = @as(*const zphy.AllowedDOFs, @ptrCast(&mask)).*;
 
@@ -270,8 +271,10 @@ pub const TileObject = struct {
                     continue;
                 }
 
-                const local_x = @as(f32, @floatFromInt(x)) * 8.0 + 4.0;
-                const local_y = @as(f32, @floatFromInt(y)) * 8.0 + 4.0;
+                const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
+                const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
+                const local_x = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
+                const local_y = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
 
                 try self.thrusters.append(.{
                     .kind = kind,

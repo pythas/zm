@@ -40,6 +40,7 @@ pub const Physics = struct {
         );
 
         physics_system.setGravity(.{ 0.0, 0.0, 0.0 });
+        physics_system.setContactListener(@as(?*anyopaque, @ptrCast(&contact_listener.contact_listener)));
 
         return .{
             .allocator = allocator,
