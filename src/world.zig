@@ -77,6 +77,7 @@ pub const World = struct {
         try objects.append(ship);
 
         var asteroid = try TileObject.init(allocator, 8, 8, Vec2.init(0.0, -140.0), 0);
+        // var asteroid = try TileObject.init(allocator, 8, 8, Vec2.init(0.0, 0.0), 0);
         for (0..asteroid.width) |y| {
             for (0..asteroid.height) |x| {
                 asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);

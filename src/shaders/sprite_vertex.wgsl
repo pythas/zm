@@ -8,6 +8,7 @@ struct VertexInput {
 struct VertexOutput {
   @builtin(position) position: vec4<f32>,
   @location(0) uv: vec2<f32>,
+  @location(1) size: vec2<f32>,
 };
 
 @vertex
@@ -52,5 +53,6 @@ fn main(
   }
 
   output.position = vec4<f32>(ndc_pos, 0.0, 1.0);
+  output.size = input.size.xy;
   return output;
 }

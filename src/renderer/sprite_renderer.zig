@@ -129,6 +129,15 @@ pub const SpriteRenderer = struct {
         }
     }
 
+    pub fn buildInstance(object: *const TileObject) SpriteRenderData {
+        return .{
+            .wh = .{ @floatFromInt(object.width * 8), @floatFromInt(object.height * 8), 0, 0 },
+            .position = .{ object.position.x, object.position.y, 0, 0 },
+            .rotation = .{ object.rotation, 0, 0, 0 },
+            .scale = 1.0,
+        };
+    }
+
     pub fn writeInstances(self: *Self, instances: []const SpriteRenderData) !void {
         if (instances.len > maxInstances) {
             return error.TooManyInstances;
@@ -166,15 +175,6 @@ pub const SpriteRenderer = struct {
                 pass.draw(6, 1, 0, @intCast(i));
             }
         }
-    }
-
-    pub fn buildInstance(object: *const TileObject) SpriteRenderData {
-        return .{
-            .wh = .{ @floatFromInt(object.width * 8), @floatFromInt(object.height * 8), 0, 0 },
-            .position = .{ object.position.x, object.position.y, 0, 0 },
-            .rotation = .{ object.rotation, 0, 0, 0 },
-            .scale = 1.0,
-        };
     }
 };
 
