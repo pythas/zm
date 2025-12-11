@@ -11,6 +11,7 @@ const Ship = @import("ship.zig").Ship;
 const Vec2 = @import("vec2.zig").Vec2;
 const Tile = @import("tile.zig").Tile;
 const TileObject = @import("tile_object.zig").TileObject;
+const ship_serialization = @import("ship_serialization.zig");
 
 pub const World = struct {
     const Self = @This();
@@ -35,48 +36,13 @@ pub const World = struct {
 
         var objects = std.ArrayList(TileObject).init(allocator);
 
-        var ship = try TileObject.init(allocator, 16, 16, Vec2.init(0.0, 0.0), 0);
-        for (0..ship.width) |y| {
-            for (0..ship.height) |x| {
-                // ship.tiles[y * ship.width + x] = try Tile.initEmpty(allocator);
-                ship.tiles[y * ship.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-            }
-        }
-        // for (2..ship.width - 2) |y| {
-        //     for (2..ship.height - 2) |x| {
-        //         ship.tiles[y * ship.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 36);
-        //     }
-        // }
-
-        var t1 = try Tile.init(allocator, .Engine, .Metal, .Ships, 67);
-        t1.rotation = .West;
-        ship.tiles[2 * ship.width + 2] = t1;
-
-        var t2 = try Tile.init(allocator, .Engine, .Metal, .Ships, 65);
-        t2.rotation = .East;
-        ship.tiles[2 * ship.width + 13] = t2;
-
-        var t3 = try Tile.init(allocator, .Engine, .Metal, .Ships, 67);
-        t3.rotation = .West;
-        ship.tiles[3 * ship.width + 2] = t3;
-
-        var t4 = try Tile.init(allocator, .Engine, .Metal, .Ships, 65);
-        t4.rotation = .East;
-        ship.tiles[3 * ship.width + 13] = t4;
-
-        var t5 = try Tile.init(allocator, .Engine, .Metal, .Ships, 66);
-        t5.rotation = .South;
-        ship.tiles[13 * ship.width + 7] = t5;
-
-        var t6 = try Tile.init(allocator, .Engine, .Metal, .Ships, 66);
-        t6.rotation = .South;
-        ship.tiles[13 * ship.width + 8] = t6;
+        var ship = try ship_serialization.loadShip(allocator, "ship.json");
 
         ship.ship_stats = .{};
         try ship.recalculatePhysics(&physics);
         try objects.append(ship);
 
-        var asteroid = try TileObject.init(allocator, 8, 8, Vec2.init(0.0, -140.0), 0);
+        var asteroid = try TileObject.init(allocator, 32, 32, Vec2.init(0.0, -240.0), 0);
         // var asteroid = try TileObject.init(allocator, 8, 8, Vec2.init(0.0, 0.0), 0);
         for (0..asteroid.width) |y| {
             for (0..asteroid.height) |x| {
@@ -136,7 +102,7 @@ pub const World = struct {
             obj.rotation = 2.0 * std.math.atan2(rot[2], rot[3]);
         }
 
-        // self.camera.position = self.objects.items[0].position;
+        self.camera.position = self.objects.items[0].position;
     }
 
     pub fn onScroll(self: *Self, xoffset: f64, yoffset: f64) void {

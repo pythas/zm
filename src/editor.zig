@@ -12,6 +12,8 @@ const Tile = @import("tile.zig").Tile;
 const Direction = @import("tile.zig").Direction;
 const Directions = @import("tile.zig").Directions;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
+const TileObject = @import("tile_object.zig").TileObject;
+const ship_serialization = @import("ship_serialization.zig");
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
@@ -99,6 +101,8 @@ pub const Editor = struct {
         };
     }
 
+
+
     pub fn update(
         self: *Self,
         renderer: *Renderer,
@@ -112,6 +116,14 @@ pub const Editor = struct {
 
         self.mouse.update();
         self.keyboard.update();
+
+        if (self.keyboard.isDown(.left_ctrl)) {
+            if (self.keyboard.isPressed(.s)) {
+                ship_serialization.saveShip(self.allocator, world.objects.items[0], "ship.json") catch |err| {
+                    std.debug.print("Failed to save ship: {}\n", .{err});
+                };
+            }
+        }
 
         const layout = EditorLayout.compute(screen_w, screen_h);
 

@@ -192,6 +192,7 @@ pub const TileObject = struct {
         if (self.body_id != .invalid) {
             body_interface.removeBody(self.body_id);
             body_interface.destroyBody(self.body_id);
+            self.body_id = .invalid;
         }
 
         const compound_settings = try zphy.CompoundShapeSettings.createStatic();
@@ -210,7 +211,8 @@ pub const TileObject = struct {
                 box_settings.asConvexShapeSettings().setDensity(switch (tile.category) {
                     .Engine => 2.0,
                     .RCS => 0.5,
-                    else => 1.0,
+                    .Hull => 1.0,
+                    else => 1000.0,
                 });
 
                 const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
@@ -243,6 +245,8 @@ pub const TileObject = struct {
         };
 
         self.body_id = try body_interface.createAndAddBody(body_settings, .activate);
+
+        physics.physics_system.optimizeBroadPhase();
 
         // ship
         self.thrusters.clearRetainingCapacity();
