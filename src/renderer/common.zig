@@ -4,14 +4,9 @@ const wgpu = zgpu.wgpu;
 const zglfw = @import("zglfw");
 
 const World = @import("../world.zig").World;
-const Map = @import("../map.zig").Map;
 const Tile = @import("../tile.zig").Tile;
-const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
-const Player = @import("../player.zig").Player;
 const GameMode = @import("../game.zig").GameMode;
-
-const tileSize = @import("../tile.zig").tileSize;
 
 pub const GlobalUniforms = extern struct {
     dt: f32,
@@ -21,7 +16,7 @@ pub const GlobalUniforms = extern struct {
     screen_wh: [4]f32,
     camera_xy: [4]f32,
     camera_zoom: f32,
-    tile_size: f32,
+    _pad_removed_tile_size: f32,
     _pad1: f32,
     _pad2: f32,
     hover_xy: [4]f32,
@@ -89,7 +84,7 @@ pub const GlobalRenderState = struct {
             .screen_wh = .{ @floatFromInt(wh[0]), @floatFromInt(wh[1]), 0, 0 },
             .camera_xy = .{ world.camera.position.x, world.camera.position.y, 0, 0 },
             .camera_zoom = world.camera.zoom,
-            .tile_size = tileSize,
+            ._pad_removed_tile_size = 1.0,
             ._pad1 = 0.0,
             ._pad2 = 0.0,
             .hover_xy = .{

@@ -6,7 +6,7 @@ struct GlobalUniforms {
   screen_wh: vec4<f32>,
   camera_xy: vec4<f32>,
   camera_zoom: f32,
-  tile_size: f32,
+  _pad_removed_tile_size: f32,
   _pad1: f32,
   _pad2: f32,
   hover_xy: vec4<f32>,
@@ -57,7 +57,7 @@ fn get_sprite_uv(tile: Tile, tile_uv: vec2<f32>) -> vec2<f32> {
 fn world_to_ndc(world_pos: vec2<f32>) -> vec2<f32> {
   let camera_pos = globals.camera_xy.xy;
   let view_pos = world_pos - camera_pos;
-  let view_px = view_pos * globals.tile_size * globals.camera_zoom;
+  let view_px = view_pos * globals.camera_zoom;
   let half_screen = globals.screen_wh.xy * 0.5;
   
   return vec2<f32>(

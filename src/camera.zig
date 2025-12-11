@@ -1,7 +1,5 @@
 const Vec2 = @import("vec2.zig").Vec2;
 
-const tileSize = @import("tile.zig").tileSize;
-
 pub const Camera = struct {
     const Self = @This();
 
@@ -16,10 +14,7 @@ pub const Camera = struct {
     }
 
     pub fn worldCenter(self: Camera) Vec2 {
-        return .{
-            .x = self.position.x * tileSize,
-            .y = self.position.y * tileSize,
-        };
+        return self.position;
     }
 
     pub fn screenToWorld(self: Camera, local: Vec2) Vec2 {

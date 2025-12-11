@@ -3,9 +3,9 @@
 
 @group(1) @binding(0) var tilemap_texture: texture_2d<u32>;
 
-fn fetch_tile(tile_pos: vec2<f32>) -> Tile {
-  let tx = clamp(i32(floor(tile_pos.x)), 0, CHUNK_W - 1);
-  let ty = clamp(i32(floor(tile_pos.y)), 0, CHUNK_H - 1);
+fn fetch_tile(tile_pos: vec2<i32>, texture_size: vec2<i32>) -> Tile {
+  let tx = clamp(tile_pos.x, 0, texture_size.x - 1);
+  let ty = clamp(tile_pos.y, 0, texture_size.y - 1);
 
   let id = textureLoad(tilemap_texture, vec2<i32>(tx, ty), 0).r;
   return unpack_tile(id);
@@ -14,6 +14,7 @@ fn fetch_tile(tile_pos: vec2<f32>) -> Tile {
 struct FragmentInput {
   @builtin(position) position: vec4<f32>,
   @location(0) uv: vec2<f32>,
+  @location(1) size: vec2<f32>,
 };
 
 fn grid(tile_uv: vec2<f32>) -> vec4<f32> {
@@ -31,12 +32,15 @@ fn grid(tile_uv: vec2<f32>) -> vec4<f32> {
 
 @fragment
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
-  let tile_x = clamp(i32(floor(input.uv.x * f32(MAX_TILE_WIDTH))), 0, MAX_TILE_WIDTH - 1);
-  let tile_y = clamp(i32(floor(input.uv.y * f32(MAX_TILE_HEIGHT))), 0, MAX_TILE_HEIGHT - 1);
+  let texture_dimensions = textureDimensions(tilemap_texture);
+  let tile_count = vec2<f32>(f32(texture_dimensions.x), f32(texture_dimensions.y));
+ 
+  let tile_x = clamp(i32(floor(input.uv.x * tile_count.x)), 0, i32(texture_dimensions.x) - 1);
+  let tile_y = clamp(i32(floor(input.uv.y * tile_count.y)), 0, i32(texture_dimensions.y) - 1);
 
-  let tile = fetch_tile(vec2<f32>(f32(tile_x), f32(tile_y)));
+  let tile = fetch_tile(vec2<i32>(tile_x, tile_y), vec2<i32>(i32(texture_dimensions.x), i32(texture_dimensions.y)));
 
-  let tile_uv = fract(input.uv * vec2<f32>(f32(MAX_TILE_WIDTH), f32(MAX_TILE_HEIGHT)));
+  let tile_uv = fract(input.uv * tile_count);
   let uv = get_sprite_uv(tile, tile_uv);
   var color = textureSampleLevel(atlas_texture, atlas_sampler, uv, tile.sheet, 0.0);
 

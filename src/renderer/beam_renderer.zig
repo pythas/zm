@@ -5,16 +5,11 @@ const zglfw = @import("zglfw");
 const shader_utils = @import("../shader_utils.zig");
 
 const World = @import("../world.zig").World;
-const Map = @import("../map.zig").Map;
 const Tile = @import("../tile.zig").Tile;
-const Chunk = @import("../chunk.zig").Chunk;
 const Texture = @import("../texture.zig").Texture;
-const Player = @import("../player.zig").Player;
 const Vec2 = @import("../vec2.zig").Vec2;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
-
-const tileSize = @import("../tile.zig").tileSize;
 
 pub const BeamRenderer = struct {
     const Self = @This();
@@ -66,61 +61,66 @@ pub const BeamRenderer = struct {
     }
 
     pub fn writeBuffers(self: *Self, world: *const World) !u32 {
-        const player = &world.player;
-        const actions = player.tile_actions.items;
+        _ = self;
+        _ = world;
 
-        var active_count: usize = 0;
-        for (actions) |action| {
-            if (action.isActive() and action.kind == .Mine) {
-                active_count += 1;
-            }
-        }
+        return 0;
 
-        if (active_count == 0) {
-            return 0;
-        }
-
-        const count = @min(active_count, maxInstances);
-        var beams = try self.allocator.alloc(BeamRenderData, count);
-        defer self.allocator.free(beams);
-
-        var bi: usize = 0;
-        for (actions) |action| {
-            if (!action.isActive() or action.kind != .Mine) continue;
-            if (bi >= count) break;
-
-            const p = action.getProgress();
-
-            const start = player.body.position;
-
-            const tile_world_pos = action.tile_ref.worldCenter();
-            const tile_size = @as(f32, @floatFromInt(tileSize));
-            const tile_pos = Vec2.init(tile_world_pos.x / tile_size, tile_world_pos.y / tile_size);
-
-            const base_width: f32 = 6.0;
-            const extra_pulse: f32 = 2.0 * @sin(p * std.math.pi);
-            const width: f32 = base_width + extra_pulse;
-
-            beams[bi] = .{
-                .start = .{ start.x, start.y },
-                .end = .{ tile_pos.x, tile_pos.y },
-                .width = width,
-                .intensity = p,
-            };
-
-            bi += 1;
-        }
-
-        if (bi == 0) return 0;
-
-        self.gctx.queue.writeBuffer(
-            self.gctx.lookupResource(self.buffer).?,
-            0,
-            u8,
-            std.mem.sliceAsBytes(beams[0..bi]),
-        );
-
-        return @intCast(bi);
+        // const player = &world.objects.items[0];
+        // const actions = world.player_controller.tile_actions.items;
+        //
+        // var active_count: usize = 0;
+        // for (actions) |action| {
+        //     if (action.isActive() and action.kind == .Mine) {
+        //         active_count += 1;
+        //     }
+        // }
+        //
+        // if (active_count == 0) {
+        //     return 0;
+        // }
+        //
+        // const count = @min(active_count, maxInstances);
+        // var beams = try self.allocator.alloc(BeamRenderData, count);
+        // defer self.allocator.free(beams);
+        //
+        // var bi: usize = 0;
+        // for (actions) |action| {
+        //     if (!action.isActive() or action.kind != .Mine) continue;
+        //     if (bi >= count) break;
+        //
+        //     const p = action.getProgress();
+        //
+        //     const start = player.body.position;
+        //
+        //     const tile_world_pos = action.tile_ref.worldCenter();
+        //     const tile_size = @as(f32, @floatFromInt(tileSize));
+        //     const tile_pos = Vec2.init(tile_world_pos.x / tile_size, tile_world_pos.y / tile_size);
+        //
+        //     const base_width: f32 = 6.0;
+        //     const extra_pulse: f32 = 2.0 * @sin(p * std.math.pi);
+        //     const width: f32 = base_width + extra_pulse;
+        //
+        //     beams[bi] = .{
+        //         .start = .{ start.x, start.y },
+        //         .end = .{ tile_pos.x, tile_pos.y },
+        //         .width = width,
+        //         .intensity = p,
+        //     };
+        //
+        //     bi += 1;
+        // }
+        //
+        // if (bi == 0) return 0;
+        //
+        // self.gctx.queue.writeBuffer(
+        //     self.gctx.lookupResource(self.buffer).?,
+        //     0,
+        //     u8,
+        //     std.mem.sliceAsBytes(beams[0..bi]),
+        // );
+        //
+        // return @intCast(bi);
     }
 
     pub fn draw(
