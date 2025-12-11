@@ -1,11 +1,14 @@
 const std = @import("std");
+const zphy = @import("zphysics");
+const zm = @import("zmath");
 
-const RigidBody = @import("rigid_body.zig").RigidBody;
 const Tile = @import("tile.zig").Tile;
 const Vec2 = @import("vec2.zig").Vec2;
 const GpuTileGrid = @import("renderer/sprite_renderer.zig").GpuTileGrid;
 const Direction = @import("tile.zig").Direction;
 const Offset = @import("tile.zig").Offset;
+const Physics = @import("physics.zig").Physics;
+const InputState = @import("input.zig").InputState;
 
 pub const ShipCapabilities = struct {
     force_forward: f32 = 0.0,
@@ -19,15 +22,30 @@ pub const ShipCapabilities = struct {
     rcs_torque: f32 = 0.0,
 };
 
+pub const ThrusterKind = enum {
+    Main,
+    Secondary,
+};
+
+pub const Thruster = struct {
+    kind: ThrusterKind,
+    x: f32,
+    y: f32,
+    direction: Direction,
+    power: f32,
+};
+
 pub const TileObject = struct {
     const Self = @This();
 
-    const enginePower: f32 = 5000.0;
-    const rcsPower: f32 = 1000.0;
+    const enginePower: f32 = 200000.0;
+    const rcsPower: f32 = 200000.0;
 
     allocator: std.mem.Allocator,
 
-    body: RigidBody,
+    body_id: zphy.BodyId = .invalid,
+    position: Vec2,
+    rotation: f32,
 
     width: usize,
     height: usize,
@@ -35,6 +53,7 @@ pub const TileObject = struct {
     tiles: []Tile,
 
     ship_stats: ?ShipCapabilities = null,
+    thrusters: std.ArrayList(Thruster),
 
     gpu_grid: ?GpuTileGrid = null,
     dirty: bool = false,
@@ -51,11 +70,13 @@ pub const TileObject = struct {
 
         return .{
             .allocator = allocator,
-            .body = RigidBody.init(position, rotation),
             .width = width,
             .height = height,
+            .position = position,
+            .rotation = rotation,
             .radius = 0.0,
             .tiles = tiles,
+            .thrusters = std.ArrayList(Thruster).init(allocator),
         };
     }
 
@@ -103,57 +124,132 @@ pub const TileObject = struct {
         return self.getTile(@intCast(nx), @intCast(ny));
     }
 
-    pub fn applyInputThrust(self: *Self, dt: f32, input: f32) void {
-        const stats = &(self.ship_stats orelse return);
-
-        var force: f32 = 0.0;
-        var torque_penalty: f32 = 0.0;
-
-        if (input > 0) {
-            force = -stats.force_forward;
-            torque_penalty = stats.engine_imbalance_torque;
-        } else if (input < 0) {
-            force = stats.force_backward;
+    pub fn applyInputThrust(self: *Self, physics: *Physics, input: InputState) void {
+        if (self.body_id == .invalid) {
+            return;
         }
 
-        self.body.addRelativeForce(dt, Vec2.init(0, force));
+        const body_interface = physics.physics_system.getBodyInterfaceMut();
 
-        if (torque_penalty != 0) {
-            self.body.addTorque(dt, torque_penalty);
+        body_interface.activate(self.body_id);
+
+        const pos_arr = body_interface.getPosition(self.body_id);
+        const rot_arr = body_interface.getRotation(self.body_id);
+
+        const v_body_pos = zm.loadArr3(pos_arr);
+        const q_rotation = zm.loadArr4(rot_arr);
+        const m_rotation = zm.matFromQuat(q_rotation);
+
+        for (self.thrusters.items) |thruster| {
+            var should_fire = false;
+
+            switch (thruster.direction) {
+                .South => {
+                    should_fire = (thruster.kind == .Main and input == .Forward) or
+                        (thruster.kind == .Secondary and input == .SecondaryForward);
+                },
+                .North => {
+                    should_fire = (thruster.kind == .Main and input == .Backward) or
+                        (thruster.kind == .Secondary and input == .SecondaryBackward);
+                },
+                .West => {
+                    should_fire = (thruster.kind == .Main and input == .Right) or
+                        (thruster.kind == .Secondary and input == .SecondaryRight);
+                },
+                .East => {
+                    should_fire = (thruster.kind == .Main and input == .Left) or
+                        (thruster.kind == .Secondary and input == .SecondaryLeft);
+                },
+            }
+
+            if (should_fire) {
+                const v_local_dir = switch (thruster.direction) {
+                    .North => zm.f32x4(0.0, 1.0, 0.0, 0.0),
+                    .South => zm.f32x4(0.0, -1.0, 0.0, 0.0),
+                    .East => zm.f32x4(-1.0, 0.0, 0.0, 0.0),
+                    .West => zm.f32x4(1.0, 0.0, 0.0, 0.0),
+                };
+
+                const v_world_dir = zm.mul(v_local_dir, m_rotation);
+                const v_force = v_world_dir * zm.f32x4s(thruster.power);
+                const v_local_pos = zm.f32x4(thruster.x, thruster.y, 0.0, 0.0);
+                const v_world_offset = zm.mul(v_local_pos, m_rotation);
+                const v_apply_point = v_body_pos + v_world_offset;
+
+                var final_force: [3]f32 = undefined;
+                var final_point: [3]f32 = undefined;
+
+                zm.storeArr3(&final_force, v_force);
+                zm.storeArr3(&final_point, v_apply_point);
+
+                body_interface.addForceAtPosition(self.body_id, final_force, final_point);
+            }
         }
     }
 
-    pub fn applyTorque(self: *Self, dt: f32, input: f32) void {
-        const stats = &(self.ship_stats orelse return);
-
-        const torque = -input * stats.rcs_torque;
-
-        self.body.addTorque(dt, torque);
-    }
-
-    pub fn applySideThrust(self: *Self, dt: f32, input: f32) void {
-        const stats = &(self.ship_stats orelse return);
-
-        var force: f32 = 0.0;
-        var torque_penalty: f32 = 0.0;
-
-        if (input < 0) {
-            force = -stats.force_side_left;
-            torque_penalty = stats.side_imbalance_torque;
-        } else if (input > 0) {
-            force = stats.force_side_right;
+    pub fn recalculatePhysics(self: *Self, physics: *Physics) !void {
+        const body_interface = physics.physics_system.getBodyInterfaceMut();
+        if (self.body_id != .invalid) {
+            body_interface.removeBody(self.body_id);
+            body_interface.destroyBody(self.body_id);
+            self.body_id = .invalid;
         }
 
-        self.body.addRelativeForce(dt, Vec2.init(force, 0));
+        const compound_settings = try zphy.CompoundShapeSettings.createStatic();
+        defer compound_settings.asShapeSettings().release();
 
-        if (torque_penalty != 0) {
-            self.body.addTorque(dt, torque_penalty);
+        for (0..self.width) |x| {
+            for (0..self.height) |y| {
+                const tile = self.getTile(x, y) orelse continue;
+                if (tile.category == .Empty) {
+                    continue;
+                }
+
+                const box_settings = try zphy.BoxShapeSettings.create(.{ 4.0, 4.0, 1.0 });
+                defer box_settings.asShapeSettings().release();
+
+                box_settings.asConvexShapeSettings().setDensity(switch (tile.category) {
+                    .Engine => 2.0,
+                    .RCS => 0.5,
+                    .Hull => 1.0,
+                    else => 1000.0,
+                });
+
+                const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
+                const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
+                const x_pos = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
+                const y_pos = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
+
+                compound_settings.addShape(
+                    .{ x_pos, y_pos, 0.0 },
+                    .{ 0, 0, 0, 1 },
+                    box_settings.asShapeSettings(),
+                    0, // NOTE: userData
+                );
+            }
         }
-    }
 
-    pub fn recalculatePhysics(self: *Self) void {
-        var total_mass: f32 = 0.0;
-        var weighted_pos = Vec2.init(0, 0);
+        const shape = try compound_settings.asShapeSettings().createShape();
+        defer shape.release();
+
+        const mask: u32 = 1 + 2 + 4 + 32; // TRANSLATION_X + TRANSLATION_Y + TRANSLATION_Z + ROTATION_Z = 39
+        const allowed_dofs = @as(*const zphy.AllowedDOFs, @ptrCast(&mask)).*;
+
+        const body_settings = zphy.BodyCreationSettings{
+            .shape = shape,
+            .position = .{ self.position.x, self.position.y, 0.0, 0.0 },
+            .rotation = .{ 0, 0, 0, 1 },
+            .motion_type = .dynamic,
+            .object_layer = 1,
+            .allowed_DOFs = allowed_dofs,
+        };
+
+        self.body_id = try body_interface.createAndAddBody(body_settings, .activate);
+
+        physics.physics_system.optimizeBroadPhase();
+
+        // ship
+        self.thrusters.clearRetainingCapacity();
 
         for (0..self.width) |x| {
             for (0..self.height) |y| {
@@ -163,103 +259,35 @@ pub const TileObject = struct {
                     continue;
                 }
 
-                const mass: f32 = switch (tile.category) {
-                    .Engine => 20.0,
-                    .RCS => 5.0,
-                    else => 10.0,
+                const power = switch (tile.category) {
+                    .Engine => enginePower,
+                    .RCS => rcsPower,
+                    else => 0.0,
                 };
-                total_mass += mass;
 
-                const pos = Vec2.init(@floatFromInt(x * 8 + 4), @floatFromInt(y * 8 + 4));
-                weighted_pos = weighted_pos.add(pos.mulScalar(mass));
-            }
-        }
+                const kind: ThrusterKind = switch (tile.category) {
+                    .Engine => .Main,
+                    .RCS => .Secondary,
+                    else => .Main,
+                };
 
-        self.body.mass = @max(1.0, total_mass);
-        self.body.center_of_mass = weighted_pos.divScalar(self.body.mass);
-
-        // calc radius
-        var max_radius: f32 = 0.0;
-        for (0..self.width) |x| {
-            for (0..self.height) |y| {
-                const tile = self.getTile(x, y) orelse continue;
-                if (tile.category == .Empty) {
+                if (power == 0.0) {
                     continue;
                 }
 
-                const pos = Vec2.init(@floatFromInt(x * 8 + 4), @floatFromInt(y * 8 + 4));
-                const distance = pos.sub(self.body.center_of_mass).len() + 6.0;
-                max_radius = @max(max_radius, distance);
+                const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
+                const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
+                const local_x = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
+                const local_y = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
+
+                try self.thrusters.append(.{
+                    .kind = kind,
+                    .x = local_x,
+                    .y = local_y,
+                    .direction = tile.rotation,
+                    .power = power,
+                });
             }
         }
-        self.radius = max_radius;
-
-        // ship calcs
-        var stats = &(self.ship_stats orelse return);
-
-        var inertia: f32 = 0.0;
-
-        stats.force_forward = 0.0;
-        stats.force_backward = 0.0;
-        stats.force_side_left = 0.0;
-        stats.force_side_right = 0.0;
-
-        stats.rcs_torque = 0.0;
-        stats.engine_imbalance_torque = 0.0;
-        stats.side_imbalance_torque = 0.0;
-
-        for (0..self.width) |x| {
-            for (0..self.height) |y| {
-                const tile = self.getTile(x, y) orelse continue;
-
-                if (tile.category == .Empty) {
-                    continue;
-                }
-
-                const pos = Vec2.init(@floatFromInt(x * 8 + 4), @floatFromInt(y * 8 + 4));
-                const delta_com = pos.sub(self.body.center_of_mass);
-
-                const mass: f32 = switch (tile.category) {
-                    .Engine => 20.0,
-                    .RCS => 5.0,
-                    else => 10.0,
-                };
-                inertia += mass * delta_com.lenSquared();
-
-                const dir = switch (tile.rotation) {
-                    .North => Vec2.init(0, 1),
-                    .South => Vec2.init(0, -1),
-                    .East => Vec2.init(-1, 0),
-                    .West => Vec2.init(1, 0),
-                };
-
-                const torque_arm = (delta_com.x * dir.y) - (delta_com.y * dir.x);
-
-                if (tile.category == .Engine) {
-                    if (dir.y < -0.1) {
-                        stats.force_forward += enginePower;
-                        stats.engine_imbalance_torque += torque_arm * enginePower;
-                    } else if (dir.y > 0.1) {
-                        stats.force_backward += enginePower;
-                    }
-
-                    if (dir.x < -0.1) {
-                        stats.force_side_left += enginePower;
-                        stats.side_imbalance_torque += torque_arm * enginePower;
-                    } else if (dir.x > 0.1) {
-                        stats.force_side_right += enginePower;
-                    }
-                } else if (tile.category == .RCS) {
-                    stats.rcs_torque += @abs(torque_arm * rcsPower);
-
-                    if (dir.x < -0.1) stats.force_side_left += rcsPower;
-                    if (dir.x > 0.1) stats.force_side_right += rcsPower;
-                    if (dir.y < -0.1) stats.force_forward += rcsPower;
-                    if (dir.y > 0.1) stats.force_backward += rcsPower;
-                }
-            }
-        }
-
-        self.body.moment_of_inertia = @max(1.0, inertia);
     }
 };

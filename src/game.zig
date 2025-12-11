@@ -57,13 +57,13 @@ pub const Game = struct {
     }
 
     pub fn update(self: *Self, dt: f32, t: f32) !void {
-        self.keyboard_state.beginFrame();
+        self.keyboard_state.update();
 
         if (self.keyboard_state.isPressed(.o)) {
             if (self.mode == .InWorld) {
                 self.mode = .ShipEditor;
             } else {
-                self.world.objects.items[0].recalculatePhysics();
+                try self.world.objects.items[0].recalculatePhysics(&self.world.physics);
                 self.mode = .InWorld;
             }
         }
@@ -102,6 +102,8 @@ pub const Game = struct {
 
                 const beam_instance_count = try self.renderer.beam.writeBuffers(world);
                 self.renderer.beam.draw(pass, global, beam_instance_count);
+
+                // self.renderer.effect.draw(pass, global);
             },
             .ShipEditor => {
                 try self.editor.draw(&self.renderer, &self.world, pass);

@@ -33,6 +33,16 @@ pub fn build(b: *std.Build) void {
     const zstbi = b.dependency("zstbi", .{});
     exe.root_module.addImport("zstbi", zstbi.module("root"));
 
+    const zmath = b.dependency("zmath", .{});
+    exe.root_module.addImport("zmath", zmath.module("root"));
+
+    const zphysics = b.dependency("zphysics", .{
+        .use_double_precision = false,
+        .enable_cross_platform_determinism = true,
+    });
+    exe.root_module.addImport("zphysics", zphysics.module("root"));
+    exe.linkLibrary(zphysics.artifact("joltc"));
+
     // ---
     const run_cmd = b.addRunArtifact(exe);
 

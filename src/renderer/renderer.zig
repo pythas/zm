@@ -4,7 +4,6 @@ const zglfw = @import("zglfw");
 
 const Atlas = @import("common.zig").Atlas;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
-const WorldRenderer = @import("world_renderer.zig").WorldRenderer;
 const SpriteRenderer = @import("sprite_renderer.zig").SpriteRenderer;
 const EffectRenderer = @import("effect_renderer.zig").EffectRenderer;
 const BeamRenderer = @import("beam_renderer.zig").BeamRenderer;

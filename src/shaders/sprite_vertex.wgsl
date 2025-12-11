@@ -8,6 +8,7 @@ struct VertexInput {
 struct VertexOutput {
   @builtin(position) position: vec4<f32>,
   @location(0) uv: vec2<f32>,
+  @location(1) size: vec2<f32>,
 };
 
 @vertex
@@ -22,7 +23,7 @@ fn main(
       vec2<f32>(0.0, 0.0),
       vec2<f32>(1.0, 0.0),
       vec2<f32>(0.0, 1.0),
-      
+ 
       vec2<f32>(0.0, 1.0),
       vec2<f32>(1.0, 0.0),
       vec2<f32>(1.0, 1.0),
@@ -38,16 +39,11 @@ fn main(
   );
 
   let rotated_pos = rotation_matrix * (quad_pos - vec2<f32>(0.5, 0.5));
-  
-  let sprite_size = input.size.xy;
+ 
+  let sprite_size = input.size.xy * input.scale;
   let sprite_position = input.position.xy;
-  
-  var final_sprite_size: vec2<f32>;
-  final_sprite_size = sprite_size;
 
-  final_sprite_size *= input.scale;
-
-  let world_pos = sprite_position + rotated_pos * final_sprite_size;
+  let world_pos = sprite_position + rotated_pos * sprite_size;
   var ndc_pos: vec2<f32>;
 
   if globals.mode == 0u {
@@ -57,5 +53,6 @@ fn main(
   }
 
   output.position = vec4<f32>(ndc_pos, 0.0, 1.0);
+  output.size = input.size.xy;
   return output;
 }
