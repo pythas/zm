@@ -5,7 +5,18 @@ const Vec2 = @import("vec2.zig").Vec2;
 pub const tilemapWidth = 16;
 pub const tilemapHeight = 16;
 
-pub const Category = enum(u8) {
+pub const TileCoords = struct {
+    x: usize,
+    y: usize,
+};
+
+pub const TileReference = struct {
+    object_id: u64,
+    tile_x: usize,
+    tile_y: usize,
+};
+
+pub const TileCategory = enum(u8) {
     Empty,
     Terrain,
     Hull,
@@ -106,7 +117,7 @@ pub const Offset = struct {
 pub const Tile = struct {
     const Self = @This();
 
-    category: Category,
+    category: TileCategory,
     composition: Composition,
     sheet: SpriteSheet,
     sprite: u16,
@@ -114,7 +125,7 @@ pub const Tile = struct {
 
     pub fn init(
         allocator: std.mem.Allocator,
-        category: Category,
+        category: TileCategory,
         base: BaseMaterial,
         sheet: SpriteSheet,
         sprite: u16,

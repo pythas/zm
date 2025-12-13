@@ -7,6 +7,8 @@ const Vec2 = @import("vec2.zig").Vec2;
 const GpuTileGrid = @import("renderer/sprite_renderer.zig").GpuTileGrid;
 const Direction = @import("tile.zig").Direction;
 const Offset = @import("tile.zig").Offset;
+const TileCategory = @import("tile.zig").TileCategory;
+const TileReference = @import("tile.zig").TileReference;
 const Physics = @import("physics.zig").Physics;
 const InputState = @import("input.zig").InputState;
 
@@ -43,6 +45,8 @@ pub const TileObject = struct {
 
     allocator: std.mem.Allocator,
 
+    id: u64,
+
     body_id: zphy.BodyId = .invalid,
     position: Vec2,
     rotation: f32,
@@ -60,6 +64,7 @@ pub const TileObject = struct {
 
     pub fn init(
         allocator: std.mem.Allocator,
+        id: u64,
         width: usize,
         height: usize,
         position: Vec2,
@@ -70,6 +75,7 @@ pub const TileObject = struct {
 
         return .{
             .allocator = allocator,
+            .id = id,
             .width = width,
             .height = height,
             .position = position,
@@ -93,12 +99,51 @@ pub const TileObject = struct {
         self.dirty = true;
     }
 
-    pub fn getTile(self: Self, x: usize, y: usize) ?Tile {
+    pub fn getTile(self: Self, x: usize, y: usize) ?*Tile {
         if (x >= self.width or y >= self.height) {
             return null;
         }
 
-        return self.tiles[y * self.width + x];
+        return &self.tiles[y * self.width + x];
+    }
+
+    pub fn setEmptyTile(self: *Self, x: usize, y: usize) void {
+        var tile = self.getTile(x, y) orelse return;
+
+        tile.category = .Empty;
+        self.dirty = true;
+
+        // TODO: Create a tile.setEmpty that sets all props
+    }
+
+    // pub fn getTileByCategory(self: Self, category: TileCategory) ![]Tile {
+    //     var tiles = std.ArrayList(Tile).init(self.allocator);
+    //     errdefer tiles.deinit();
+    //
+    //     for (self.tiles) |tile| {
+    //         if (tile.category == category) {
+    //             try tiles.append(tile);
+    //         }
+    //     }
+    //
+    //     return tiles.toOwnedSlice();
+    // }
+
+    pub fn getTileByCategory(self: Self, category: TileCategory) ![]TileReference {
+        var tile_refs = std.ArrayList(TileReference).init(self.allocator);
+        errdefer tile_refs.deinit();
+
+        for (self.tiles, 0..) |tile, i| {
+            if (tile.category == category) {
+                try tile_refs.append(.{
+                    .object_id = self.id,
+                    .tile_x = i % self.width,
+                    .tile_y = i / self.height,
+                });
+            }
+        }
+
+        return tile_refs.toOwnedSlice();
     }
 
     pub fn getNeighbouringTile(
@@ -106,7 +151,7 @@ pub const TileObject = struct {
         x: usize,
         y: usize,
         direction: Direction,
-    ) ?Tile {
+    ) ?*Tile {
         const delta: Offset = switch (direction) {
             .North => .{ .dx = 0, .dy = -1 },
             .East => .{ .dx = 1, .dy = 0 },
@@ -122,6 +167,88 @@ pub const TileObject = struct {
         }
 
         return self.getTile(@intCast(nx), @intCast(ny));
+    }
+
+    pub fn getTileCoordsAtWorldPos(self: Self, point: Vec2) ?struct {
+        x: usize,
+        y: usize,
+    } {
+        const dx = point.x - self.position.x;
+        const dy = point.y - self.position.y;
+
+        const cos = @cos(self.rotation);
+        const sin = @sin(self.rotation);
+
+        const local_x = dx * cos + dy * sin;
+        const local_y = -dx * sin + dy * cos;
+
+        const tile_size = 8.0;
+        const half_width_units = @as(f32, @floatFromInt(self.width)) * (tile_size / 2.0);
+        const half_height_units = @as(f32, @floatFromInt(self.height)) * (tile_size / 2.0);
+
+        const grid_pos_x = local_x + half_width_units;
+        const grid_pos_y = local_y + half_height_units;
+
+        if (grid_pos_x < 0 or grid_pos_y < 0) {
+            return null;
+        }
+
+        const grid_width_units = @as(f32, @floatFromInt(self.width)) * tile_size;
+        const grid_height_units = @as(f32, @floatFromInt(self.height)) * tile_size;
+
+        if (grid_pos_x >= grid_width_units or grid_pos_y >= grid_height_units) {
+            return null;
+        }
+
+        return .{
+            .x = @intFromFloat(@floor(grid_pos_x / tile_size)),
+            .y = @intFromFloat(@floor(grid_pos_y / tile_size)),
+        };
+    }
+
+    pub fn getTileWorldPos(self: Self, x: usize, y: usize) Vec2 {
+        const tile_size = 8.0;
+
+        const object_center_x = @as(f32, @floatFromInt(self.width)) * (tile_size / 2.0);
+        const object_center_y = @as(f32, @floatFromInt(self.height)) * (tile_size / 2.0);
+
+        const tile_center_x = (@as(f32, @floatFromInt(x)) * tile_size) + (tile_size / 2.0);
+        const tile_center_y = (@as(f32, @floatFromInt(y)) * tile_size) + (tile_size / 2.0);
+
+        const local_x = tile_center_x - object_center_x;
+        const local_y = tile_center_y - object_center_y;
+
+        const cos = @cos(self.rotation);
+        const sin = @sin(self.rotation);
+
+        const rot_x = local_x * cos - local_y * sin;
+        const rot_y = local_x * sin + local_y * cos;
+
+        return Vec2.init(self.position.x + rot_x, self.position.y + rot_y);
+    }
+
+    pub fn getDistanceToTile(self: Self, x: usize, y: usize, target: Vec2) f32 {
+        const tile_world_pos = self.getTileWorldPos(x, y);
+
+        const dx = target.x - tile_world_pos.x;
+        const dy = target.y - tile_world_pos.y;
+
+        return @sqrt(dx * dx + dy * dy);
+    }
+
+    pub fn getDistanceToTileSq(self: Self, x: usize, y: usize, target: Vec2) f32 {
+        const tile_world_pos = self.getTileWorldPos(x, y);
+
+        const dx = target.x - tile_world_pos.x;
+        const dy = target.y - tile_world_pos.y;
+
+        return dx * dx + dy * dy;
+    }
+
+    pub fn getTileAt(self: Self, point: Vec2) ?Tile {
+        const coords = self.getTileCoordsAtWorldPos(point) orelse return null;
+
+        return self.getTile(coords.x, coords.y);
     }
 
     pub fn applyInputThrust(self: *Self, physics: *Physics, input: InputState) void {
@@ -212,6 +339,7 @@ pub const TileObject = struct {
                     .Engine => 2.0,
                     .RCS => 0.5,
                     .Hull => 1.0,
+                    .Laser => 1.0,
                     else => 1000.0,
                 });
 

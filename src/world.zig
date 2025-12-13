@@ -5,6 +5,7 @@ const zglfw = @import("zglfw");
 
 const Physics = @import("physics.zig").Physics;
 const KeyboardState = @import("input.zig").KeyboardState;
+const MouseState = @import("input.zig").MouseState;
 const PlayerController = @import("player.zig").PlayerController;
 const Camera = @import("camera.zig").Camera;
 const Ship = @import("ship.zig").Ship;
@@ -17,15 +18,14 @@ pub const World = struct {
     const Self = @This();
 
     allocator: std.mem.Allocator,
-    camera: Camera,
 
-    objects: std.ArrayList(TileObject),
+    camera: Camera,
     player_controller: PlayerController,
 
-    physics: Physics,
+    // next_object_id: u64 = 0,
+    objects: std.ArrayList(TileObject),
 
-    last_left: zglfw.Action = .release,
-    last_right: zglfw.Action = .release,
+    physics: Physics,
 
     pub fn init(allocator: std.mem.Allocator) !Self {
         var physics = try Physics.init(allocator);
@@ -36,26 +36,33 @@ pub const World = struct {
 
         var objects = std.ArrayList(TileObject).init(allocator);
 
-        var ship = try ship_serialization.loadShip(allocator, "ship.json");
+        var ship = try ship_serialization.loadShip(allocator, 0, "ship.json");
 
         ship.ship_stats = .{};
         try ship.recalculatePhysics(&physics);
         try objects.append(ship);
 
-        var asteroid = try TileObject.init(allocator, 32, 32, Vec2.init(0.0, -240.0), 0);
-        // var asteroid = try TileObject.init(allocator, 8, 8, Vec2.init(0.0, 0.0), 0);
-        for (0..asteroid.width) |y| {
-            for (0..asteroid.height) |x| {
-                asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+        {
+            var asteroid = try TileObject.init(allocator, 1, 16, 16, Vec2.init(0.0, -300.0), 0);
+            for (0..asteroid.width) |y| {
+                for (0..asteroid.height) |x| {
+                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+                }
             }
+            try asteroid.recalculatePhysics(&physics);
+            try objects.append(asteroid);
         }
-        // for (2..asteroid.width - 2) |y| {
-        //     for (2..asteroid.height - 2) |x| {
-        //         asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-        //     }
-        // }
-        try asteroid.recalculatePhysics(&physics);
-        try objects.append(asteroid);
+
+        {
+            var asteroid = try TileObject.init(allocator, 2, 16, 16, Vec2.init(-200.0, -300.0), 0);
+            for (0..asteroid.width) |y| {
+                for (0..asteroid.height) |x| {
+                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+                }
+            }
+            try asteroid.recalculatePhysics(&physics);
+            try objects.append(asteroid);
+        }
 
         const player_controller = PlayerController.init(allocator, 0);
 
@@ -76,17 +83,27 @@ pub const World = struct {
         self.physics.deinit();
     }
 
+    pub fn getObjectById(self: *World, id: u64) ?*TileObject {
+        for (self.objects.items) |*obj| {
+            if (obj.id == id) return obj;
+        }
+        return null;
+    }
+
     pub fn update(
         self: *Self,
         dt: f32,
         keyboard_state: *const KeyboardState,
-        window: *zglfw.Window,
+        mouse_state: *const MouseState,
     ) !void {
-        _ = window;
-
         try self.physics.physics_system.update(dt, .{});
 
-        self.player_controller.update(dt, self.objects.items, keyboard_state, &self.physics);
+        try self.player_controller.update(
+            dt,
+            self,
+            keyboard_state,
+            mouse_state,
+        );
 
         const body_interface = self.physics.physics_system.getBodyInterface();
 

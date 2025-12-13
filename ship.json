@@ -2,8 +2,8 @@
   "width": 16,
   "height": 16,
   "position": {
-    "x": -5.762875080108643e-4,
-    "y": -1.0660601043701172e2
+    "x": 1.5368412971496582e1,
+    "y": -1.6618289184570312e2
   },
   "rotation": 0e0,
   "tiles": [
@@ -17,8 +17,8 @@
     {
       "x": 6,
       "y": 1,
-      "category": 2,
-      "sprite": 36,
+      "category": 3,
+      "sprite": 64,
       "rotation": 0
     },
     {
@@ -38,8 +38,8 @@
     {
       "x": 9,
       "y": 1,
-      "category": 2,
-      "sprite": 36,
+      "category": 3,
+      "sprite": 64,
       "rotation": 0
     },
     {
@@ -143,8 +143,8 @@
     {
       "x": 6,
       "y": 3,
-      "category": 2,
-      "sprite": 36,
+      "category": 5,
+      "sprite": 35,
       "rotation": 0
     },
     {
@@ -164,8 +164,8 @@
     {
       "x": 9,
       "y": 3,
-      "category": 2,
-      "sprite": 36,
+      "category": 5,
+      "sprite": 35,
       "rotation": 0
     },
     {
@@ -262,9 +262,9 @@
     {
       "x": 3,
       "y": 5,
-      "category": 2,
-      "sprite": 36,
-      "rotation": 0
+      "category": 3,
+      "sprite": 67,
+      "rotation": 3
     },
     {
       "x": 4,
@@ -325,9 +325,9 @@
     {
       "x": 12,
       "y": 5,
-      "category": 2,
-      "sprite": 36,
-      "rotation": 0
+      "category": 3,
+      "sprite": 65,
+      "rotation": 1
     },
     {
       "x": 3,
@@ -486,9 +486,9 @@
     {
       "x": 2,
       "y": 8,
-      "category": 2,
-      "sprite": 36,
-      "rotation": 0
+      "category": 3,
+      "sprite": 67,
+      "rotation": 3
     },
     {
       "x": 3,
@@ -563,9 +563,9 @@
     {
       "x": 13,
       "y": 8,
-      "category": 2,
-      "sprite": 36,
-      "rotation": 0
+      "category": 3,
+      "sprite": 65,
+      "rotation": 1
     },
     {
       "x": 2,

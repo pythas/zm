@@ -101,8 +101,6 @@ pub const Editor = struct {
         };
     }
 
-
-
     pub fn update(
         self: *Self,
         renderer: *Renderer,
@@ -147,7 +145,7 @@ pub const Editor = struct {
                         var t2 = ti;
                         t2.rotation = @enumFromInt((@intFromEnum(t2.rotation) + 1) % 4);
                         t2.sprite = (t2.sprite - 64 + 1) % 4 + 64;
-                        world.objects.items[0].setTile(tile_x, tile_y, t2);
+                        world.objects.items[0].setTile(tile_x, tile_y, t2.*);
                     }
                 }
             }
@@ -227,7 +225,11 @@ pub const Editor = struct {
                             }
                         }
                     },
-                    .Laser => {},
+                    .Laser => {
+                        const ht = try Tile.init(self.allocator, .Laser, .Metal, .Ships, 35);
+
+                        world.objects.items[0].setTile(tile_x, tile_y, ht);
+                    },
                 }
             }
 
@@ -296,6 +298,15 @@ pub const Editor = struct {
             "RCS",
         )) {
             self.current_palette = .RCS;
+        }
+
+        btn_x += btn_s + 10;
+        if (try ui.button(
+            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
+            self.current_palette == .Laser,
+            "Laser",
+        )) {
+            self.current_palette = .Laser;
         }
 
         // ship

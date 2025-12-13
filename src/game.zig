@@ -4,6 +4,7 @@ const zglfw = @import("zglfw");
 
 const World = @import("world.zig").World;
 const KeyboardState = @import("input.zig").KeyboardState;
+const MouseState = @import("input.zig").MouseState;
 const Renderer = @import("renderer/renderer.zig").Renderer;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
@@ -24,7 +25,10 @@ pub const Game = struct {
     window: *zglfw.Window,
     renderer: Renderer,
     editor: Editor,
+
     keyboard_state: KeyboardState,
+    mouse_state: MouseState,
+
     mode: GameMode = .InWorld,
     world: World,
 
@@ -44,6 +48,7 @@ pub const Game = struct {
             .editor = editor,
             .world = world,
             .keyboard_state = KeyboardState.init(window),
+            .mouse_state = MouseState.init(window),
         };
     }
 
@@ -58,6 +63,7 @@ pub const Game = struct {
 
     pub fn update(self: *Self, dt: f32, t: f32) !void {
         self.keyboard_state.update();
+        self.mouse_state.update();
 
         if (self.keyboard_state.isPressed(.o)) {
             if (self.mode == .InWorld) {
@@ -72,7 +78,7 @@ pub const Game = struct {
             .InWorld => {
                 self.renderer.global.write(self.window, &self.world, dt, t, self.mode, 0.0, 0.0);
 
-                try self.world.update(dt, &self.keyboard_state, self.window);
+                try self.world.update(dt, &self.keyboard_state, &self.mouse_state);
             },
             .ShipEditor => {
                 self.editor.update(&self.renderer, &self.world, dt, t);

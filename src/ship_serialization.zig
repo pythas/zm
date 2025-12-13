@@ -1,8 +1,9 @@
 const std = @import("std");
+
 const TileObject = @import("tile_object.zig").TileObject;
 const Tile = @import("tile.zig").Tile;
 const Direction = @import("tile.zig").Direction;
-const Category = @import("tile.zig").Category;
+const TileCategory = @import("tile.zig").TileCategory;
 const BaseMaterial = @import("tile.zig").BaseMaterial;
 const SpriteSheet = @import("tile.zig").SpriteSheet;
 const Vec2 = @import("vec2.zig").Vec2;
@@ -57,7 +58,7 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
     std.debug.print("Ship saved to {s}\n", .{filename});
 }
 
-pub fn loadShip(allocator: std.mem.Allocator, filename: []const u8) !TileObject {
+pub fn loadShip(allocator: std.mem.Allocator, id: u64, filename: []const u8) !TileObject {
     const file = std.fs.cwd().openFile(filename, .{}) catch |err| {
         std.debug.print("Failed to open {s}: {}\n", .{ filename, err });
         return err;
@@ -74,6 +75,7 @@ pub fn loadShip(allocator: std.mem.Allocator, filename: []const u8) !TileObject 
 
     var ship = try TileObject.init(
         allocator,
+        id,
         ship_data.width,
         ship_data.height,
         Vec2{ .x = ship_data.position.x, .y = ship_data.position.y },
@@ -82,7 +84,7 @@ pub fn loadShip(allocator: std.mem.Allocator, filename: []const u8) !TileObject 
 
     // Load tiles
     for (ship_data.tiles) |tile_data| {
-        const category: Category = @enumFromInt(tile_data.category);
+        const category: TileCategory = @enumFromInt(tile_data.category);
         const rotation: Direction = @enumFromInt(tile_data.rotation);
 
         const tile = try Tile.init(
@@ -92,13 +94,14 @@ pub fn loadShip(allocator: std.mem.Allocator, filename: []const u8) !TileObject 
             .Ships, // Default sheet
             tile_data.sprite,
         );
-        
+
         var loaded_tile = tile;
         loaded_tile.rotation = rotation;
-        
+
         ship.setTile(tile_data.x, tile_data.y, loaded_tile);
     }
 
     std.debug.print("Ship loaded from {s}\n", .{filename});
     return ship;
 }
+

@@ -1,5 +1,7 @@
 const zglfw = @import("zglfw");
 
+const Vec2 = @import("vec2.zig").Vec2;
+
 pub const InputState = enum {
     Forward,
     Backward,
@@ -129,5 +131,13 @@ pub const MouseState = struct {
         const mouse_pos = self.window.getCursorPos();
         self.x = @floatCast(mouse_pos[0]);
         self.y = @floatCast(mouse_pos[1]);
+    }
+
+    pub fn getRelativePosition(self: Self) Vec2 {
+        const wh = self.window.getFramebufferSize();
+        const x = self.x - @as(f32, @floatFromInt(wh[0])) / 2;
+        const y = self.y - @as(f32, @floatFromInt(wh[1])) / 2;
+
+        return Vec2.init(x, y);
     }
 };
