@@ -37,6 +37,12 @@ pub const Thruster = struct {
     power: f32,
 };
 
+pub const ObjectType = enum {
+    Ship,
+    Asteroid,
+    Debris,
+};
+
 pub const TileObject = struct {
     const Self = @This();
 
@@ -46,6 +52,7 @@ pub const TileObject = struct {
     allocator: std.mem.Allocator,
 
     id: u64,
+    object_type: ObjectType = .Asteroid,
 
     body_id: zphy.BodyId = .invalid,
     position: Vec2,
@@ -61,6 +68,7 @@ pub const TileObject = struct {
 
     gpu_grid: ?GpuTileGrid = null,
     dirty: bool = false,
+    physics_dirty: bool = false,
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -87,7 +95,11 @@ pub const TileObject = struct {
     }
 
     pub fn deinit(self: *Self) void {
+        for (self.tiles) |*tile| {
+            tile.composition.deinit();
+        }
         self.allocator.free(self.tiles);
+        self.thrusters.deinit();
     }
 
     pub fn setTile(self: *Self, x: usize, y: usize, tile: Tile) void {
@@ -104,7 +116,8 @@ pub const TileObject = struct {
             return null;
         }
 
-        return &self.tiles[y * self.width + x];
+        const index = y * self.width + x;
+        return &self.tiles[index];
     }
 
     pub fn setEmptyTile(self: *Self, x: usize, y: usize) void {
@@ -125,7 +138,7 @@ pub const TileObject = struct {
                 try tile_refs.append(.{
                     .object_id = self.id,
                     .tile_x = i % self.width,
-                    .tile_y = i / self.height,
+                    .tile_y = i / self.width,
                 });
             }
         }
@@ -303,15 +316,11 @@ pub const TileObject = struct {
 
     pub fn recalculatePhysics(self: *Self, physics: *Physics) !void {
         const body_interface = physics.physics_system.getBodyInterfaceMut();
-        if (self.body_id != .invalid) {
-            body_interface.removeBody(self.body_id);
-            body_interface.destroyBody(self.body_id);
-            self.body_id = .invalid;
-        }
 
         const compound_settings = try zphy.CompoundShapeSettings.createStatic();
         defer compound_settings.asShapeSettings().release();
 
+        var shape_count: u32 = 0;
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 const tile = self.getTile(x, y) orelse continue;
@@ -339,32 +348,52 @@ pub const TileObject = struct {
                     .{ x_pos, y_pos, 0.0 },
                     .{ 0, 0, 0, 1 },
                     box_settings.asShapeSettings(),
-                    0, // NOTE: userData
+                    0,
                 );
+                shape_count += 1;
             }
+        }
+
+        if (shape_count == 0) {
+            if (self.body_id != .invalid) {
+                body_interface.removeBody(self.body_id);
+                body_interface.destroyBody(self.body_id);
+                self.body_id = .invalid;
+            }
+            return;
         }
 
         const shape = try compound_settings.asShapeSettings().createShape();
         defer shape.release();
 
-        const mask: u32 = 1 + 2 + 4 + 32; // TRANSLATION_X + TRANSLATION_Y + TRANSLATION_Z + ROTATION_Z = 39
-        const allowed_dofs = @as(*const zphy.AllowedDOFs, @ptrCast(&mask)).*;
+        if (self.body_id != .invalid) {
+            body_interface.setShape(self.body_id, shape, true, .activate);
+        } else {
+            const mask: u32 = 1 + 2 + 4 + 32; // TRANSLATION_X + TRANSLATION_Y + TRANSLATION_Z + ROTATION_Z = 39
+            const allowed_dofs = @as(*const zphy.AllowedDOFs, @ptrCast(&mask)).*;
 
-        const q_rotation = zm.quatFromAxisAngle(zm.f32x4(0.0, 0.0, 1.0, 0.0), self.rotation);
+            const q_rotation = zm.quatFromAxisAngle(zm.f32x4(0.0, 0.0, 1.0, 0.0), self.rotation);
 
-        var rot_arr: [4]f32 = undefined;
-        zm.storeArr4(&rot_arr, q_rotation);
+            var rot_arr: [4]f32 = undefined;
+            zm.storeArr4(&rot_arr, q_rotation);
 
-        const body_settings = zphy.BodyCreationSettings{
-            .shape = shape,
-            .position = .{ self.position.x, self.position.y, 0.0, 0.0 },
-            .rotation = rot_arr,
-            .motion_type = .dynamic,
-            .object_layer = 1,
-            .allowed_DOFs = allowed_dofs,
-        };
+            const collision_layer: u16 = switch (self.object_type) {
+                .Ship => 1,
+                .Asteroid => 1,
+                .Debris => 2,
+            };
 
-        self.body_id = try body_interface.createAndAddBody(body_settings, .activate);
+            const body_settings = zphy.BodyCreationSettings{
+                .shape = shape,
+                .position = .{ self.position.x, self.position.y, 0.0, 0.0 },
+                .rotation = rot_arr,
+                .motion_type = .dynamic,
+                .object_layer = collision_layer,
+                .allowed_DOFs = allowed_dofs,
+            };
+
+            self.body_id = try body_interface.createAndAddBody(body_settings, .activate);
+        }
 
         physics.physics_system.optimizeBroadPhase();
 

@@ -101,6 +101,7 @@ pub fn loadShip(allocator: std.mem.Allocator, id: u64, filename: []const u8) !Ti
         ship.setTile(tile_data.x, tile_data.y, loaded_tile);
     }
 
+
     std.debug.print("Ship loaded from {s}\n", .{filename});
     return ship;
 }

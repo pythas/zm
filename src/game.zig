@@ -54,6 +54,8 @@ pub const Game = struct {
 
     pub fn deinit(self: *Self) void {
         self.world.deinit();
+        self.renderer.deinit();
+        self.editor.deinit();
     }
 
     pub fn setupCallbacks(self: *Self) void {

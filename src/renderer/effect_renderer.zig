@@ -40,9 +40,8 @@ pub const EffectRenderer = struct {
         };
     }
 
-    pub fn deinit(self: Self, allocator: std.mem.Allocator) void {
+    pub fn deinit(self: Self) void {
         _ = self;
-        _ = allocator;
     }
 
     pub fn draw(

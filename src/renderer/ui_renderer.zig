@@ -88,6 +88,10 @@ pub const UiRenderer = struct {
         };
     }
 
+    pub fn deinit(self: *Self) void {
+        self.vertices.deinit();
+    }
+
     pub fn beginFrame(
         self: *Self,
     ) void {

@@ -22,7 +22,7 @@ pub const World = struct {
     camera: Camera,
     player_controller: PlayerController,
 
-    // next_object_id: u64 = 0,
+    next_object_id: u64 = 0,
     objects: std.ArrayList(TileObject),
 
     physics: Physics,
@@ -34,45 +34,48 @@ pub const World = struct {
             Vec2.init(0, 0),
         );
 
-        var objects = std.ArrayList(TileObject).init(allocator);
-
-        var ship = try ship_serialization.loadShip(allocator, 0, "ship.json");
-
-        ship.ship_stats = .{};
-        try ship.recalculatePhysics(&physics);
-        try objects.append(ship);
-
-        {
-            var asteroid = try TileObject.init(allocator, 1, 16, 16, Vec2.init(0.0, -300.0), 0);
-            for (0..asteroid.width) |y| {
-                for (0..asteroid.height) |x| {
-                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-                }
-            }
-            try asteroid.recalculatePhysics(&physics);
-            try objects.append(asteroid);
-        }
-
-        {
-            var asteroid = try TileObject.init(allocator, 2, 16, 16, Vec2.init(-200.0, -300.0), 0);
-            for (0..asteroid.width) |y| {
-                for (0..asteroid.height) |x| {
-                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
-                }
-            }
-            try asteroid.recalculatePhysics(&physics);
-            try objects.append(asteroid);
-        }
-
         const player_controller = PlayerController.init(allocator, 0);
 
-        return .{
+        var self: Self = .{
             .allocator = allocator,
             .camera = camera,
-            .objects = objects,
+            .objects = std.ArrayList(TileObject).init(allocator),
             .player_controller = player_controller,
             .physics = physics,
         };
+
+        var ship = try ship_serialization.loadShip(allocator, self.generateObjectId(), "ship.json");
+
+        ship.object_type = .Ship;
+        ship.ship_stats = .{};
+        try ship.recalculatePhysics(&physics);
+        try self.objects.append(ship);
+
+        {
+            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(0.0, -300.0), 0);
+            asteroid.object_type = .Asteroid;
+            for (0..asteroid.width) |y| {
+                for (0..asteroid.height) |x| {
+                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+                }
+            }
+            try asteroid.recalculatePhysics(&physics);
+            try self.objects.append(asteroid);
+        }
+
+        {
+            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(-200.0, -300.0), 0);
+            asteroid.object_type = .Asteroid;
+            for (0..asteroid.width) |y| {
+                for (0..asteroid.height) |x| {
+                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+                }
+            }
+            try asteroid.recalculatePhysics(&physics);
+            try self.objects.append(asteroid);
+        }
+
+        return self;
     }
 
     pub fn deinit(self: *Self) void {
@@ -81,6 +84,15 @@ pub const World = struct {
         }
         self.objects.deinit();
         self.physics.deinit();
+        self.player_controller.deinit();
+    }
+
+    pub fn generateObjectId(self: *Self) u64 {
+        const id = self.next_object_id;
+
+        self.next_object_id += 1;
+
+        return id;
     }
 
     pub fn getObjectById(self: *World, id: u64) ?*TileObject {
@@ -123,7 +135,9 @@ pub const World = struct {
             obj.rotation = 2.0 * std.math.atan2(rot[2], rot[3]);
         }
 
-        self.camera.position = self.objects.items[0].position;
+        if (self.objects.items.len > 0) {
+            self.camera.position = self.objects.items[0].position;
+        }
     }
 
     pub fn onScroll(self: *Self, xoffset: f64, yoffset: f64) void {

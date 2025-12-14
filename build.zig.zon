@@ -30,8 +30,9 @@
             .hash = "12207f41bf1035f272bc654056ab07f0004c9b20ede8be03fc2cb0f2eb29cd1c897b",
         },
         .zphysics = .{
-            .url = "git+https://github.com/zig-gamedev/zphysics?ref=main#87dbfd003e31623cede1137aa8a70f86619b5d5b",
-            .hash = "zphysics-0.2.0-dev-nZDEAOXUQgCrjn_iSZke7zpWwqRUe_BRlrzRrDdXXPEz",
+            .path = "libs/zphysics",
+            //     .url = "git+https://github.com/zig-gamedev/zphysics?ref=main#87dbfd003e31623cede1137aa8a70f86619b5d5b",
+            //     .hash = "zphysics-0.2.0-dev-nZDEAOXUQgCrjn_iSZke7zpWwqRUe_BRlrzRrDdXXPEz",
         },
         .zmath = .{
             .url = "git+https://github.com/zig-gamedev/zmath?ref=main#3a5955b2b72cd081563fbb084eff05bffd1e3fbb",

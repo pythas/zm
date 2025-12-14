@@ -29,6 +29,10 @@ pub const PlayerController = struct {
         };
     }
 
+    pub fn deinit(self: *Self) void {
+        self.tile_actions.deinit();
+    }
+
     pub fn update(
         self: *Self,
         dt: f32,
@@ -178,11 +182,43 @@ pub const PlayerController = struct {
                             tile_action.target.tile_y,
                         });
 
-                        const tile_x = tile_action.target.tile_x;
-                        const tile_y = tile_action.target.tile_y;
+                        if (world.getObjectById(tile_action.target.object_id)) |target_obj| {
+                            const tx = tile_action.target.tile_x;
+                            const ty = tile_action.target.tile_y;
+                            const target_id = tile_action.target.object_id;
 
-                        if (world.getObjectById(tile_action.target.object_id)) |object| {
-                            object.setEmptyTile(tile_x, tile_y);
+                            if (target_obj.getTile(tx, ty)) |tile| {
+                                if (tile.category != .Empty) {
+                                    const debris_pos = target_obj.getTileWorldPos(tx, ty);
+
+                                    const new_id = world.generateObjectId();
+                                    var debris = try TileObject.init(self.allocator, new_id, 1, 1, debris_pos, target_obj.rotation);
+                                    debris.object_type = .Debris;
+                                    debris.setTile(0, 0, tile.*);
+
+                                    try debris.recalculatePhysics(&world.physics);
+
+                                    if (target_obj.body_id != .invalid) {
+                                        const body_interface = world.physics.physics_system.getBodyInterfaceMut();
+                                        const parent_vel = body_interface.getLinearVelocity(target_obj.body_id);
+                                        const parent_ang_vel = body_interface.getAngularVelocity(target_obj.body_id);
+
+                                        body_interface.setLinearVelocity(debris.body_id, parent_vel);
+                                        body_interface.setAngularVelocity(debris.body_id, parent_ang_vel);
+                                    }
+
+                                    // const body_interface = world.physics.physics_system.getBodyInterfaceMut();
+
+                                    // body_interface.addTorque(debris.body_id, @as(f32, @floatFromInt(std.crypto.random.intRangeAtMost(i32, 1000, 5000))));
+
+                                    try world.objects.append(debris);
+                                }
+                            }
+
+                            if (world.getObjectById(target_id)) |target_obj_refreshed| {
+                                target_obj_refreshed.setEmptyTile(tx, ty);
+                                target_obj_refreshed.physics_dirty = true;
+                            }
                         }
                     },
                 }

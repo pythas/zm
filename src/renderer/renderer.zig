@@ -13,6 +13,7 @@ const World = @import("../world.zig").World;
 pub const Renderer = struct {
     const Self = @This();
 
+    allocator: std.mem.Allocator,
     atlas: Atlas,
     global: GlobalRenderState,
     sprite: SpriteRenderer,
@@ -38,6 +39,7 @@ pub const Renderer = struct {
         const ui = try UiRenderer.init(allocator, gctx, window, &global);
 
         return .{
+            .allocator = allocator,
             .atlas = atlas,
             .global = global,
             .sprite = sprite,
@@ -45,5 +47,14 @@ pub const Renderer = struct {
             .beam = beam,
             .ui = ui,
         };
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.atlas.deinit();
+        self.global.deinit();
+        self.sprite.deinit();
+        self.effect.deinit();
+        self.beam.deinit();
+        self.ui.deinit();
     }
 };

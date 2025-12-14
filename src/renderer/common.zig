@@ -102,6 +102,10 @@ pub const GlobalRenderState = struct {
             std.mem.asBytes(&uniform_data),
         );
     }
+
+    pub fn deinit(self: *GlobalRenderState) void {
+        _ = self;
+    }
 };
 
 pub const Atlas = struct {
@@ -137,6 +141,7 @@ pub const Atlas = struct {
 
         for (paths, 0..) |path, i| {
             const tex = try Texture.init(allocator, path);
+            defer tex.deinit();
             @memcpy(texture_data[0..texture_size], tex.data);
 
             gctx.queue.writeTexture(
@@ -163,6 +168,10 @@ pub const Atlas = struct {
             .texture = texture,
             .view = view,
         };
+    }
+
+    pub fn deinit(self: *Atlas) void {
+        _ = self;
     }
 };
 

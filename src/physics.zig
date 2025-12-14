@@ -65,7 +65,8 @@ pub const Physics = struct {
 const object_layers = struct {
     const non_moving: zphy.ObjectLayer = 0;
     const moving: zphy.ObjectLayer = 1;
-    const len: u32 = 2;
+    const debris: zphy.ObjectLayer = 2;
+    const len: u32 = 3;
 };
 
 const broad_phase_layers = struct {
@@ -83,6 +84,7 @@ const BroadPhaseLayerInterface = extern struct {
 
         object_to_broad_phase[object_layers.non_moving] = broad_phase_layers.non_moving;
         object_to_broad_phase[object_layers.moving] = broad_phase_layers.moving;
+        object_to_broad_phase[object_layers.debris] = broad_phase_layers.moving;
 
         return .{
             .object_to_broad_phase = object_to_broad_phase,
@@ -120,6 +122,7 @@ const ObjectVsBroadPhaseLayerFilter = extern struct {
         return switch (layer1) {
             object_layers.non_moving => layer2 == broad_phase_layers.moving,
             object_layers.moving => true,
+            object_layers.debris => true,
             else => unreachable,
         };
     }
@@ -134,8 +137,9 @@ const ObjectLayerPairFilter = extern struct {
         object2: zphy.ObjectLayer,
     ) callconv(.c) bool {
         return switch (object1) {
-            object_layers.non_moving => object2 == object_layers.moving,
+            object_layers.non_moving => object2 == object_layers.moving or object2 == object_layers.debris,
             object_layers.moving => true,
+            object_layers.debris => object2 != object_layers.debris, // Debris doesn't collide with other debris
             else => unreachable,
         };
     }
@@ -177,7 +181,7 @@ const ContactListener = extern struct {
         _ = contact_listener;
         _ = body1;
         _ = body2;
-        std.debug.print("A contact was added\n", .{});
+        // std.debug.print("A contact was added\n", .{});
     }
 
     pub fn onContactPersisted(
@@ -190,7 +194,7 @@ const ContactListener = extern struct {
         _ = contact_listener;
         _ = body1;
         _ = body2;
-        std.debug.print("A contact was persisted\n", .{});
+        // std.debug.print("A contact was persisted\n", .{});
     }
 
     pub fn onContactRemoved(
@@ -199,6 +203,6 @@ const ContactListener = extern struct {
     ) callconv(.c) void {
         _ = contact_listener;
         _ = sub_shape_id_pair;
-        std.debug.print("A contact was removed\n", .{});
+        // std.debug.print("A contact was removed\n", .{});
     }
 };

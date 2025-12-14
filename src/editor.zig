@@ -101,6 +101,10 @@ pub const Editor = struct {
         };
     }
 
+    pub fn deinit(self: *Self) void {
+        _ = self;
+    }
+
     pub fn update(
         self: *Self,
         renderer: *Renderer,
