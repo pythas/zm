@@ -131,6 +131,7 @@ pub const PlayerController = struct {
                             break;
                         }
 
+                        // get closest laser
                         var source: ?TileCoords = null;
                         var d_min: ?f32 = null;
 
@@ -145,7 +146,7 @@ pub const PlayerController = struct {
                             break;
                         }
 
-                        // TODO: check if we laser are in dist
+                        // TODO: check if laser are in dist
 
                         const target = TileReference{
                             .object_id = object.id,

@@ -112,6 +112,10 @@ pub const World = struct {
                 continue;
             }
 
+            if (obj.dirty) {
+                try obj.recalculatePhysics(&self.physics);
+            }
+
             const pos = body_interface.getPosition(obj.body_id);
             const rot = body_interface.getRotation(obj.body_id);
 

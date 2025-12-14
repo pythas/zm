@@ -116,19 +116,6 @@ pub const TileObject = struct {
         // TODO: Create a tile.setEmpty that sets all props
     }
 
-    // pub fn getTileByCategory(self: Self, category: TileCategory) ![]Tile {
-    //     var tiles = std.ArrayList(Tile).init(self.allocator);
-    //     errdefer tiles.deinit();
-    //
-    //     for (self.tiles) |tile| {
-    //         if (tile.category == category) {
-    //             try tiles.append(tile);
-    //         }
-    //     }
-    //
-    //     return tiles.toOwnedSlice();
-    // }
-
     pub fn getTileByCategory(self: Self, category: TileCategory) ![]TileReference {
         var tile_refs = std.ArrayList(TileReference).init(self.allocator);
         errdefer tile_refs.deinit();
@@ -363,10 +350,15 @@ pub const TileObject = struct {
         const mask: u32 = 1 + 2 + 4 + 32; // TRANSLATION_X + TRANSLATION_Y + TRANSLATION_Z + ROTATION_Z = 39
         const allowed_dofs = @as(*const zphy.AllowedDOFs, @ptrCast(&mask)).*;
 
+        const q_rotation = zm.quatFromAxisAngle(zm.f32x4(0.0, 0.0, 1.0, 0.0), self.rotation);
+
+        var rot_arr: [4]f32 = undefined;
+        zm.storeArr4(&rot_arr, q_rotation);
+
         const body_settings = zphy.BodyCreationSettings{
             .shape = shape,
             .position = .{ self.position.x, self.position.y, 0.0, 0.0 },
-            .rotation = .{ 0, 0, 0, 1 },
+            .rotation = rot_arr,
             .motion_type = .dynamic,
             .object_layer = 1,
             .allowed_DOFs = allowed_dofs,
