@@ -204,10 +204,20 @@ pub const PlayerController = struct {
 
                                         const r = debris.position.sub(target_obj.position);
                                         const tan_vel = Vec2.init(-parent_ang_vel * r.y, parent_ang_vel * r.x);
-                                        const final_vel = parent_vel.add(tan_vel);
+                                        var final_vel = parent_vel.add(tan_vel);
+
+                                        // Add random drift
+                                        const rand = std.crypto.random;
+                                        const drift_speed = 30.0;
+                                        final_vel.x += (rand.float(f32) - 0.5) * drift_speed;
+                                        final_vel.y += (rand.float(f32) - 0.5) * drift_speed;
+
+                                        // Add random rotation
+                                        const rot_speed = 2.0;
+                                        const final_ang_vel = parent_ang_vel + (rand.float(f32) - 0.5) * rot_speed;
 
                                         world.physics.setLinearVelocity(debris.body_id, final_vel);
-                                        world.physics.setAngularVelocity(debris.body_id, parent_ang_vel);
+                                        world.physics.setAngularVelocity(debris.body_id, final_ang_vel);
                                     }
 
                                     // const body_interface = world.physics.physics_system.getBodyInterfaceMut();

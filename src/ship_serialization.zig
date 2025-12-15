@@ -49,8 +49,8 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
     const ship_data = ShipData{
         .width = ship.width,
         .height = ship.height,
-        .position = .{ .x = ship.position.x, .y = ship.position.y },
-        .rotation = ship.rotation,
+        .position = .{ .x = 0.0, .y = 0.0 },
+        .rotation = 0.0,
         .tiles = tiles_data.items,
     };
 
