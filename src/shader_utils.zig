@@ -16,4 +16,3 @@ pub fn createShaderModuleWithCommon(
 
     return zgpu.createWgslShaderModule(device, combined_code.ptr, entry_point_z.ptr);
 }
-

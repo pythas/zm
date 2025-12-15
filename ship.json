@@ -2,10 +2,10 @@
   "width": 16,
   "height": 16,
   "position": {
-    "x": 1.5368412971496582e1,
-    "y": -1.6618289184570312e2
+    "x": -3.6961280822753906e1,
+    "y": -9.837141723632812e2
   },
-  "rotation": 0e0,
+  "rotation": 2.6605328544974327e-2,
   "tiles": [
     {
       "x": 5,
@@ -283,8 +283,8 @@
     {
       "x": 6,
       "y": 5,
-      "category": 2,
-      "sprite": 36,
+      "category": 5,
+      "sprite": 35,
       "rotation": 0
     },
     {
@@ -304,8 +304,8 @@
     {
       "x": 9,
       "y": 5,
-      "category": 2,
-      "sprite": 36,
+      "category": 5,
+      "sprite": 35,
       "rotation": 0
     },
     {
@@ -430,8 +430,8 @@
     {
       "x": 6,
       "y": 7,
-      "category": 2,
-      "sprite": 36,
+      "category": 5,
+      "sprite": 35,
       "rotation": 0
     },
     {
@@ -451,8 +451,8 @@
     {
       "x": 9,
       "y": 7,
-      "category": 2,
-      "sprite": 36,
+      "category": 5,
+      "sprite": 35,
       "rotation": 0
     },
     {
@@ -598,8 +598,8 @@
     {
       "x": 6,
       "y": 9,
-      "category": 2,
-      "sprite": 36,
+      "category": 5,
+      "sprite": 35,
       "rotation": 0
     },
     {
@@ -619,8 +619,8 @@
     {
       "x": 9,
       "y": 9,
-      "category": 2,
-      "sprite": 36,
+      "category": 5,
+      "sprite": 35,
       "rotation": 0
     },
     {

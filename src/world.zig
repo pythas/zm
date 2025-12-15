@@ -1,5 +1,4 @@
 const std = @import("std");
-const color = @import("color.zig");
 const math = std.math;
 const zglfw = @import("zglfw");
 
@@ -8,7 +7,6 @@ const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
 const PlayerController = @import("player.zig").PlayerController;
 const Camera = @import("camera.zig").Camera;
-const Ship = @import("ship.zig").Ship;
 const Vec2 = @import("vec2.zig").Vec2;
 const Tile = @import("tile.zig").Tile;
 const TileObject = @import("tile_object.zig").TileObject;
