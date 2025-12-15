@@ -3,7 +3,7 @@ const color = @import("color.zig");
 const math = std.math;
 const zglfw = @import("zglfw");
 
-const Physics = @import("physics.zig").Physics;
+const Physics = @import("box2d_physics.zig").Physics;
 const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
 const PlayerController = @import("player.zig").PlayerController;
@@ -108,7 +108,18 @@ pub const World = struct {
         keyboard_state: *const KeyboardState,
         mouse_state: *const MouseState,
     ) !void {
-        try self.physics.physics_system.update(dt, .{});
+        self.physics.update(dt);
+
+        for (self.objects.items) |*obj| {
+            if (!obj.body_id.isValid()) {
+                continue;
+            }
+            const pos = self.physics.getPosition(obj.body_id);
+            const rot = self.physics.getRotation(obj.body_id);
+
+            obj.position = pos;
+            obj.rotation = rot;
+        }
 
         try self.player_controller.update(
             dt,
@@ -117,10 +128,8 @@ pub const World = struct {
             mouse_state,
         );
 
-        const body_interface = self.physics.physics_system.getBodyInterface();
-
         for (self.objects.items) |*obj| {
-            if (obj.body_id == .invalid) {
+            if (!obj.body_id.isValid()) {
                 continue;
             }
 
@@ -128,11 +137,11 @@ pub const World = struct {
                 try obj.recalculatePhysics(&self.physics);
             }
 
-            const pos = body_interface.getPosition(obj.body_id);
-            const rot = body_interface.getRotation(obj.body_id);
+            const pos = self.physics.getPosition(obj.body_id);
+            const rot = self.physics.getRotation(obj.body_id);
 
-            obj.position = Vec2.init(pos[0], pos[1]);
-            obj.rotation = 2.0 * std.math.atan2(rot[2], rot[3]);
+            obj.position = pos;
+            obj.rotation = rot;
         }
 
         if (self.objects.items.len > 0) {

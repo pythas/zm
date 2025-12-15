@@ -78,9 +78,9 @@ pub const Game = struct {
 
         switch (self.mode) {
             .InWorld => {
-                self.renderer.global.write(self.window, &self.world, dt, t, self.mode, 0.0, 0.0);
-
                 try self.world.update(dt, &self.keyboard_state, &self.mouse_state);
+
+                self.renderer.global.write(self.window, &self.world, dt, t, self.mode, 0.0, 0.0);
             },
             .ShipEditor => {
                 self.editor.update(&self.renderer, &self.world, dt, t);

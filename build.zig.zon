@@ -29,14 +29,13 @@
             .url = "git+https://github.com/kooparse/zgltf#ee153a493a773d1a8c4893f117d593ea21e4db93",
             .hash = "12207f41bf1035f272bc654056ab07f0004c9b20ede8be03fc2cb0f2eb29cd1c897b",
         },
-        .zphysics = .{
-            .path = "libs/zphysics",
-            //     .url = "git+https://github.com/zig-gamedev/zphysics?ref=main#87dbfd003e31623cede1137aa8a70f86619b5d5b",
-            //     .hash = "zphysics-0.2.0-dev-nZDEAOXUQgCrjn_iSZke7zpWwqRUe_BRlrzRrDdXXPEz",
-        },
         .zmath = .{
             .url = "git+https://github.com/zig-gamedev/zmath?ref=main#3a5955b2b72cd081563fbb084eff05bffd1e3fbb",
             .hash = "zmath-0.11.0-dev-wjwivdMsAwD-xaLj76YHUq3t9JDH-X16xuMTmnDzqbu2",
+        },
+        .box2d = .{
+            .url = "git+https://github.com/allyourcodebase/box2d?ref=main#0482245bf59bec743a7cb29961a480c3f7497f0c",
+            .hash = "box2d-3.1.1-crFBk74aAAD-TJGY5mHVDB0sV5JntTq0MnlaHYxb5yl5",
         },
     },
     .paths = .{

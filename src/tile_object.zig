@@ -1,5 +1,4 @@
 const std = @import("std");
-const zphy = @import("zphysics");
 const zm = @import("zmath");
 
 const Tile = @import("tile.zig").Tile;
@@ -9,7 +8,9 @@ const Direction = @import("tile.zig").Direction;
 const Offset = @import("tile.zig").Offset;
 const TileCategory = @import("tile.zig").TileCategory;
 const TileReference = @import("tile.zig").TileReference;
-const Physics = @import("physics.zig").Physics;
+const Physics = @import("box2d_physics.zig").Physics;
+const BodyId = @import("box2d_physics.zig").BodyId;
+const TileData = @import("box2d_physics.zig").TileData;
 const InputState = @import("input.zig").InputState;
 
 pub const ShipCapabilities = struct {
@@ -54,7 +55,7 @@ pub const TileObject = struct {
     id: u64,
     object_type: ObjectType = .Asteroid,
 
-    body_id: zphy.BodyId = .invalid,
+    body_id: BodyId = BodyId.invalid,
     position: Vec2,
     rotation: f32,
 
@@ -252,20 +253,15 @@ pub const TileObject = struct {
     }
 
     pub fn applyInputThrust(self: *Self, physics: *Physics, input: InputState) void {
-        if (self.body_id == .invalid) {
+        if (!self.body_id.isValid()) {
             return;
         }
 
-        const body_interface = physics.physics_system.getBodyInterfaceMut();
+        const body_pos = physics.getPosition(self.body_id);
+        const body_rot = physics.getRotation(self.body_id);
 
-        body_interface.activate(self.body_id);
-
-        const pos_arr = body_interface.getPosition(self.body_id);
-        const rot_arr = body_interface.getRotation(self.body_id);
-
-        const v_body_pos = zm.loadArr3(pos_arr);
-        const q_rotation = zm.loadArr4(rot_arr);
-        const m_rotation = zm.matFromQuat(q_rotation);
+        const cos_rot = @cos(body_rot);
+        const sin_rot = @sin(body_rot);
 
         for (self.thrusters.items) |thruster| {
             var should_fire = false;
@@ -290,115 +286,98 @@ pub const TileObject = struct {
             }
 
             if (should_fire) {
-                const v_local_dir = switch (thruster.direction) {
-                    .North => zm.f32x4(0.0, 1.0, 0.0, 0.0),
-                    .South => zm.f32x4(0.0, -1.0, 0.0, 0.0),
-                    .East => zm.f32x4(-1.0, 0.0, 0.0, 0.0),
-                    .West => zm.f32x4(1.0, 0.0, 0.0, 0.0),
+                const local_dir = switch (thruster.direction) {
+                    .North => Vec2.init(0.0, 1.0),
+                    .South => Vec2.init(0.0, -1.0),
+                    .East => Vec2.init(-1.0, 0.0),
+                    .West => Vec2.init(1.0, 0.0),
                 };
 
-                const v_world_dir = zm.mul(v_local_dir, m_rotation);
-                const v_force = v_world_dir * zm.f32x4s(thruster.power);
-                const v_local_pos = zm.f32x4(thruster.x, thruster.y, 0.0, 0.0);
-                const v_world_offset = zm.mul(v_local_pos, m_rotation);
-                const v_apply_point = v_body_pos + v_world_offset;
+                const world_dir = Vec2.init(local_dir.x * cos_rot - local_dir.y * sin_rot, local_dir.x * sin_rot + local_dir.y * cos_rot);
 
-                var final_force: [3]f32 = undefined;
-                var final_point: [3]f32 = undefined;
+                const force = Vec2.init(world_dir.x * thruster.power, world_dir.y * thruster.power);
 
-                zm.storeArr3(&final_force, v_force);
-                zm.storeArr3(&final_point, v_apply_point);
+                const local_pos = Vec2.init(thruster.x, thruster.y);
+                const world_offset = Vec2.init(local_pos.x * cos_rot - local_pos.y * sin_rot, local_pos.x * sin_rot + local_pos.y * cos_rot);
 
-                body_interface.addForceAtPosition(self.body_id, final_force, final_point);
+                const apply_point = Vec2.init(body_pos.x + world_offset.x, body_pos.y + world_offset.y);
+
+                physics.addForceAtPoint(self.body_id, force, apply_point, true);
             }
         }
     }
 
     pub fn recalculatePhysics(self: *Self, physics: *Physics) !void {
-        const body_interface = physics.physics_system.getBodyInterfaceMut();
+        var tiles = std.ArrayList(TileData).init(self.allocator);
+        defer tiles.deinit();
 
-        const compound_settings = try zphy.CompoundShapeSettings.createStatic();
-        defer compound_settings.asShapeSettings().release();
-
-        var shape_count: u32 = 0;
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 const tile = self.getTile(x, y) orelse continue;
+
                 if (tile.category == .Empty) {
                     continue;
                 }
 
-                const box_settings = try zphy.BoxShapeSettings.create(.{ 4.0, 4.0, 1.0 });
-                defer box_settings.asShapeSettings().release();
-
-                box_settings.asConvexShapeSettings().setDensity(switch (tile.category) {
+                const density: f32 = switch (tile.category) {
                     .Engine => 2.0,
                     .RCS => 0.5,
                     .Hull => 1.0,
                     .Laser => 1.0,
+                    .Core => 3.0,
                     else => 1000.0,
-                });
+                };
 
                 const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
                 const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
                 const x_pos = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
                 const y_pos = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
 
-                compound_settings.addShape(
-                    .{ x_pos, y_pos, 0.0 },
-                    .{ 0, 0, 0, 1 },
-                    box_settings.asShapeSettings(),
-                    0,
-                );
-                shape_count += 1;
+                try tiles.append(TileData{
+                    .pos = Vec2.init(x_pos, y_pos),
+                    .density = density,
+                    .layer = if (self.object_type == .Debris) .Debris else .Default,
+                });
             }
         }
 
-        if (shape_count == 0) {
-            if (self.body_id != .invalid) {
-                body_interface.removeBody(self.body_id);
-                body_interface.destroyBody(self.body_id);
-                self.body_id = .invalid;
+        if (tiles.items.len == 0) {
+            if (self.body_id.isValid()) {
+                physics.destroyBody(self.body_id);
+                self.body_id = BodyId.invalid;
             }
             return;
         }
 
-        const shape = try compound_settings.asShapeSettings().createShape();
-        defer shape.release();
+        var linear_velocity = Vec2.init(0, 0);
+        var angular_velocity: f32 = 0.0;
 
-        if (self.body_id != .invalid) {
-            body_interface.setShape(self.body_id, shape, true, .activate);
-        } else {
-            const mask: u32 = 1 + 2 + 4 + 32; // TRANSLATION_X + TRANSLATION_Y + TRANSLATION_Z + ROTATION_Z = 39
-            const allowed_dofs = @as(*const zphy.AllowedDOFs, @ptrCast(&mask)).*;
+        if (self.body_id.isValid()) {
+            self.position = physics.getPosition(self.body_id);
+            self.rotation = physics.getRotation(self.body_id);
 
-            const q_rotation = zm.quatFromAxisAngle(zm.f32x4(0.0, 0.0, 1.0, 0.0), self.rotation);
+            linear_velocity = physics.getLinearVelocity(self.body_id);
+            angular_velocity = physics.getAngularVelocity(self.body_id);
 
-            var rot_arr: [4]f32 = undefined;
-            zm.storeArr4(&rot_arr, q_rotation);
-
-            const collision_layer: u16 = switch (self.object_type) {
-                .Ship => 1,
-                .Asteroid => 1,
-                .Debris => 2,
-            };
-
-            const body_settings = zphy.BodyCreationSettings{
-                .shape = shape,
-                .position = .{ self.position.x, self.position.y, 0.0, 0.0 },
-                .rotation = rot_arr,
-                .motion_type = .dynamic,
-                .object_layer = collision_layer,
-                .allowed_DOFs = allowed_dofs,
-            };
-
-            self.body_id = try body_interface.createAndAddBody(body_settings, .activate);
+            physics.destroyBody(self.body_id);
         }
 
-        physics.physics_system.optimizeBroadPhase();
+        self.body_id = try physics.createBody(self.position, self.rotation);
 
-        // ship
+        try physics.createTileShape(self.body_id, tiles.items);
+
+        physics.setLinearVelocity(self.body_id, linear_velocity);
+        physics.setAngularVelocity(self.body_id, angular_velocity);
+
+        try self.rebuildThrusters();
+    }
+
+    fn rebuildThrusters(self: *Self) !void {
         self.thrusters.clearRetainingCapacity();
+
+        if (self.object_type != .Ship) {
+            return;
+        }
 
         for (0..self.width) |x| {
             for (0..self.height) |y| {

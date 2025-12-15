@@ -9,7 +9,7 @@ const TileCoords = @import("tile.zig").TileCoords;
 const TileObject = @import("tile_object.zig").TileObject;
 const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
-const Physics = @import("physics.zig").Physics;
+const Physics = @import("box2d_physics.zig").Physics;
 const World = @import("world.zig").World;
 
 pub const PlayerController = struct {
@@ -198,13 +198,16 @@ pub const PlayerController = struct {
 
                                     try debris.recalculatePhysics(&world.physics);
 
-                                    if (target_obj.body_id != .invalid) {
-                                        const body_interface = world.physics.physics_system.getBodyInterfaceMut();
-                                        const parent_vel = body_interface.getLinearVelocity(target_obj.body_id);
-                                        const parent_ang_vel = body_interface.getAngularVelocity(target_obj.body_id);
+                                    if (target_obj.body_id.isValid()) {
+                                        const parent_vel = world.physics.getLinearVelocity(target_obj.body_id);
+                                        const parent_ang_vel = world.physics.getAngularVelocity(target_obj.body_id);
 
-                                        body_interface.setLinearVelocity(debris.body_id, parent_vel);
-                                        body_interface.setAngularVelocity(debris.body_id, parent_ang_vel);
+                                        const r = debris.position.sub(target_obj.position);
+                                        const tan_vel = Vec2.init(-parent_ang_vel * r.y, parent_ang_vel * r.x);
+                                        const final_vel = parent_vel.add(tan_vel);
+
+                                        world.physics.setLinearVelocity(debris.body_id, final_vel);
+                                        world.physics.setAngularVelocity(debris.body_id, parent_ang_vel);
                                     }
 
                                     // const body_interface = world.physics.physics_system.getBodyInterfaceMut();

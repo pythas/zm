@@ -23,6 +23,7 @@ pub const TileCategory = enum(u8) {
     Engine,
     RCS,
     Laser,
+    Core,
 };
 
 pub const BaseMaterial = enum(u8) {
