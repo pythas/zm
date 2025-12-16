@@ -1,16 +1,16 @@
 const std = @import("std");
-const zm = @import("zmath");
 
 const Tile = @import("tile.zig").Tile;
 const Vec2 = @import("vec2.zig").Vec2;
 const GpuTileGrid = @import("renderer/sprite_renderer.zig").GpuTileGrid;
 const Direction = @import("tile.zig").Direction;
 const Offset = @import("tile.zig").Offset;
-const TileCategory = @import("tile.zig").TileCategory;
+const ShipPart = @import("tile.zig").ShipPart;
 const TileReference = @import("tile.zig").TileReference;
 const Physics = @import("box2d_physics.zig").Physics;
 const BodyId = @import("box2d_physics.zig").BodyId;
-const TileData = @import("box2d_physics.zig").TileData;
+const PhysicsTileData = @import("box2d_physics.zig").TileData;
+const TileData = @import("tile.zig").TileData;
 const InputState = @import("input.zig").InputState;
 
 pub const ShipCapabilities = struct {
@@ -47,9 +47,6 @@ pub const ObjectType = enum {
 pub const TileObject = struct {
     const Self = @This();
 
-    const enginePower: f32 = 200000.0;
-    const rcsPower: f32 = 200000.0;
-
     allocator: std.mem.Allocator,
 
     id: u64,
@@ -64,7 +61,6 @@ pub const TileObject = struct {
     radius: f32,
     tiles: []Tile,
 
-    ship_stats: ?ShipCapabilities = null,
     thrusters: std.ArrayList(Thruster),
 
     gpu_grid: ?GpuTileGrid = null,
@@ -80,7 +76,7 @@ pub const TileObject = struct {
         rotation: f32,
     ) !Self {
         const tiles = try allocator.alloc(Tile, width * height);
-        @memset(tiles, try Tile.initEmpty(allocator));
+        @memset(tiles, try Tile.initEmpty());
 
         return .{
             .allocator = allocator,
@@ -96,9 +92,6 @@ pub const TileObject = struct {
     }
 
     pub fn deinit(self: *Self) void {
-        for (self.tiles) |*tile| {
-            tile.composition.deinit();
-        }
         self.allocator.free(self.tiles);
         self.thrusters.deinit();
     }
@@ -122,20 +115,20 @@ pub const TileObject = struct {
     }
 
     pub fn setEmptyTile(self: *Self, x: usize, y: usize) void {
-        var tile = self.getTile(x, y) orelse return;
+        const tile = self.getTile(x, y) orelse return;
 
-        tile.category = .Empty;
+        tile.* = try Tile.initEmpty();
         self.dirty = true;
-
-        // TODO: Create a tile.setEmpty that sets all props
     }
 
-    pub fn getTileByCategory(self: Self, category: TileCategory) ![]TileReference {
+    pub fn getTileByShipPart(self: Self, ship_part: ShipPart) ![]TileReference {
         var tile_refs = std.ArrayList(TileReference).init(self.allocator);
         errdefer tile_refs.deinit();
 
         for (self.tiles, 0..) |tile, i| {
-            if (tile.category == category) {
+            const current_ship_part = tile.getShipPart() orelse continue;
+
+            if (current_ship_part == ship_part) {
                 try tile_refs.append(.{
                     .object_id = self.id,
                     .tile_x = i % self.width,
@@ -177,11 +170,11 @@ pub const TileObject = struct {
         const dx = point.x - self.position.x;
         const dy = point.y - self.position.y;
 
-        const cos = @cos(self.rotation);
-        const sin = @sin(self.rotation);
+        const cos_rot = @cos(self.rotation);
+        const sin_rot = @sin(self.rotation);
 
-        const local_x = dx * cos + dy * sin;
-        const local_y = -dx * sin + dy * cos;
+        const local_x = dx * cos_rot + dy * sin_rot;
+        const local_y = -dx * sin_rot + dy * cos_rot;
 
         const tile_size = 8.0;
         const half_width_units = @as(f32, @floatFromInt(self.width)) * (tile_size / 2.0);
@@ -219,11 +212,11 @@ pub const TileObject = struct {
         const local_x = tile_center_x - object_center_x;
         const local_y = tile_center_y - object_center_y;
 
-        const cos = @cos(self.rotation);
-        const sin = @sin(self.rotation);
+        const cos_rot = @cos(self.rotation);
+        const sin_rot = @sin(self.rotation);
 
-        const rot_x = local_x * cos - local_y * sin;
-        const rot_y = local_x * sin + local_y * cos;
+        const rot_x = local_x * cos_rot - local_y * sin_rot;
+        const rot_y = local_x * sin_rot + local_y * cos_rot;
 
         return Vec2.init(self.position.x + rot_x, self.position.y + rot_y);
     }
@@ -249,7 +242,7 @@ pub const TileObject = struct {
     pub fn getTileAt(self: Self, point: Vec2) ?Tile {
         const coords = self.getTileCoordsAtWorldPos(point) orelse return null;
 
-        return self.getTile(coords.x, coords.y);
+        return self.getTile(coords.x, coords.y).*;
     }
 
     pub fn applyInputThrust(self: *Self, physics: *Physics, input: InputState) void {
@@ -308,32 +301,39 @@ pub const TileObject = struct {
     }
 
     pub fn recalculatePhysics(self: *Self, physics: *Physics) !void {
-        var tiles = std.ArrayList(TileData).init(self.allocator);
-        defer tiles.deinit();
+        self.physics_dirty = false;
+        if (self.body_id.isValid()) {
+            physics.destroyBody(self.body_id);
+        }
+
+        var physics_tiles = std.ArrayList(PhysicsTileData).init(self.allocator);
+        defer physics_tiles.deinit();
 
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 const tile = self.getTile(x, y) orelse continue;
 
-                if (tile.category == .Empty) {
+                const density: f32 = switch (tile.data) {
+                    .Ship => |ship_data| switch (ship_data.part) {
+                        .Engine => 2.0,
+                        .Hull => 1.0,
+                        .Laser => 1.0,
+                        .RCS => 0.5,
+                    },
+                    .Terrain => 1.0,
+                    .Empty => 0.0,
+                };
+
+                if (density == 0.0) {
                     continue;
                 }
-
-                const density: f32 = switch (tile.category) {
-                    .Engine => 2.0,
-                    .RCS => 0.5,
-                    .Hull => 1.0,
-                    .Laser => 1.0,
-                    .Core => 3.0,
-                    else => 1000.0,
-                };
 
                 const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
                 const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
                 const x_pos = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
                 const y_pos = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
 
-                try tiles.append(TileData{
+                try physics_tiles.append(PhysicsTileData{
                     .pos = Vec2.init(x_pos, y_pos),
                     .density = density,
                     .layer = if (self.object_type == .Debris) .Debris else .Default,
@@ -341,7 +341,7 @@ pub const TileObject = struct {
             }
         }
 
-        if (tiles.items.len == 0) {
+        if (physics_tiles.items.len == 0) {
             if (self.body_id.isValid()) {
                 physics.destroyBody(self.body_id);
                 self.body_id = BodyId.invalid;
@@ -364,7 +364,7 @@ pub const TileObject = struct {
 
         self.body_id = try physics.createBody(self.position, self.rotation);
 
-        try physics.createTileShape(self.body_id, tiles.items);
+        try physics.createTileShape(self.body_id, physics_tiles.items);
 
         physics.setLinearVelocity(self.body_id, linear_velocity);
         physics.setAngularVelocity(self.body_id, angular_velocity);
@@ -379,29 +379,24 @@ pub const TileObject = struct {
             return;
         }
 
+        const enginePower: f32 = 200000.0; // Moved here from TileObject struct
+
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 const tile = self.getTile(x, y) orelse continue;
+                const ship_part = tile.getShipPart() orelse continue;
 
-                if (tile.category == .Empty) {
-                    continue;
-                }
-
-                const power = switch (tile.category) {
+                const power: f32 = switch (ship_part) {
                     .Engine => enginePower,
-                    .RCS => rcsPower,
-                    else => 0.0,
+                    // .RCS => rcsPower,
+                    else => continue,
                 };
 
-                const kind: ThrusterKind = switch (tile.category) {
+                const kind: ThrusterKind = switch (ship_part) {
                     .Engine => .Main,
-                    .RCS => .Secondary,
-                    else => .Main,
+                    // .RCS => .Secondary,
+                    else => continue,
                 };
-
-                if (power == 0.0) {
-                    continue;
-                }
 
                 const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
                 const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;

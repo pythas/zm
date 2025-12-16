@@ -45,7 +45,6 @@ pub const World = struct {
         var ship = try ship_serialization.loadShip(allocator, self.generateObjectId(), "ship.json");
 
         ship.object_type = .Ship;
-        ship.ship_stats = .{};
         try ship.recalculatePhysics(&physics);
         try self.objects.append(ship);
 
@@ -54,7 +53,25 @@ pub const World = struct {
             asteroid.object_type = .Asteroid;
             for (0..asteroid.width) |y| {
                 for (0..asteroid.height) |x| {
-                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+                    // asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(
+                        .{
+                            .Terrain = .{
+                                .base_material = .Rock,
+                                .ores = .{
+                                    .{
+                                        .ore = .Iron,
+                                        .richness = 1,
+                                    },
+                                    .{
+                                        .ore = .None,
+                                        .richness = 0,
+                                    },
+                                },
+                            },
+                        },
+                        .{ .sheet = .Ships, .index = 34 },
+                    );
                 }
             }
             try asteroid.recalculatePhysics(&physics);
@@ -66,7 +83,24 @@ pub const World = struct {
             asteroid.object_type = .Asteroid;
             for (0..asteroid.width) |y| {
                 for (0..asteroid.height) |x| {
-                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
+                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(
+                        .{
+                            .Terrain = .{
+                                .base_material = .Rock,
+                                .ores = .{
+                                    .{
+                                        .ore = .Iron,
+                                        .richness = 1,
+                                    },
+                                    .{
+                                        .ore = .None,
+                                        .richness = 0,
+                                    },
+                                },
+                            },
+                        },
+                        .{ .sheet = .Ships, .index = 34 },
+                    );
                 }
             }
             try asteroid.recalculatePhysics(&physics);

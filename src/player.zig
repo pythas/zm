@@ -11,6 +11,7 @@ const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
 const Physics = @import("box2d_physics.zig").Physics;
 const World = @import("world.zig").World;
+const ShipPart = @import("tile.zig").ShipPart; // Renamed from ItemId
 
 pub const PlayerController = struct {
     const Self = @This();
@@ -87,13 +88,13 @@ pub const PlayerController = struct {
 
                 if (object.getTileCoordsAtWorldPos(world_pos)) |coords| {
                     if (object.getTile(coords.x, coords.y)) |tile| {
-                        if (tile.category == .Empty) {
-                            continue;
+                        if (tile.data == .Empty) {
+                            break;
                         }
 
                         const target_pos = object.getTileWorldPos(coords.x, coords.y);
 
-                        const tile_refs = try ship.getTileByCategory(.Laser);
+                        const tile_refs = try ship.getTileByShipPart(.Laser);
                         defer self.allocator.free(tile_refs);
 
                         // get all available lasers
@@ -188,7 +189,7 @@ pub const PlayerController = struct {
                             const target_id = tile_action.target.object_id;
 
                             if (target_obj.getTile(tx, ty)) |tile| {
-                                if (tile.category != .Empty) {
+                                if (tile.data != .Empty) {
                                     const debris_pos = target_obj.getTileWorldPos(tx, ty);
 
                                     const new_id = world.generateObjectId();
@@ -219,10 +220,6 @@ pub const PlayerController = struct {
                                         world.physics.setLinearVelocity(debris.body_id, final_vel);
                                         world.physics.setAngularVelocity(debris.body_id, final_ang_vel);
                                     }
-
-                                    // const body_interface = world.physics.physics_system.getBodyInterfaceMut();
-
-                                    // body_interface.addTorque(debris.body_id, @as(f32, @floatFromInt(std.crypto.random.intRangeAtMost(i32, 1000, 5000))));
 
                                     try world.objects.append(debris);
                                 }

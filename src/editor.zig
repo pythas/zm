@@ -145,11 +145,11 @@ pub const Editor = struct {
                 const tile = world.objects.items[0].getTile(tile_x, tile_y);
 
                 if (tile) |ti| {
-                    if (ti.category == .Engine) {
-                        var t2 = ti;
+                    if (ti.data == .Ship and ti.data.Ship.part == .Engine) {
+                        var t2 = ti.*;
                         t2.rotation = @enumFromInt((@intFromEnum(t2.rotation) + 1) % 4);
-                        t2.sprite = (t2.sprite - 64 + 1) % 4 + 64;
-                        world.objects.items[0].setTile(tile_x, tile_y, t2.*);
+                        t2.sprite.index = (t2.sprite.index - 64 + 1) % 4 + 64;
+                        world.objects.items[0].setTile(tile_x, tile_y, t2);
                     }
                 }
             }
@@ -157,7 +157,10 @@ pub const Editor = struct {
             if (self.mouse.is_left_down) {
                 switch (self.current_palette) {
                     .Hull => {
-                        const ht = try Tile.init(self.allocator, .Hull, .Metal, .Ships, 36);
+                        const ht = try Tile.init(
+                            .{ .Ship = .{ .part = .Hull, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .sheet = .Ships, .index = 36 },
+                        );
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);
                     },
@@ -172,7 +175,7 @@ pub const Editor = struct {
                                 d.direction,
                             ) orelse continue;
 
-                            if (n.category == .Empty) {
+                            if (n.data == .Empty) {
                                 if (engine_dir == null) {
                                     engine_dir = d.direction;
                                 }
@@ -183,12 +186,15 @@ pub const Editor = struct {
 
                         if (is_connected) {
                             if (engine_dir) |ed| {
-                                var et = try Tile.init(self.allocator, .Engine, .Metal, .Ships, switch (ed) {
-                                    .North => 64,
-                                    .East => 65,
-                                    .South => 66,
-                                    .West => 67,
-                                });
+                                var et = try Tile.init(
+                                    .{ .Ship = .{ .part = .Engine, .tier = 1, .health = 100.0, .variation = 0 } },
+                                    .{ .sheet = .Ships, .index = switch (ed) {
+                                        .North => 64,
+                                        .East => 65,
+                                        .South => 66,
+                                        .West => 67,
+                                    } },
+                                );
                                 et.rotation = ed;
 
                                 world.objects.items[0].setTile(tile_x, tile_y, et);
@@ -206,7 +212,7 @@ pub const Editor = struct {
                                 d.direction,
                             ) orelse continue;
 
-                            if (n.category == .Empty) {
+                            if (n.data == .Empty) {
                                 if (engine_dir == null) {
                                     engine_dir = d.direction;
                                 }
@@ -217,12 +223,15 @@ pub const Editor = struct {
 
                         if (is_connected) {
                             if (engine_dir) |ed| {
-                                var et = try Tile.init(self.allocator, .RCS, .Metal, .Ships, switch (ed) {
-                                    .North => 96,
-                                    .East => 97,
-                                    .South => 99,
-                                    .West => 99,
-                                });
+                                var et = try Tile.init(
+                                    .{ .Ship = .{ .part = .RCS, .tier = 1, .health = 100.0, .variation = 0 } },
+                                    .{ .sheet = .Ships, .index = switch (ed) {
+                                        .North => 96,
+                                        .East => 97,
+                                        .South => 99,
+                                        .West => 99,
+                                    } },
+                                );
                                 et.rotation = ed;
 
                                 world.objects.items[0].setTile(tile_x, tile_y, et);
@@ -230,7 +239,10 @@ pub const Editor = struct {
                         }
                     },
                     .Laser => {
-                        const ht = try Tile.init(self.allocator, .Laser, .Metal, .Ships, 35);
+                        const ht = try Tile.init(
+                            .{ .Ship = .{ .part = .Laser, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .sheet = .Ships, .index = 35 },
+                        );
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);
                     },
@@ -238,7 +250,7 @@ pub const Editor = struct {
             }
 
             if (self.mouse.is_right_down) {
-                world.objects.items[0].setTile(tile_x, tile_y, try Tile.initEmpty(self.allocator));
+                world.objects.items[0].setTile(tile_x, tile_y, try Tile.initEmpty());
             }
         }
 

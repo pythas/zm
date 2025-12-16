@@ -2,107 +2,142 @@ const std = @import("std");
 
 const TileObject = @import("tile_object.zig").TileObject;
 const Tile = @import("tile.zig").Tile;
-const Direction = @import("tile.zig").Direction;
-const TileCategory = @import("tile.zig").TileCategory;
+const TileData = @import("tile.zig").TileData;
+const ShipPart = @import("tile.zig").ShipPart;
 const BaseMaterial = @import("tile.zig").BaseMaterial;
+const Ore = @import("tile.zig").Ore;
+const OreAmount = @import("tile.zig").OreAmount;
+const Direction = @import("tile.zig").Direction;
 const SpriteSheet = @import("tile.zig").SpriteSheet;
+const Sprite = @import("tile.zig").Sprite;
 const Vec2 = @import("vec2.zig").Vec2;
 
-const TileData = struct {
+pub const ShipSerializationError = anyerror;
+
+const JsonTileFlat = struct {
     x: usize,
     y: usize,
-    category: u8,
-    sprite: u16,
-    rotation: u8,
+    data_type: []const u8,
+    part: ?[]const u8 = null,
+    base_material: ?[]const u8 = null,
+    sprite_sheet: []const u8,
+    sprite_index: u16,
+    rotation: []const u8,
 };
 
-const ShipData = struct {
+const JsonShipData = struct {
     width: usize,
     height: usize,
-    position: struct { x: f32, y: f32 },
-    rotation: f32,
-    tiles: []TileData,
+    tiles: []JsonTileFlat,
 };
 
 pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []const u8) !void {
     const file = try std.fs.cwd().createFile(filename, .{});
     defer file.close();
 
-    var tiles_data = std.ArrayList(TileData).init(allocator);
-    defer tiles_data.deinit();
+    var serializable_tiles = std.ArrayList(JsonTileFlat).init(allocator);
+    defer serializable_tiles.deinit();
 
     for (0..ship.height) |y| {
         for (0..ship.width) |x| {
             const tile = ship.getTile(x, y) orelse continue;
-            if (tile.category != .Empty) {
-                try tiles_data.append(.{
-                    .x = x,
-                    .y = y,
-                    .category = @intFromEnum(tile.category),
-                    .sprite = tile.sprite,
-                    .rotation = @intFromEnum(tile.rotation),
-                });
+
+            const data_type_str = @tagName(tile.data);
+            var part_str: ?[]const u8 = null;
+            var base_material_str: ?[]const u8 = null;
+
+            switch (tile.data) {
+                .Ship => |s| part_str = @tagName(s.part),
+                .Terrain => |t| base_material_str = @tagName(t.base_material),
+                else => {},
             }
+
+            try serializable_tiles.append(.{
+                .x = x,
+                .y = y,
+                .data_type = data_type_str,
+                .part = part_str,
+                .base_material = base_material_str,
+                .sprite_sheet = @tagName(tile.sprite.sheet),
+                .sprite_index = tile.sprite.index,
+                .rotation = @tagName(tile.rotation),
+            });
         }
     }
 
-    const ship_data = ShipData{
+    const serializable_ship = JsonShipData{
         .width = ship.width,
         .height = ship.height,
-        .position = .{ .x = 0.0, .y = 0.0 },
-        .rotation = 0.0,
-        .tiles = tiles_data.items,
+        .tiles = serializable_tiles.items,
     };
 
-    try std.json.stringify(ship_data, .{ .whitespace = .indent_2 }, file.writer());
+    try std.json.stringify(serializable_ship, .{ .whitespace = .indent_2 }, file.writer());
     std.debug.print("Ship saved to {s}\n", .{filename});
 }
 
-pub fn loadShip(allocator: std.mem.Allocator, id: u64, filename: []const u8) !TileObject {
+pub fn loadShip(
+    allocator: std.mem.Allocator,
+    id: u64,
+    filename: []const u8,
+) !TileObject {
     const file = std.fs.cwd().openFile(filename, .{}) catch |err| {
-        std.debug.print("Failed to open {s}: {}\n", .{ filename, err });
         return err;
     };
     defer file.close();
 
-    const contents = try file.readToEndAlloc(allocator, 1024 * 1024); // 1MB max
+    const contents = file.readToEndAlloc(allocator, 1024 * 1024) catch |err| {
+        return err;
+    };
     defer allocator.free(contents);
 
-    var parsed = try std.json.parseFromSlice(ShipData, allocator, contents, .{});
+    var parsed = std.json.parseFromSlice(JsonShipData, allocator, contents, .{}) catch |err| {
+        return err;
+    };
     defer parsed.deinit();
 
-    const ship_data = parsed.value;
+    const json_ship_data = parsed.value;
 
     var ship = try TileObject.init(
         allocator,
         id,
-        ship_data.width,
-        ship_data.height,
-        Vec2{ .x = ship_data.position.x, .y = ship_data.position.y },
-        ship_data.rotation,
+        json_ship_data.width,
+        json_ship_data.height,
+        Vec2.init(0, 0),
+        0.0,
     );
 
-    // Load tiles
-    for (ship_data.tiles) |tile_data| {
-        const category: TileCategory = @enumFromInt(tile_data.category);
-        const rotation: Direction = @enumFromInt(tile_data.rotation);
+    for (json_ship_data.tiles) |json_tile| {
+        const data_tag = std.meta.stringToEnum(std.meta.Tag(TileData), json_tile.data_type) orelse return ShipSerializationError.InvalidEnumString;
 
-        const tile = try Tile.init(
-            allocator,
-            category,
-            .Metal, // Default material
-            .Ships, // Default sheet
-            tile_data.sprite,
-        );
+        const tile_data: TileData = switch (data_tag) {
+            .Empty => .Empty,
+            .Terrain => blk: {
+                const mat_str = json_tile.base_material orelse return ShipSerializationError.InvalidEnumString;
+                const mat = std.meta.stringToEnum(BaseMaterial, mat_str) orelse return ShipSerializationError.InvalidEnumString;
+                break :blk .{ .Terrain = .{ .base_material = mat, .ores = .{
+                    .{ .ore = .None, .richness = 0 },
+                    .{ .ore = .None, .richness = 0 },
+                } } };
+            },
+            .Ship => blk: {
+                const part_str = json_tile.part orelse return ShipSerializationError.InvalidEnumString;
+                const part = std.meta.stringToEnum(ShipPart, part_str) orelse return ShipSerializationError.InvalidEnumString;
+                break :blk .{ .Ship = .{ .part = part, .tier = 1, .health = 100.0, .variation = 0 } };
+            },
+        };
 
-        var loaded_tile = tile;
-        loaded_tile.rotation = rotation;
+        const sheet = std.meta.stringToEnum(SpriteSheet, json_tile.sprite_sheet) orelse return ShipSerializationError.InvalidEnumString;
+        const sprite = Sprite{
+            .sheet = sheet,
+            .index = json_tile.sprite_index,
+        };
 
-        ship.setTile(tile_data.x, tile_data.y, loaded_tile);
+        var new_tile = try Tile.init(tile_data, sprite);
+        new_tile.rotation = std.meta.stringToEnum(Direction, json_tile.rotation) orelse return ShipSerializationError.InvalidEnumString;
+
+        ship.setTile(json_tile.x, json_tile.y, new_tile);
     }
-
 
     std.debug.print("Ship loaded from {s}\n", .{filename});
     return ship;
 }
-

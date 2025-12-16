@@ -1,9 +1,55 @@
 const std = @import("std");
-
 const Vec2 = @import("vec2.zig").Vec2;
-
 pub const tilemapWidth = 16;
 pub const tilemapHeight = 16;
+
+pub const ShipPart = enum(u8) {
+    Hull,
+    Engine,
+    RCS,
+    Laser,
+};
+
+pub const BaseMaterial = enum(u8) {
+    Vacuum,
+    Rock,
+    Metal,
+    Ice,
+};
+
+pub const Ore = enum(u8) {
+    None,
+    Iron,
+    Nickel,
+    Cobalt,
+    Gold,
+    Platinum,
+};
+
+pub const OreAmount = struct {
+    ore: Ore,
+    richness: u8,
+};
+
+pub const TileType = enum {
+    Empty,
+    Terrain,
+    Ship,
+};
+
+pub const TileData = union(TileType) {
+    Empty: void,
+    Terrain: struct {
+        base_material: BaseMaterial,
+        ores: [2]OreAmount,
+    },
+    Ship: struct {
+        part: ShipPart,
+        tier: u8,
+        health: f32,
+        variation: u8,
+    },
+};
 
 pub const TileCoords = struct {
     x: usize,
@@ -16,80 +62,15 @@ pub const TileReference = struct {
     tile_y: usize,
 };
 
-pub const TileCategory = enum(u8) {
-    Empty,
-    Terrain,
-    Hull,
-    Engine,
-    RCS,
-    Laser,
-    Core,
-};
-
-pub const BaseMaterial = enum(u8) {
-    Vacuum,
-    Rock,
-    Regolith,
-    Ice,
-    Metal,
-    Wood,
-    Composite,
-    Organic,
-};
-
-pub const Ore = enum(u8) {
-    Iron,
-    Nickel,
-    Cobalt,
-    Copper,
-    Gold,
-    Platinum,
-    Water,
-    Carbon,
-    Silicon,
-    RareEarths,
-};
-
-pub const OreAmount = struct {
-    ore: Ore,
-    richness: u8,
-};
-
-pub const Composition = struct {
-    const Self = @This();
-
-    base: BaseMaterial,
-    ores: std.ArrayList(OreAmount),
-
-    pub fn init(
-        allocator: std.mem.Allocator,
-        base: BaseMaterial,
-    ) !Self {
-        return .{
-            .base = base,
-            .ores = std.ArrayList(OreAmount).init(allocator),
-        };
-    }
-
-    pub fn deinit(self: *Self) void {
-        self.ores.deinit();
-    }
-
-    pub fn setOre(self: *Self, ore: Ore, richness: u8) !void {
-        for (self.ores.items) |*slot| {
-            if (slot.ore == ore) {
-                slot.richness = richness;
-                return;
-            }
-        }
-        try self.ores.append(.{ .ore = ore, .richness = richness });
-    }
-};
-
 pub const SpriteSheet = enum(u8) {
     World = 0,
     Asteroids = 1,
     Ships = 2,
+};
+
+pub const Sprite = struct {
+    sheet: SpriteSheet,
+    index: u16,
 };
 
 pub const Direction = enum(u8) {
@@ -97,54 +78,57 @@ pub const Direction = enum(u8) {
     East = 1,
     South = 2,
     West = 3,
-};
 
-pub const Directions: []const struct {
-    direction: Direction,
-    dx: i32,
-    dy: i32,
-} = &.{
-    .{ .direction = Direction.North, .dx = 0, .dy = -1 },
-    .{ .direction = Direction.South, .dx = 0, .dy = 1 },
-    .{ .direction = Direction.East, .dx = 1, .dy = 0 },
-    .{ .direction = Direction.West, .dx = -1, .dy = 0 },
+    pub fn toRad(self: Direction) f32 {
+        return switch (self) {
+            .North => 0.0,
+            .East => std.math.pi / 2.0,
+            .South => std.math.pi,
+            .West => 3.0 * std.math.pi / 2.0,
+        };
+    }
 };
 
 pub const Offset = struct {
-    dx: isize,
-    dy: isize,
+    dx: i32,
+    dy: i32,
+};
+
+pub const Directions = [_]struct { direction: Direction, offset: Offset }{
+    .{ .direction = .North, .offset = .{ .dx = 0, .dy = -1 } },
+    .{ .direction = .East, .offset = .{ .dx = 1, .dy = 0 } },
+    .{ .direction = .South, .offset = .{ .dx = 0, .dy = 1 } },
+    .{ .direction = .West, .offset = .{ .dx = -1, .dy = 0 } },
 };
 
 pub const Tile = struct {
     const Self = @This();
 
-    category: TileCategory,
-    composition: Composition,
-    sheet: SpriteSheet,
-    sprite: u16,
+    data: TileData,
+    sprite: Sprite,
     rotation: Direction = .North,
 
     pub fn init(
-        allocator: std.mem.Allocator,
-        category: TileCategory,
-        base: BaseMaterial,
-        sheet: SpriteSheet,
-        sprite: u16,
+        data: TileData,
+        sprite: Sprite,
     ) !Self {
         return .{
-            .category = category,
-            .composition = try Composition.init(allocator, base),
-            .sheet = sheet,
+            .data = data,
             .sprite = sprite,
         };
     }
 
-    pub fn initEmpty(allocator: std.mem.Allocator) !Self {
+    pub fn initEmpty() !Self {
         return .{
-            .category = .Empty,
-            .composition = try Composition.init(allocator, .Vacuum),
-            .sheet = .World,
-            .sprite = 0,
+            .data = .Empty,
+            .sprite = .{ .sheet = .World, .index = 0 },
+        };
+    }
+
+    pub fn getShipPart(self: Self) ?ShipPart {
+        return switch (self.data) {
+            .Ship => |ship| ship.part,
+            else => null,
         };
     }
 };
