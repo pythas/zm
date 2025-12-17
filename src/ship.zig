@@ -20,4 +20,15 @@ pub const PartStats = struct {
             else => 0.0,
         };
     }
+
+    pub fn getLaserRangeSq(tier: u8) f32 {
+        const range: f32 = switch (tier) {
+            1 => 80.0,
+            2 => 160.0,
+            3 => 320.0,
+            else => 0.0,
+        };
+
+        return range * range;
+    }
 };

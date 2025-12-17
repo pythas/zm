@@ -12,6 +12,7 @@ const MouseState = @import("input.zig").MouseState;
 const Physics = @import("box2d_physics.zig").Physics;
 const World = @import("world.zig").World;
 const PartKind = @import("tile.zig").PartKind;
+const PartStats = @import("ship.zig").PartStats;
 
 pub const PlayerController = struct {
     const Self = @This();
@@ -117,16 +118,27 @@ pub const PlayerController = struct {
                             }
 
                             if (!is_used) {
+                                // check if in range
+                                const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;
+                                const tier = ti.getTier() orelse continue;
+
+                                const range = PartStats.getLaserRangeSq(tier);
+                                const dist = ship.getDistanceToTileSq(
+                                    tile_ref.tile_x,
+                                    tile_ref.tile_y,
+                                    target_pos,
+                                );
+
+                                if (dist > range) {
+                                    continue;
+                                }
+
                                 try laser_candidates.append(.{
                                     .coords = .{
                                         .x = tile_ref.tile_x,
                                         .y = tile_ref.tile_y,
                                     },
-                                    .dist = ship.getDistanceToTileSq(
-                                        tile_ref.tile_x,
-                                        tile_ref.tile_y,
-                                        target_pos,
-                                    ),
+                                    .dist = dist,
                                 });
                             }
                         }
@@ -150,8 +162,6 @@ pub const PlayerController = struct {
                         if (source == null) {
                             break;
                         }
-
-                        // TODO: check if laser are in dist
 
                         const target = TileReference{
                             .object_id = object.id,
