@@ -31,4 +31,13 @@ pub const PartStats = struct {
 
         return range * range;
     }
+
+    pub fn getLaserRadius(tier: u8) u8 {
+        return switch (tier) {
+            1 => 0,
+            2 => 1,
+            3 => 2,
+            else => 0,
+        };
+    }
 };

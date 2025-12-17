@@ -87,93 +87,122 @@ pub const PlayerController = struct {
                     continue;
                 }
 
-                if (object.getTileCoordsAtWorldPos(world_pos)) |coords| {
-                    if (object.getTile(coords.x, coords.y)) |tile| {
-                        if (tile.data == .Empty) {
+                const coords = object.getTileCoordsAtWorldPos(world_pos) orelse continue;
+                const tile = object.getTile(coords.x, coords.y) orelse continue;
+                if (tile.data == .Empty) continue;
+
+                const target_pos = object.getTileWorldPos(coords.x, coords.y);
+
+                const tile_refs = try ship.getTileByPartKind(.Laser);
+                defer self.allocator.free(tile_refs);
+
+                const LaserCandidate = struct {
+                    coords: TileCoords,
+                    dist: f32,
+                    tier: u8,
+                };
+                var laser_candidates = std.ArrayList(LaserCandidate).init(self.allocator);
+                defer laser_candidates.deinit();
+
+                for (tile_refs) |tile_ref| {
+                    var is_used = false;
+                    for (self.tile_actions.items) |tile_action| {
+                        if (tile_action.source.x == tile_ref.tile_x and
+                            tile_action.source.y == tile_ref.tile_y)
+                        {
+                            is_used = true;
+
                             break;
                         }
+                    }
 
-                        const target_pos = object.getTileWorldPos(coords.x, coords.y);
+                    if (!is_used) {
+                        // check if in range
+                        const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;
+                        const tier = ti.getTier() orelse continue;
 
-                        const tile_refs = try ship.getTileByPartKind(.Laser);
-                        defer self.allocator.free(tile_refs);
+                        const range = PartStats.getLaserRangeSq(tier);
+                        const dist = ship.getDistanceToTileSq(
+                            tile_ref.tile_x,
+                            tile_ref.tile_y,
+                            target_pos,
+                        );
 
-                        // get all available lasers
-                        var laser_candidates = std.ArrayList(struct {
-                            coords: TileCoords,
-                            dist: f32,
-                        }).init(self.allocator);
-                        defer laser_candidates.deinit();
+                        if (dist > range) {
+                            continue;
+                        }
 
-                        for (tile_refs) |tile_ref| {
-                            var is_used = false;
-                            for (self.tile_actions.items) |tile_action| {
-                                if (tile_action.source.x == tile_ref.tile_x and
-                                    tile_action.source.y == tile_ref.tile_y)
-                                {
-                                    is_used = true;
+                        try laser_candidates.append(.{
+                            .coords = .{
+                                .x = tile_ref.tile_x,
+                                .y = tile_ref.tile_y,
+                            },
+                            .dist = dist,
+                            .tier = tier,
+                        });
+                    }
+                }
 
-                                    break;
-                                }
-                            }
+                if (laser_candidates.items.len == 0) {
+                    std.debug.print("No valid laser avaiable for mining\n", .{});
+                    break;
+                }
 
-                            if (!is_used) {
-                                // check if in range
-                                const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;
-                                const tier = ti.getTier() orelse continue;
+                // get closest laser
+                const best_candidate = find_min: {
+                    var min: ?LaserCandidate = null;
 
-                                const range = PartStats.getLaserRangeSq(tier);
-                                const dist = ship.getDistanceToTileSq(
-                                    tile_ref.tile_x,
-                                    tile_ref.tile_y,
-                                    target_pos,
-                                );
+                    for (laser_candidates.items) |candidate| {
+                        if (min == null or candidate.dist < min.?.dist) {
+                            min = candidate;
+                        }
+                    }
 
-                                if (dist > range) {
-                                    continue;
-                                }
+                    break :find_min min;
+                };
 
-                                try laser_candidates.append(.{
-                                    .coords = .{
-                                        .x = tile_ref.tile_x,
-                                        .y = tile_ref.tile_y,
-                                    },
-                                    .dist = dist,
+                if (best_candidate == null) {
+                    break;
+                }
+
+                var targets = std.ArrayList(TileReference).init(self.allocator);
+                defer targets.deinit();
+
+                const radius: i32 = @intCast(PartStats.getLaserRadius(best_candidate.?.tier));
+                const center_x: i32 = @intCast(coords.x);
+                const center_y: i32 = @intCast(coords.y);
+
+                var dy: i32 = -radius;
+                while (dy <= radius) : (dy += 1) {
+                    var dx: i32 = -radius;
+                    while (dx <= radius) : (dx += 1) {
+                        if (@abs(dx) + @abs(dy) <= radius) {
+                            const target_x = center_x + dx;
+                            const target_y = center_y + dy;
+
+                            if (target_x < 0 or target_y < 0) continue;
+
+                            const tile_x: usize = @intCast(target_x);
+                            const tile_y: usize = @intCast(target_y);
+
+                            if (object.getTile(tile_x, tile_y)) |target_tile| {
+                                if (target_tile.data == .Empty) continue;
+
+                                try targets.append(.{
+                                    .object_id = object.id,
+                                    .tile_x = tile_x,
+                                    .tile_y = tile_y,
                                 });
                             }
                         }
-
-                        if (laser_candidates.items.len == 0) {
-                            std.debug.print("No valid laser avaiable for mining\n", .{});
-                            break;
-                        }
-
-                        // get closest laser
-                        var source: ?TileCoords = null;
-                        var d_min: ?f32 = null;
-
-                        for (laser_candidates.items) |laser_candidate| {
-                            if (d_min == null or laser_candidate.dist < d_min.?) {
-                                d_min = laser_candidate.dist;
-                                source = laser_candidate.coords;
-                            }
-                        }
-
-                        if (source == null) {
-                            break;
-                        }
-
-                        const target = TileReference{
-                            .object_id = object.id,
-                            .tile_x = coords.x,
-                            .tile_y = coords.y,
-                        };
-
-                        try self.startMining(source.?, target);
-
-                        break;
                     }
                 }
+
+                for (targets.items) |target| {
+                    try self.startMining(best_candidate.?.coords, target);
+                }
+
+                break;
             }
         }
 
