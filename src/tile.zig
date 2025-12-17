@@ -131,4 +131,11 @@ pub const Tile = struct {
             else => null,
         };
     }
+
+    pub fn getTier(self: Self) ?u8 {
+        return switch (self.data) {
+            .ShipPart => |ship| ship.tier,
+            else => null,
+        };
+    }
 };

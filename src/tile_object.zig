@@ -12,6 +12,7 @@ const BodyId = @import("box2d_physics.zig").BodyId;
 const PhysicsTileData = @import("box2d_physics.zig").TileData;
 const TileData = @import("tile.zig").TileData;
 const InputState = @import("input.zig").InputState;
+const PartStats = @import("ship.zig").PartStats;
 
 pub const ShipCapabilities = struct {
     force_forward: f32 = 0.0,
@@ -314,12 +315,7 @@ pub const TileObject = struct {
                 const tile = self.getTile(x, y) orelse continue;
 
                 const density: f32 = switch (tile.data) {
-                    .ShipPart => |ship_data| switch (ship_data.kind) {
-                        .Engine => 2.0,
-                        .Hull => 1.0,
-                        .Laser => 1.0,
-                        .RCS => 0.5,
-                    },
+                    .ShipPart => |ship_data| PartStats.getDensity(ship_data.kind),
                     .Terrain => 1.0,
                     .Empty => 0.0,
                 };
@@ -379,22 +375,19 @@ pub const TileObject = struct {
             return;
         }
 
-        const enginePower: f32 = 200000.0;
-
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 const tile = self.getTile(x, y) orelse continue;
                 const part_kind = tile.getPartKind() orelse continue;
+                const tier = tile.getTier() orelse continue;
 
                 const power: f32 = switch (part_kind) {
-                    .Engine => enginePower,
-                    // .RCS => rcsPower,
+                    .Engine => PartStats.getEnginePower(tier),
                     else => continue,
                 };
 
                 const kind: ThrusterKind = switch (part_kind) {
                     .Engine => .Main,
-                    // .RCS => .Secondary,
                     else => continue,
                 };
 
