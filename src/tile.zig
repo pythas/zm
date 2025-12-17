@@ -3,7 +3,7 @@ const Vec2 = @import("vec2.zig").Vec2;
 pub const tilemapWidth = 16;
 pub const tilemapHeight = 16;
 
-pub const ShipPart = enum(u8) {
+pub const PartKind = enum(u8) {
     Hull,
     Engine,
     RCS,
@@ -34,7 +34,7 @@ pub const OreAmount = struct {
 pub const TileType = enum {
     Empty,
     Terrain,
-    Ship,
+    ShipPart,
 };
 
 pub const TileData = union(TileType) {
@@ -43,8 +43,8 @@ pub const TileData = union(TileType) {
         base_material: BaseMaterial,
         ores: [2]OreAmount,
     },
-    Ship: struct {
-        part: ShipPart,
+    ShipPart: struct {
+        kind: PartKind,
         tier: u8,
         health: f32,
         variation: u8,
@@ -125,9 +125,9 @@ pub const Tile = struct {
         };
     }
 
-    pub fn getShipPart(self: Self) ?ShipPart {
+    pub fn getPartKind(self: Self) ?PartKind {
         return switch (self.data) {
-            .Ship => |ship| ship.part,
+            .ShipPart => |ship| ship.kind,
             else => null,
         };
     }

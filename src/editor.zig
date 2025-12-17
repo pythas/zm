@@ -145,7 +145,7 @@ pub const Editor = struct {
                 const tile = world.objects.items[0].getTile(tile_x, tile_y);
 
                 if (tile) |ti| {
-                    if (ti.data == .Ship and ti.data.Ship.part == .Engine) {
+                    if (ti.data == .ShipPart and ti.data.ShipPart.kind == .Engine) {
                         var t2 = ti.*;
                         t2.rotation = @enumFromInt((@intFromEnum(t2.rotation) + 1) % 4);
                         t2.sprite.index = (t2.sprite.index - 64 + 1) % 4 + 64;
@@ -158,7 +158,7 @@ pub const Editor = struct {
                 switch (self.current_palette) {
                     .Hull => {
                         const ht = try Tile.init(
-                            .{ .Ship = .{ .part = .Hull, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .ShipPart = .{ .kind = .Hull, .tier = 1, .health = 100.0, .variation = 0 } },
                             .{ .sheet = .Ships, .index = 36 },
                         );
 
@@ -187,7 +187,7 @@ pub const Editor = struct {
                         if (is_connected) {
                             if (engine_dir) |ed| {
                                 var et = try Tile.init(
-                                    .{ .Ship = .{ .part = .Engine, .tier = 1, .health = 100.0, .variation = 0 } },
+                                    .{ .ShipPart = .{ .kind = .Engine, .tier = 1, .health = 100.0, .variation = 0 } },
                                     .{ .sheet = .Ships, .index = switch (ed) {
                                         .North => 64,
                                         .East => 65,
@@ -224,7 +224,7 @@ pub const Editor = struct {
                         if (is_connected) {
                             if (engine_dir) |ed| {
                                 var et = try Tile.init(
-                                    .{ .Ship = .{ .part = .RCS, .tier = 1, .health = 100.0, .variation = 0 } },
+                                    .{ .ShipPart = .{ .kind = .RCS, .tier = 1, .health = 100.0, .variation = 0 } },
                                     .{ .sheet = .Ships, .index = switch (ed) {
                                         .North => 96,
                                         .East => 97,
@@ -240,7 +240,7 @@ pub const Editor = struct {
                     },
                     .Laser => {
                         const ht = try Tile.init(
-                            .{ .Ship = .{ .part = .Laser, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .ShipPart = .{ .kind = .Laser, .tier = 1, .health = 100.0, .variation = 0 } },
                             .{ .sheet = .Ships, .index = 35 },
                         );
 

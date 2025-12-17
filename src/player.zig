@@ -11,7 +11,7 @@ const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
 const Physics = @import("box2d_physics.zig").Physics;
 const World = @import("world.zig").World;
-const ShipPart = @import("tile.zig").ShipPart; // Renamed from ItemId
+const PartKind = @import("tile.zig").PartKind;
 
 pub const PlayerController = struct {
     const Self = @This();
@@ -94,7 +94,7 @@ pub const PlayerController = struct {
 
                         const target_pos = object.getTileWorldPos(coords.x, coords.y);
 
-                        const tile_refs = try ship.getTileByShipPart(.Laser);
+                        const tile_refs = try ship.getTileByPartKind(.Laser);
                         defer self.allocator.free(tile_refs);
 
                         // get all available lasers

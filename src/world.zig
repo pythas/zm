@@ -42,9 +42,13 @@ pub const World = struct {
             .physics = physics,
         };
 
-        var ship = try ship_serialization.loadShip(allocator, self.generateObjectId(), "ship.json");
+        const ship_id = self.generateObjectId();
+        var ship = ship_serialization.loadShip(allocator, ship_id, "ship.json") catch |err| switch (err) {
+            error.FileNotFound => try TileObject.init(allocator, ship_id, 16, 16, Vec2.init(0, 0), 0),
+            else => return err,
+        };
 
-        ship.object_type = .Ship;
+        ship.object_type = .ShipPart;
         try ship.recalculatePhysics(&physics);
         try self.objects.append(ship);
 

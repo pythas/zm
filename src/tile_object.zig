@@ -5,7 +5,7 @@ const Vec2 = @import("vec2.zig").Vec2;
 const GpuTileGrid = @import("renderer/sprite_renderer.zig").GpuTileGrid;
 const Direction = @import("tile.zig").Direction;
 const Offset = @import("tile.zig").Offset;
-const ShipPart = @import("tile.zig").ShipPart;
+const PartKind = @import("tile.zig").PartKind;
 const TileReference = @import("tile.zig").TileReference;
 const Physics = @import("box2d_physics.zig").Physics;
 const BodyId = @import("box2d_physics.zig").BodyId;
@@ -39,7 +39,7 @@ pub const Thruster = struct {
 };
 
 pub const ObjectType = enum {
-    Ship,
+    ShipPart,
     Asteroid,
     Debris,
 };
@@ -121,14 +121,14 @@ pub const TileObject = struct {
         self.dirty = true;
     }
 
-    pub fn getTileByShipPart(self: Self, ship_part: ShipPart) ![]TileReference {
+    pub fn getTileByPartKind(self: Self, part_kind: PartKind) ![]TileReference {
         var tile_refs = std.ArrayList(TileReference).init(self.allocator);
         errdefer tile_refs.deinit();
 
         for (self.tiles, 0..) |tile, i| {
-            const current_ship_part = tile.getShipPart() orelse continue;
+            const current_part_kind = tile.getPartKind() orelse continue;
 
-            if (current_ship_part == ship_part) {
+            if (current_part_kind == part_kind) {
                 try tile_refs.append(.{
                     .object_id = self.id,
                     .tile_x = i % self.width,
@@ -314,7 +314,7 @@ pub const TileObject = struct {
                 const tile = self.getTile(x, y) orelse continue;
 
                 const density: f32 = switch (tile.data) {
-                    .Ship => |ship_data| switch (ship_data.part) {
+                    .ShipPart => |ship_data| switch (ship_data.kind) {
                         .Engine => 2.0,
                         .Hull => 1.0,
                         .Laser => 1.0,
@@ -375,24 +375,24 @@ pub const TileObject = struct {
     fn rebuildThrusters(self: *Self) !void {
         self.thrusters.clearRetainingCapacity();
 
-        if (self.object_type != .Ship) {
+        if (self.object_type != .ShipPart) {
             return;
         }
 
-        const enginePower: f32 = 200000.0; // Moved here from TileObject struct
+        const enginePower: f32 = 200000.0;
 
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 const tile = self.getTile(x, y) orelse continue;
-                const ship_part = tile.getShipPart() orelse continue;
+                const part_kind = tile.getPartKind() orelse continue;
 
-                const power: f32 = switch (ship_part) {
+                const power: f32 = switch (part_kind) {
                     .Engine => enginePower,
                     // .RCS => rcsPower,
                     else => continue,
                 };
 
-                const kind: ThrusterKind = switch (ship_part) {
+                const kind: ThrusterKind = switch (part_kind) {
                     .Engine => .Main,
                     // .RCS => .Secondary,
                     else => continue,

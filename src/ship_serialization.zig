@@ -3,7 +3,7 @@ const std = @import("std");
 const TileObject = @import("tile_object.zig").TileObject;
 const Tile = @import("tile.zig").Tile;
 const TileData = @import("tile.zig").TileData;
-const ShipPart = @import("tile.zig").ShipPart;
+const PartKind = @import("tile.zig").PartKind;
 const BaseMaterial = @import("tile.zig").BaseMaterial;
 const Ore = @import("tile.zig").Ore;
 const OreAmount = @import("tile.zig").OreAmount;
@@ -18,7 +18,7 @@ const JsonTileFlat = struct {
     x: usize,
     y: usize,
     data_type: []const u8,
-    part: ?[]const u8 = null,
+    kind: ?[]const u8 = null,
     base_material: ?[]const u8 = null,
     sprite_sheet: []const u8,
     sprite_index: u16,
@@ -47,7 +47,7 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
             var base_material_str: ?[]const u8 = null;
 
             switch (tile.data) {
-                .Ship => |s| part_str = @tagName(s.part),
+                .ShipPart => |s| part_str = @tagName(s.kind),
                 .Terrain => |t| base_material_str = @tagName(t.base_material),
                 else => {},
             }
@@ -56,7 +56,7 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
                 .x = x,
                 .y = y,
                 .data_type = data_type_str,
-                .part = part_str,
+                .kind = part_str,
                 .base_material = base_material_str,
                 .sprite_sheet = @tagName(tile.sprite.sheet),
                 .sprite_index = tile.sprite.index,
@@ -119,10 +119,10 @@ pub fn loadShip(
                     .{ .ore = .None, .richness = 0 },
                 } } };
             },
-            .Ship => blk: {
-                const part_str = json_tile.part orelse return ShipSerializationError.InvalidEnumString;
-                const part = std.meta.stringToEnum(ShipPart, part_str) orelse return ShipSerializationError.InvalidEnumString;
-                break :blk .{ .Ship = .{ .part = part, .tier = 1, .health = 100.0, .variation = 0 } };
+            .ShipPart => blk: {
+                const kind_str = json_tile.kind orelse return ShipSerializationError.InvalidEnumString;
+                const kind = std.meta.stringToEnum(PartKind, kind_str) orelse return ShipSerializationError.InvalidEnumString;
+                break :blk .{ .ShipPart = .{ .kind = kind, .tier = 1, .health = 100.0, .variation = 0 } };
             },
         };
 
