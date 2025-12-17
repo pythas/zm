@@ -37,19 +37,23 @@ pub const TileType = enum {
     ShipPart,
 };
 
+pub const TerrainTileType = struct {
+    base_material: BaseMaterial,
+    ores: [2]OreAmount,
+};
+
+pub const ShipPartTileType = struct {
+    kind: PartKind,
+    tier: u8,
+    health: f32,
+    variation: u8,
+    rotation: Direction = .North,
+};
+
 pub const TileData = union(TileType) {
     Empty: void,
-    Terrain: struct {
-        base_material: BaseMaterial,
-        ores: [2]OreAmount,
-    },
-    ShipPart: struct {
-        kind: PartKind,
-        tier: u8,
-        health: f32,
-        variation: u8,
-        // TODO: add rotation
-    },
+    Terrain: TerrainTileType,
+    ShipPart: ShipPartTileType,
 };
 
 pub const TileCoords = struct {
@@ -122,7 +126,6 @@ pub const Tile = struct {
     const Self = @This();
 
     data: TileData,
-    rotation: Direction = .North,
 
     pub fn init(
         data: TileData,
@@ -138,6 +141,13 @@ pub const Tile = struct {
         };
     }
 
+    pub fn getShipPart(self: Self) ?ShipPartTileType {
+        return switch (self.data) {
+            .ShipPart => |ship| ship,
+            else => null,
+        };
+    }
+
     pub fn getPartKind(self: Self) ?PartKind {
         return switch (self.data) {
             .ShipPart => |ship| ship.kind,
@@ -149,6 +159,13 @@ pub const Tile = struct {
         return switch (self.data) {
             .ShipPart => |ship| ship.tier,
             else => null,
+        };
+    }
+
+    pub fn isShipPart(self: Self) bool {
+        return switch (self.data) {
+            .ShipPart => true,
+            else => false,
         };
     }
 };

@@ -170,18 +170,24 @@ pub const TileObject = struct {
         const tile = self.getTile(x, y) orelse return 0;
         const tile_type = std.meta.activeTag(tile.data);
 
-        const neighbors = .{
-            .{ .dir = .North, .bit = 0 },
-            .{ .dir = .East, .bit = 1 },
-            .{ .dir = .South, .bit = 2 },
-            .{ .dir = .West, .bit = 3 },
+        const Neighbor = struct {
+            dir: Direction,
+            bit: u3,
+        };
+        const neighbors = [4]Neighbor{
+            Neighbor{ .dir = .North, .bit = 0 },
+            Neighbor{ .dir = .East, .bit = 1 },
+            Neighbor{ .dir = .South, .bit = 2 },
+            Neighbor{ .dir = .West, .bit = 3 },
         };
 
-        inline for (neighbors) |n| {
+        for (neighbors) |n| {
             if (self.getNeighbouringTile(x, y, n.dir)) |neighbor| {
-                if (std.meta.activeTag(neighbor.data) == tile_type) {
-                    mask |= 1 << n.bit;
+                if (std.meta.activeTag(neighbor.data) != tile_type) {
+                    continue;
                 }
+
+                mask |= @as(u8, 1) << n.bit;
             }
         }
 
@@ -396,15 +402,14 @@ pub const TileObject = struct {
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 const tile = self.getTile(x, y) orelse continue;
-                const part_kind = tile.getPartKind() orelse continue;
-                const tier = tile.getTier() orelse continue;
+                const ship_part = tile.getShipPart() orelse continue;
 
-                const power: f32 = switch (part_kind) {
-                    .Engine => PartStats.getEnginePower(tier),
+                const power: f32 = switch (ship_part.kind) {
+                    .Engine => PartStats.getEnginePower(ship_part.tier),
                     else => continue,
                 };
 
-                const kind: ThrusterKind = switch (part_kind) {
+                const kind: ThrusterKind = switch (ship_part.kind) {
                     .Engine => .Main,
                     else => continue,
                 };
@@ -418,7 +423,7 @@ pub const TileObject = struct {
                     .kind = kind,
                     .x = local_x,
                     .y = local_y,
-                    .direction = tile.rotation,
+                    .direction = ship_part.rotation,
                     .power = power,
                 });
             }

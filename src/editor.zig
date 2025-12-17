@@ -147,8 +147,7 @@ pub const Editor = struct {
                 if (tile) |ti| {
                     if (ti.data == .ShipPart and ti.data.ShipPart.kind == .Engine) {
                         var t2 = ti.*;
-                        t2.rotation = @enumFromInt((@intFromEnum(t2.rotation) + 1) % 4);
-                        // t2.sprite.index = (t2.sprite.index - 64 + 1) % 4 + 64;
+                        t2.data.ShipPart.rotation = @enumFromInt((@intFromEnum(t2.data.ShipPart.rotation) + 1) % 4);
                         world.objects.items[0].setTile(tile_x, tile_y, t2);
                     }
                 }
@@ -188,7 +187,7 @@ pub const Editor = struct {
                                 var et = try Tile.init(
                                     .{ .ShipPart = .{ .kind = .Engine, .tier = 1, .health = 100.0, .variation = 0 } },
                                 );
-                                et.rotation = ed;
+                                et.data.ShipPart.rotation = ed;
 
                                 world.objects.items[0].setTile(tile_x, tile_y, et);
                             }
@@ -219,7 +218,7 @@ pub const Editor = struct {
                                 var et = try Tile.init(
                                     .{ .ShipPart = .{ .kind = .RCS, .tier = 1, .health = 100.0, .variation = 0 } },
                                 );
-                                et.rotation = ed;
+                                et.data.ShipPart.rotation = ed;
 
                                 world.objects.items[0].setTile(tile_x, tile_y, et);
                             }

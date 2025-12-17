@@ -20,7 +20,7 @@ const JsonTileFlat = struct {
     data_type: []const u8,
     kind: ?[]const u8 = null,
     base_material: ?[]const u8 = null,
-    rotation: []const u8,
+    rotation: ?[]const u8,
 };
 
 const JsonShipData = struct {
@@ -43,9 +43,13 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
             const data_type_str = @tagName(tile.data);
             var part_str: ?[]const u8 = null;
             var base_material_str: ?[]const u8 = null;
+            var rotation: ?[]const u8 = null;
 
             switch (tile.data) {
-                .ShipPart => |s| part_str = @tagName(s.kind),
+                .ShipPart => |s| {
+                    part_str = @tagName(s.kind);
+                    rotation = @tagName(s.rotation);
+                },
                 .Terrain => |t| base_material_str = @tagName(t.base_material),
                 else => {},
             }
@@ -56,7 +60,7 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
                 .data_type = data_type_str,
                 .kind = part_str,
                 .base_material = base_material_str,
-                .rotation = @tagName(tile.rotation),
+                .rotation = rotation,
             });
         }
     }
@@ -110,20 +114,36 @@ pub fn loadShip(
             .Terrain => blk: {
                 const mat_str = json_tile.base_material orelse return ShipSerializationError.InvalidEnumString;
                 const mat = std.meta.stringToEnum(BaseMaterial, mat_str) orelse return ShipSerializationError.InvalidEnumString;
-                break :blk .{ .Terrain = .{ .base_material = mat, .ores = .{
-                    .{ .ore = .None, .richness = 0 },
-                    .{ .ore = .None, .richness = 0 },
-                } } };
+
+                break :blk .{
+                    .Terrain = .{
+                        .base_material = mat,
+                        .ores = .{
+                            .{ .ore = .None, .richness = 0 },
+                            .{ .ore = .None, .richness = 0 },
+                        },
+                    },
+                };
             },
             .ShipPart => blk: {
                 const kind_str = json_tile.kind orelse return ShipSerializationError.InvalidEnumString;
                 const kind = std.meta.stringToEnum(PartKind, kind_str) orelse return ShipSerializationError.InvalidEnumString;
-                break :blk .{ .ShipPart = .{ .kind = kind, .tier = 1, .health = 100.0, .variation = 0 } };
+                const rotation_str = json_tile.rotation orelse return ShipSerializationError.InvalidEnumString;
+                const rotation = std.meta.stringToEnum(Direction, rotation_str) orelse return ShipSerializationError.InvalidEnumString;
+
+                break :blk .{
+                    .ShipPart = .{
+                        .kind = kind,
+                        .tier = 1,
+                        .health = 100.0,
+                        .variation = 0,
+                        .rotation = rotation,
+                    },
+                };
             },
         };
 
-        var new_tile = try Tile.init(tile_data);
-        new_tile.rotation = std.meta.stringToEnum(Direction, json_tile.rotation) orelse return ShipSerializationError.InvalidEnumString;
+        const new_tile = try Tile.init(tile_data);
 
         ship.setTile(json_tile.x, json_tile.y, new_tile);
     }
