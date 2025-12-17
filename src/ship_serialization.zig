@@ -20,8 +20,6 @@ const JsonTileFlat = struct {
     data_type: []const u8,
     kind: ?[]const u8 = null,
     base_material: ?[]const u8 = null,
-    sprite_sheet: []const u8,
-    sprite_index: u16,
     rotation: []const u8,
 };
 
@@ -58,8 +56,6 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
                 .data_type = data_type_str,
                 .kind = part_str,
                 .base_material = base_material_str,
-                .sprite_sheet = @tagName(tile.sprite.sheet),
-                .sprite_index = tile.sprite.index,
                 .rotation = @tagName(tile.rotation),
             });
         }
@@ -126,13 +122,7 @@ pub fn loadShip(
             },
         };
 
-        const sheet = std.meta.stringToEnum(SpriteSheet, json_tile.sprite_sheet) orelse return ShipSerializationError.InvalidEnumString;
-        const sprite = Sprite{
-            .sheet = sheet,
-            .index = json_tile.sprite_index,
-        };
-
-        var new_tile = try Tile.init(tile_data, sprite);
+        var new_tile = try Tile.init(tile_data);
         new_tile.rotation = std.meta.stringToEnum(Direction, json_tile.rotation) orelse return ShipSerializationError.InvalidEnumString;
 
         ship.setTile(json_tile.x, json_tile.y, new_tile);

@@ -279,7 +279,7 @@ pub const PlayerController = struct {
 
     pub fn startMining(self: *Self, source: TileCoords, target: TileReference) !void {
         try self.tile_actions.append(
-            TileAction.init(.Mine, source, target, 3.0),
+            TileAction.init(.Mine, source, target, 1.0),
         );
     }
 };

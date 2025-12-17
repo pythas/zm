@@ -53,11 +53,10 @@ pub const World = struct {
         try self.objects.append(ship);
 
         {
-            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(0.0, -300.0), 0);
+            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(0.0, -250.0), 0);
             asteroid.object_type = .Asteroid;
             for (0..asteroid.width) |y| {
                 for (0..asteroid.height) |x| {
-                    // asteroid.tiles[y * asteroid.width + x] = try Tile.init(allocator, .Hull, .Metal, .Ships, 34);
                     asteroid.tiles[y * asteroid.width + x] = try Tile.init(
                         .{
                             .Terrain = .{
@@ -74,7 +73,6 @@ pub const World = struct {
                                 },
                             },
                         },
-                        .{ .sheet = .Ships, .index = 34 },
                     );
                 }
             }
@@ -83,7 +81,7 @@ pub const World = struct {
         }
 
         {
-            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(-200.0, -300.0), 0);
+            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(-200.0, -250.0), 0);
             asteroid.object_type = .Asteroid;
             for (0..asteroid.width) |y| {
                 for (0..asteroid.height) |x| {
@@ -103,7 +101,6 @@ pub const World = struct {
                                 },
                             },
                         },
-                        .{ .sheet = .Ships, .index = 34 },
                     );
                 }
             }

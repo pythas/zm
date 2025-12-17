@@ -48,6 +48,7 @@ pub const TileData = union(TileType) {
         tier: u8,
         health: f32,
         variation: u8,
+        // TODO: add rotation
     },
 };
 
@@ -64,13 +65,29 @@ pub const TileReference = struct {
 
 pub const SpriteSheet = enum(u8) {
     World = 0,
-    Asteroids = 1,
+    Terrain = 1,
     Ships = 2,
 };
 
 pub const Sprite = struct {
+    const Self = @This();
+
     sheet: SpriteSheet,
     index: u16,
+
+    pub fn init(sheet: SpriteSheet, index: u16) Self {
+        return .{
+            .sheet = sheet,
+            .index = index,
+        };
+    }
+
+    pub fn initEmpty() Self {
+        return .{
+            .sheet = .World,
+            .index = 0,
+        };
+    }
 };
 
 pub const Direction = enum(u8) {
@@ -105,23 +122,19 @@ pub const Tile = struct {
     const Self = @This();
 
     data: TileData,
-    sprite: Sprite,
     rotation: Direction = .North,
 
     pub fn init(
         data: TileData,
-        sprite: Sprite,
     ) !Self {
         return .{
             .data = data,
-            .sprite = sprite,
         };
     }
 
     pub fn initEmpty() !Self {
         return .{
             .data = .Empty,
-            .sprite = .{ .sheet = .World, .index = 0 },
         };
     }
 

@@ -114,7 +114,10 @@ pub const SpriteRenderer = struct {
             defer self.allocator.free(data);
 
             for (0..object.width * object.height) |i| {
-                data[i] = packTileForGpu(object.tiles[i]);
+                const x = i % object.width;
+                const y = i / object.width;
+
+                data[i] = packTileForGpu(object.tiles[i], object.getNeighborMask(x, y));
             }
 
             self.gctx.queue.writeTexture(

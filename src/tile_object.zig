@@ -13,6 +13,7 @@ const PhysicsTileData = @import("box2d_physics.zig").TileData;
 const TileData = @import("tile.zig").TileData;
 const InputState = @import("input.zig").InputState;
 const PartStats = @import("ship.zig").PartStats;
+const TileType = @import("tile.zig").TileType;
 
 pub const ShipCapabilities = struct {
     force_forward: f32 = 0.0,
@@ -162,6 +163,29 @@ pub const TileObject = struct {
         }
 
         return self.getTile(@intCast(nx), @intCast(ny));
+    }
+
+    pub fn getNeighborMask(self: Self, x: usize, y: usize) u8 {
+        var mask: u8 = 0;
+        const tile = self.getTile(x, y) orelse return 0;
+        const tile_type = std.meta.activeTag(tile.data);
+
+        const neighbors = .{
+            .{ .dir = .North, .bit = 0 },
+            .{ .dir = .East, .bit = 1 },
+            .{ .dir = .South, .bit = 2 },
+            .{ .dir = .West, .bit = 3 },
+        };
+
+        inline for (neighbors) |n| {
+            if (self.getNeighbouringTile(x, y, n.dir)) |neighbor| {
+                if (std.meta.activeTag(neighbor.data) == tile_type) {
+                    mask |= 1 << n.bit;
+                }
+            }
+        }
+
+        return mask;
     }
 
     pub fn getTileCoordsAtWorldPos(self: Self, point: Vec2) ?struct {
