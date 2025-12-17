@@ -327,8 +327,19 @@ pub const TileObject = struct {
 
     pub fn recalculatePhysics(self: *Self, physics: *Physics) !void {
         self.physics_dirty = false;
+
+        var linear_velocity = Vec2.init(0, 0);
+        var angular_velocity: f32 = 0.0;
+
         if (self.body_id.isValid()) {
+            self.position = physics.getPosition(self.body_id);
+            self.rotation = physics.getRotation(self.body_id);
+
+            linear_velocity = physics.getLinearVelocity(self.body_id);
+            angular_velocity = physics.getAngularVelocity(self.body_id);
+
             physics.destroyBody(self.body_id);
+            self.body_id = BodyId.invalid;
         }
 
         var physics_tiles = std.ArrayList(PhysicsTileData).init(self.allocator);
@@ -362,24 +373,7 @@ pub const TileObject = struct {
         }
 
         if (physics_tiles.items.len == 0) {
-            if (self.body_id.isValid()) {
-                physics.destroyBody(self.body_id);
-                self.body_id = BodyId.invalid;
-            }
             return;
-        }
-
-        var linear_velocity = Vec2.init(0, 0);
-        var angular_velocity: f32 = 0.0;
-
-        if (self.body_id.isValid()) {
-            self.position = physics.getPosition(self.body_id);
-            self.rotation = physics.getRotation(self.body_id);
-
-            linear_velocity = physics.getLinearVelocity(self.body_id);
-            angular_velocity = physics.getAngularVelocity(self.body_id);
-
-            physics.destroyBody(self.body_id);
         }
 
         self.body_id = try physics.createBody(self.position, self.rotation);

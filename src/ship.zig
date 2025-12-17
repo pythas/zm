@@ -14,7 +14,7 @@ pub const PartStats = struct {
 
     pub fn getEnginePower(tier: u8) f32 {
         return switch (tier) {
-            1 => 300_000.0,
+            1 => 30_000.0,
             2 => 100_000.0,
             3 => 200_000.0,
             else => 0.0,
@@ -23,7 +23,7 @@ pub const PartStats = struct {
 
     pub fn getLaserRangeSq(tier: u8) f32 {
         const range: f32 = switch (tier) {
-            1 => 9980.0,
+            1 => 80.0,
             2 => 160.0,
             3 => 320.0,
             else => 0.0,
