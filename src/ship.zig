@@ -8,7 +8,6 @@ pub const PartStats = struct {
             .engine => 2.0,
             .hull => 1.0,
             .laser => 1.0,
-            .rcs => 0.5,
         };
     }
 

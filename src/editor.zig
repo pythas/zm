@@ -78,7 +78,6 @@ const EditorLayout = struct {
 pub const EditorPalette = enum {
     hull,
     engine,
-    rcs,
     laser,
 };
 
@@ -193,37 +192,6 @@ pub const Editor = struct {
                             }
                         }
                     },
-                    .rcs => {
-                        var engine_dir: ?Direction = null;
-                        var is_connected = false;
-
-                        for (Directions) |d| {
-                            const n = world.objects.items[0].getNeighbouringTile(
-                                tile_x,
-                                tile_y,
-                                d.direction,
-                            ) orelse continue;
-
-                            if (n.data == .empty) {
-                                if (engine_dir == null) {
-                                    engine_dir = d.direction;
-                                }
-                            } else {
-                                is_connected = true;
-                            }
-                        }
-
-                        if (is_connected) {
-                            if (engine_dir) |ed| {
-                                var et = try Tile.init(
-                                    .{ .ship_part = .{ .kind = .rcs, .tier = 1, .health = 100.0, .variation = 0 } },
-                                );
-                                et.data.ship_part.rotation = ed;
-
-                                world.objects.items[0].setTile(tile_x, tile_y, et);
-                            }
-                        }
-                    },
                     .laser => {
                         const ht = try Tile.init(
                             .{ .ship_part = .{ .kind = .laser, .tier = 1, .health = 100.0, .variation = 0 } },
@@ -290,15 +258,6 @@ pub const Editor = struct {
             "Engine",
         )) {
             self.current_palette = .engine;
-        }
-
-        btn_x += btn_s + 10;
-        if (try ui.button(
-            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .rcs,
-            "RCS",
-        )) {
-            self.current_palette = .rcs;
         }
 
         btn_x += btn_s + 10;

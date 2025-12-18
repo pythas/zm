@@ -6,7 +6,6 @@ pub const tilemapHeight = 16;
 pub const PartKind = enum(u8) {
     hull,
     engine,
-    rcs,
     laser,
 };
 
