@@ -46,11 +46,11 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
             var rotation: ?[]const u8 = null;
 
             switch (tile.data) {
-                .ShipPart => |s| {
+                .ship_part => |s| {
                     part_str = @tagName(s.kind);
                     rotation = @tagName(s.rotation);
                 },
-                .Terrain => |t| base_material_str = @tagName(t.base_material),
+                .terrain => |t| base_material_str = @tagName(t.base_material),
                 else => {},
             }
 
@@ -110,29 +110,29 @@ pub fn loadShip(
         const data_tag = std.meta.stringToEnum(std.meta.Tag(TileData), json_tile.data_type) orelse return ShipSerializationError.InvalidEnumString;
 
         const tile_data: TileData = switch (data_tag) {
-            .Empty => .Empty,
-            .Terrain => blk: {
+            .empty => .empty,
+            .terrain => blk: {
                 const mat_str = json_tile.base_material orelse return ShipSerializationError.InvalidEnumString;
                 const mat = std.meta.stringToEnum(BaseMaterial, mat_str) orelse return ShipSerializationError.InvalidEnumString;
 
                 break :blk .{
-                    .Terrain = .{
+                    .terrain = .{
                         .base_material = mat,
                         .ores = .{
-                            .{ .ore = .None, .richness = 0 },
-                            .{ .ore = .None, .richness = 0 },
+                            .{ .ore = .none, .richness = 0 },
+                            .{ .ore = .none, .richness = 0 },
                         },
                     },
                 };
             },
-            .ShipPart => blk: {
+            .ship_part => blk: {
                 const kind_str = json_tile.kind orelse return ShipSerializationError.InvalidEnumString;
                 const kind = std.meta.stringToEnum(PartKind, kind_str) orelse return ShipSerializationError.InvalidEnumString;
                 const rotation_str = json_tile.rotation orelse return ShipSerializationError.InvalidEnumString;
                 const rotation = std.meta.stringToEnum(Direction, rotation_str) orelse return ShipSerializationError.InvalidEnumString;
 
                 break :blk .{
-                    .ShipPart = .{
+                    .ship_part = .{
                         .kind = kind,
                         .tier = 1,
                         .health = 100.0,

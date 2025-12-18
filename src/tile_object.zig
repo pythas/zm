@@ -28,8 +28,8 @@ pub const ShipCapabilities = struct {
 };
 
 pub const ThrusterKind = enum {
-    Main,
-    Secondary,
+    main,
+    secondary,
 };
 
 pub const Thruster = struct {
@@ -41,9 +41,9 @@ pub const Thruster = struct {
 };
 
 pub const ObjectType = enum {
-    ShipPart,
-    Asteroid,
-    Debris,
+    ship_part,
+    asteroid,
+    debris,
 };
 
 pub const TileObject = struct {
@@ -52,7 +52,7 @@ pub const TileObject = struct {
     allocator: std.mem.Allocator,
 
     id: u64,
-    object_type: ObjectType = .Asteroid,
+    object_type: ObjectType = .asteroid,
 
     body_id: BodyId = BodyId.invalid,
     position: Vec2,
@@ -149,10 +149,10 @@ pub const TileObject = struct {
         direction: Direction,
     ) ?*Tile {
         const delta: Offset = switch (direction) {
-            .North => .{ .dx = 0, .dy = -1 },
-            .East => .{ .dx = 1, .dy = 0 },
-            .South => .{ .dx = 0, .dy = 1 },
-            .West => .{ .dx = -1, .dy = 0 },
+            .north => .{ .dx = 0, .dy = -1 },
+            .east => .{ .dx = 1, .dy = 0 },
+            .south => .{ .dx = 0, .dy = 1 },
+            .west => .{ .dx = -1, .dy = 0 },
         };
 
         const nx = @as(isize, @intCast(x)) + delta.dx;
@@ -175,10 +175,10 @@ pub const TileObject = struct {
             bit: u3,
         };
         const neighbors = [4]Neighbor{
-            Neighbor{ .dir = .North, .bit = 0 },
-            Neighbor{ .dir = .East, .bit = 1 },
-            Neighbor{ .dir = .South, .bit = 2 },
-            Neighbor{ .dir = .West, .bit = 3 },
+            Neighbor{ .dir = .north, .bit = 0 },
+            Neighbor{ .dir = .east, .bit = 1 },
+            Neighbor{ .dir = .south, .bit = 2 },
+            Neighbor{ .dir = .west, .bit = 3 },
         };
 
         for (neighbors) |n| {
@@ -291,30 +291,30 @@ pub const TileObject = struct {
             var should_fire = false;
 
             switch (thruster.direction) {
-                .South => {
-                    should_fire = (thruster.kind == .Main and input == .Forward) or
-                        (thruster.kind == .Secondary and input == .SecondaryForward);
+                .south => {
+                    should_fire = (thruster.kind == .main and input == .forward) or
+                        (thruster.kind == .secondary and input == .secondary_forward);
                 },
-                .North => {
-                    should_fire = (thruster.kind == .Main and input == .Backward) or
-                        (thruster.kind == .Secondary and input == .SecondaryBackward);
+                .north => {
+                    should_fire = (thruster.kind == .main and input == .backward) or
+                        (thruster.kind == .secondary and input == .secondary_backward);
                 },
-                .West => {
-                    should_fire = (thruster.kind == .Main and input == .Right) or
-                        (thruster.kind == .Secondary and input == .SecondaryRight);
+                .west => {
+                    should_fire = (thruster.kind == .main and input == .right) or
+                        (thruster.kind == .secondary and input == .secondary_right);
                 },
-                .East => {
-                    should_fire = (thruster.kind == .Main and input == .Left) or
-                        (thruster.kind == .Secondary and input == .SecondaryLeft);
+                .east => {
+                    should_fire = (thruster.kind == .main and input == .left) or
+                        (thruster.kind == .secondary and input == .secondary_left);
                 },
             }
 
             if (should_fire) {
                 const local_dir = switch (thruster.direction) {
-                    .North => Vec2.init(0.0, 1.0),
-                    .South => Vec2.init(0.0, -1.0),
-                    .East => Vec2.init(-1.0, 0.0),
-                    .West => Vec2.init(1.0, 0.0),
+                    .north => Vec2.init(0.0, 1.0),
+                    .south => Vec2.init(0.0, -1.0),
+                    .east => Vec2.init(-1.0, 0.0),
+                    .west => Vec2.init(1.0, 0.0),
                 };
 
                 const world_dir = Vec2.init(local_dir.x * cos_rot - local_dir.y * sin_rot, local_dir.x * sin_rot + local_dir.y * cos_rot);
@@ -356,9 +356,9 @@ pub const TileObject = struct {
                 const tile = self.getTile(x, y) orelse continue;
 
                 const density: f32 = switch (tile.data) {
-                    .ShipPart => |ship_data| PartStats.getDensity(ship_data.kind),
-                    .Terrain => 1.0,
-                    .Empty => 0.0,
+                    .ship_part => |ship_data| PartStats.getDensity(ship_data.kind),
+                    .terrain => 1.0,
+                    .empty => 0.0,
                 };
 
                 if (density == 0.0) {
@@ -373,7 +373,7 @@ pub const TileObject = struct {
                 try physics_tiles.append(PhysicsTileData{
                     .pos = Vec2.init(x_pos, y_pos),
                     .density = density,
-                    .layer = if (self.object_type == .Debris) .Debris else .Default,
+                    .layer = if (self.object_type == .debris) .debris else .default,
                 });
             }
         }
@@ -395,7 +395,7 @@ pub const TileObject = struct {
     fn rebuildThrusters(self: *Self) !void {
         self.thrusters.clearRetainingCapacity();
 
-        if (self.object_type != .ShipPart) {
+        if (self.object_type != .ship_part) {
             return;
         }
 
@@ -405,12 +405,12 @@ pub const TileObject = struct {
                 const ship_part = tile.getShipPart() orelse continue;
 
                 const power: f32 = switch (ship_part.kind) {
-                    .Engine => PartStats.getEnginePower(ship_part.tier),
+                    .engine => PartStats.getEnginePower(ship_part.tier),
                     else => continue,
                 };
 
                 const kind: ThrusterKind = switch (ship_part.kind) {
-                    .Engine => .Main,
+                    .engine => .main,
                     else => continue,
                 };
 

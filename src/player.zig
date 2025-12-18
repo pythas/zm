@@ -46,35 +46,35 @@ pub const PlayerController = struct {
 
         if (!keyboard_state.isDown(.left_shift)) {
             if (keyboard_state.isDown(.w)) {
-                ship.applyInputThrust(&world.physics, .Forward);
+                ship.applyInputThrust(&world.physics, .forward);
             }
 
             if (keyboard_state.isDown(.s)) {
-                ship.applyInputThrust(&world.physics, .Backward);
+                ship.applyInputThrust(&world.physics, .backward);
             }
 
             if (keyboard_state.isDown(.a)) {
-                ship.applyInputThrust(&world.physics, .Left);
+                ship.applyInputThrust(&world.physics, .left);
             }
 
             if (keyboard_state.isDown(.d)) {
-                ship.applyInputThrust(&world.physics, .Right);
+                ship.applyInputThrust(&world.physics, .right);
             }
         } else {
             if (keyboard_state.isDown(.w)) {
-                ship.applyInputThrust(&world.physics, .SecondaryForward);
+                ship.applyInputThrust(&world.physics, .secondary_forward);
             }
 
             if (keyboard_state.isDown(.s)) {
-                ship.applyInputThrust(&world.physics, .SecondaryBackward);
+                ship.applyInputThrust(&world.physics, .secondary_backward);
             }
 
             if (keyboard_state.isDown(.a)) {
-                ship.applyInputThrust(&world.physics, .SecondaryLeft);
+                ship.applyInputThrust(&world.physics, .secondary_left);
             }
 
             if (keyboard_state.isDown(.d)) {
-                ship.applyInputThrust(&world.physics, .SecondaryRight);
+                ship.applyInputThrust(&world.physics, .secondary_right);
             }
         }
 
@@ -89,11 +89,11 @@ pub const PlayerController = struct {
 
                 const coords = object.getTileCoordsAtWorldPos(world_pos) orelse continue;
                 const tile = object.getTile(coords.x, coords.y) orelse continue;
-                if (tile.data == .Empty) continue;
+                if (tile.data == .empty) continue;
 
                 const target_pos = object.getTileWorldPos(coords.x, coords.y);
 
-                const tile_refs = try ship.getTileByPartKind(.Laser);
+                const tile_refs = try ship.getTileByPartKind(.laser);
                 defer self.allocator.free(tile_refs);
 
                 const LaserCandidate = struct {
@@ -186,7 +186,7 @@ pub const PlayerController = struct {
                             const tile_y: usize = @intCast(target_y);
 
                             if (object.getTile(tile_x, tile_y)) |target_tile| {
-                                if (target_tile.data == .Empty) continue;
+                                if (target_tile.data == .empty) continue;
 
                                 try targets.append(.{
                                     .object_id = object.id,
@@ -216,7 +216,7 @@ pub const PlayerController = struct {
 
             if (!tile_action.isActive()) {
                 switch (tile_action.kind) {
-                    .Mine => {
+                    .mine => {
                         std.debug.print("mine tile: {d} {d}\n", .{
                             tile_action.target.tile_x,
                             tile_action.target.tile_y,
@@ -228,12 +228,12 @@ pub const PlayerController = struct {
                             const target_id = tile_action.target.object_id;
 
                             if (target_obj.getTile(tx, ty)) |tile| {
-                                if (tile.data != .Empty) {
+                                if (tile.data != .empty) {
                                     const debris_pos = target_obj.getTileWorldPos(tx, ty);
 
                                     const new_id = world.generateObjectId();
                                     var debris = try TileObject.init(self.allocator, new_id, 1, 1, debris_pos, target_obj.rotation);
-                                    debris.object_type = .Debris;
+                                    debris.object_type = .debris;
                                     debris.setTile(0, 0, tile.*);
 
                                     try debris.recalculatePhysics(&world.physics);
@@ -279,7 +279,7 @@ pub const PlayerController = struct {
 
     pub fn startMining(self: *Self, source: TileCoords, target: TileReference) !void {
         try self.tile_actions.append(
-            TileAction.init(.Mine, source, target, 1.0),
+            TileAction.init(.mine, source, target, 1.0),
         );
     }
 };
@@ -288,7 +288,7 @@ pub const TileAction = struct {
     const Self = @This();
 
     pub const Kind = enum {
-        Mine,
+        mine,
     };
 
     kind: Kind,

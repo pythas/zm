@@ -3,14 +3,14 @@ const zglfw = @import("zglfw");
 const Vec2 = @import("vec2.zig").Vec2;
 
 pub const InputState = enum {
-    Forward,
-    Backward,
-    Left,
-    Right,
-    SecondaryForward,
-    SecondaryBackward,
-    SecondaryLeft,
-    SecondaryRight,
+    forward,
+    backward,
+    left,
+    right,
+    secondary_forward,
+    secondary_backward,
+    secondary_left,
+    secondary_right,
 };
 
 pub const KeyboardState = struct {

@@ -76,10 +76,10 @@ const EditorLayout = struct {
 };
 
 pub const EditorPalette = enum {
-    Hull,
-    Engine,
-    RCS,
-    Laser,
+    hull,
+    engine,
+    rcs,
+    laser,
 };
 
 pub const Editor = struct {
@@ -97,7 +97,7 @@ pub const Editor = struct {
             .window = window,
             .mouse = MouseState.init(window),
             .keyboard = KeyboardState.init(window),
-            .current_palette = .Hull,
+            .current_palette = .hull,
         };
     }
 
@@ -145,9 +145,9 @@ pub const Editor = struct {
                 const tile = world.objects.items[0].getTile(tile_x, tile_y);
 
                 if (tile) |ti| {
-                    if (ti.data == .ShipPart and ti.data.ShipPart.kind == .Engine) {
+                    if (ti.data == .ship_part and ti.data.ship_part.kind == .engine) {
                         var t2 = ti.*;
-                        t2.data.ShipPart.rotation = @enumFromInt((@intFromEnum(t2.data.ShipPart.rotation) + 1) % 4);
+                        t2.data.ship_part.rotation = @enumFromInt((@intFromEnum(t2.data.ship_part.rotation) + 1) % 4);
                         world.objects.items[0].setTile(tile_x, tile_y, t2);
                     }
                 }
@@ -155,14 +155,14 @@ pub const Editor = struct {
 
             if (self.mouse.is_left_down) {
                 switch (self.current_palette) {
-                    .Hull => {
+                    .hull => {
                         const ht = try Tile.init(
-                            .{ .ShipPart = .{ .kind = .Hull, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .ship_part = .{ .kind = .hull, .tier = 1, .health = 100.0, .variation = 0 } },
                         );
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);
                     },
-                    .Engine => {
+                    .engine => {
                         var engine_dir: ?Direction = null;
                         var is_connected = false;
 
@@ -173,7 +173,7 @@ pub const Editor = struct {
                                 d.direction,
                             ) orelse continue;
 
-                            if (n.data == .Empty) {
+                            if (n.data == .empty) {
                                 if (engine_dir == null) {
                                     engine_dir = d.direction;
                                 }
@@ -185,15 +185,15 @@ pub const Editor = struct {
                         if (is_connected) {
                             if (engine_dir) |ed| {
                                 var et = try Tile.init(
-                                    .{ .ShipPart = .{ .kind = .Engine, .tier = 1, .health = 100.0, .variation = 0 } },
+                                    .{ .ship_part = .{ .kind = .engine, .tier = 1, .health = 100.0, .variation = 0 } },
                                 );
-                                et.data.ShipPart.rotation = ed;
+                                et.data.ship_part.rotation = ed;
 
                                 world.objects.items[0].setTile(tile_x, tile_y, et);
                             }
                         }
                     },
-                    .RCS => {
+                    .rcs => {
                         var engine_dir: ?Direction = null;
                         var is_connected = false;
 
@@ -204,7 +204,7 @@ pub const Editor = struct {
                                 d.direction,
                             ) orelse continue;
 
-                            if (n.data == .Empty) {
+                            if (n.data == .empty) {
                                 if (engine_dir == null) {
                                     engine_dir = d.direction;
                                 }
@@ -216,17 +216,17 @@ pub const Editor = struct {
                         if (is_connected) {
                             if (engine_dir) |ed| {
                                 var et = try Tile.init(
-                                    .{ .ShipPart = .{ .kind = .RCS, .tier = 1, .health = 100.0, .variation = 0 } },
+                                    .{ .ship_part = .{ .kind = .rcs, .tier = 1, .health = 100.0, .variation = 0 } },
                                 );
-                                et.data.ShipPart.rotation = ed;
+                                et.data.ship_part.rotation = ed;
 
                                 world.objects.items[0].setTile(tile_x, tile_y, et);
                             }
                         }
                     },
-                    .Laser => {
+                    .laser => {
                         const ht = try Tile.init(
-                            .{ .ShipPart = .{ .kind = .Laser, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .ship_part = .{ .kind = .laser, .tier = 1, .health = 100.0, .variation = 0 } },
                         );
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);
@@ -244,7 +244,7 @@ pub const Editor = struct {
             world,
             dt,
             t,
-            .ShipEditor,
+            .ship_editor,
             hover_x,
             hover_y,
         );
@@ -277,37 +277,37 @@ pub const Editor = struct {
 
         if (try ui.button(
             .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .Hull,
+            self.current_palette == .hull,
             "Hull",
         )) {
-            self.current_palette = .Hull;
+            self.current_palette = .hull;
         }
 
         btn_x += btn_s + 10;
         if (try ui.button(
             .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .Engine,
+            self.current_palette == .engine,
             "Engine",
         )) {
-            self.current_palette = .Engine;
+            self.current_palette = .engine;
         }
 
         btn_x += btn_s + 10;
         if (try ui.button(
             .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .RCS,
+            self.current_palette == .rcs,
             "RCS",
         )) {
-            self.current_palette = .RCS;
+            self.current_palette = .rcs;
         }
 
         btn_x += btn_s + 10;
         if (try ui.button(
             .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .Laser,
+            self.current_palette == .laser,
             "Laser",
         )) {
-            self.current_palette = .Laser;
+            self.current_palette = .laser;
         }
 
         // ship

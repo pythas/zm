@@ -18,14 +18,14 @@ pub const BodyId = struct {
 };
 
 pub const CollisionLayer = enum {
-    Default,
-    Debris,
+    default,
+    debris,
 };
 
 pub const TileData = struct {
     pos: Vec2,
     density: f32,
-    layer: CollisionLayer = .Default,
+    layer: CollisionLayer = .default,
 };
 
 pub const Physics = struct {
@@ -179,11 +179,11 @@ pub const Physics = struct {
             shape_def.density = tile.density;
 
             switch (tile.layer) {
-                .Default => {
+                .default => {
                     shape_def.filter.categoryBits = 0x0001;
                     shape_def.filter.maskBits = 0xFFFF;
                 },
-                .Debris => {
+                .debris => {
                     shape_def.filter.categoryBits = 0x0002;
                     shape_def.filter.maskBits = 0x0000; // Collides with nothing
                 },

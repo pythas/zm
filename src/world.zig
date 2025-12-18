@@ -48,26 +48,26 @@ pub const World = struct {
             else => return err,
         };
 
-        ship.object_type = .ShipPart;
+        ship.object_type = .ship_part;
         try ship.recalculatePhysics(&physics);
         try self.objects.append(ship);
 
         {
             var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(0.0, -250.0), 0);
-            asteroid.object_type = .Asteroid;
+            asteroid.object_type = .asteroid;
             for (0..asteroid.width) |y| {
                 for (0..asteroid.height) |x| {
                     asteroid.tiles[y * asteroid.width + x] = try Tile.init(
                         .{
-                            .Terrain = .{
-                                .base_material = .Rock,
+                            .terrain = .{
+                                .base_material = .rock,
                                 .ores = .{
                                     .{
-                                        .ore = .Iron,
+                                        .ore = .iron,
                                         .richness = 1,
                                     },
                                     .{
-                                        .ore = .None,
+                                        .ore = .none,
                                         .richness = 0,
                                     },
                                 },
@@ -82,20 +82,20 @@ pub const World = struct {
 
         {
             var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(-200.0, -250.0), 0);
-            asteroid.object_type = .Asteroid;
+            asteroid.object_type = .asteroid;
             for (0..asteroid.width) |y| {
                 for (0..asteroid.height) |x| {
                     asteroid.tiles[y * asteroid.width + x] = try Tile.init(
                         .{
-                            .Terrain = .{
-                                .base_material = .Rock,
+                            .terrain = .{
+                                .base_material = .rock,
                                 .ores = .{
                                     .{
-                                        .ore = .Iron,
+                                        .ore = .iron,
                                         .richness = 1,
                                     },
                                     .{
-                                        .ore = .None,
+                                        .ore = .none,
                                         .richness = 0,
                                     },
                                 },

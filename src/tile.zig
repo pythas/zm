@@ -4,26 +4,26 @@ pub const tilemapWidth = 16;
 pub const tilemapHeight = 16;
 
 pub const PartKind = enum(u8) {
-    Hull,
-    Engine,
-    RCS,
-    Laser,
+    hull,
+    engine,
+    rcs,
+    laser,
 };
 
 pub const BaseMaterial = enum(u8) {
-    Vacuum,
-    Rock,
-    Metal,
-    Ice,
+    vacuum,
+    rock,
+    metal,
+    ice,
 };
 
 pub const Ore = enum(u8) {
-    None,
-    Iron,
-    Nickel,
-    Cobalt,
-    Gold,
-    Platinum,
+    none,
+    iron,
+    nickel,
+    cobalt,
+    gold,
+    platinum,
 };
 
 pub const OreAmount = struct {
@@ -32,9 +32,9 @@ pub const OreAmount = struct {
 };
 
 pub const TileType = enum {
-    Empty,
-    Terrain,
-    ShipPart,
+    empty,
+    terrain,
+    ship_part,
 };
 
 pub const TerrainTileType = struct {
@@ -47,13 +47,13 @@ pub const ShipPartTileType = struct {
     tier: u8,
     health: f32,
     variation: u8,
-    rotation: Direction = .North,
+    rotation: Direction = .north,
 };
 
 pub const TileData = union(TileType) {
-    Empty: void,
-    Terrain: TerrainTileType,
-    ShipPart: ShipPartTileType,
+    empty: void,
+    terrain: TerrainTileType,
+    ship_part: ShipPartTileType,
 };
 
 pub const TileCoords = struct {
@@ -68,9 +68,9 @@ pub const TileReference = struct {
 };
 
 pub const SpriteSheet = enum(u8) {
-    World = 0,
-    Terrain = 1,
-    Ships = 2,
+    world = 0,
+    terrain = 1,
+    ships = 2,
 };
 
 pub const Sprite = struct {
@@ -88,24 +88,24 @@ pub const Sprite = struct {
 
     pub fn initEmpty() Self {
         return .{
-            .sheet = .World,
+            .sheet = .world,
             .index = 0,
         };
     }
 };
 
 pub const Direction = enum(u8) {
-    North = 0,
-    East = 1,
-    South = 2,
-    West = 3,
+    north = 0,
+    east = 1,
+    south = 2,
+    west = 3,
 
     pub fn toRad(self: Direction) f32 {
         return switch (self) {
-            .North => 0.0,
-            .East => std.math.pi / 2.0,
-            .South => std.math.pi,
-            .West => 3.0 * std.math.pi / 2.0,
+            .north => 0.0,
+            .east => std.math.pi / 2.0,
+            .south => std.math.pi,
+            .west => 3.0 * std.math.pi / 2.0,
         };
     }
 };
@@ -116,10 +116,10 @@ pub const Offset = struct {
 };
 
 pub const Directions = [_]struct { direction: Direction, offset: Offset }{
-    .{ .direction = .North, .offset = .{ .dx = 0, .dy = -1 } },
-    .{ .direction = .East, .offset = .{ .dx = 1, .dy = 0 } },
-    .{ .direction = .South, .offset = .{ .dx = 0, .dy = 1 } },
-    .{ .direction = .West, .offset = .{ .dx = -1, .dy = 0 } },
+    .{ .direction = .north, .offset = .{ .dx = 0, .dy = -1 } },
+    .{ .direction = .east, .offset = .{ .dx = 1, .dy = 0 } },
+    .{ .direction = .south, .offset = .{ .dx = 0, .dy = 1 } },
+    .{ .direction = .west, .offset = .{ .dx = -1, .dy = 0 } },
 };
 
 pub const Tile = struct {
@@ -137,34 +137,34 @@ pub const Tile = struct {
 
     pub fn initEmpty() !Self {
         return .{
-            .data = .Empty,
+            .data = .empty,
         };
     }
 
     pub fn getShipPart(self: Self) ?ShipPartTileType {
         return switch (self.data) {
-            .ShipPart => |ship| ship,
+            .ship_part => |ship| ship,
             else => null,
         };
     }
 
     pub fn getPartKind(self: Self) ?PartKind {
         return switch (self.data) {
-            .ShipPart => |ship| ship.kind,
+            .ship_part => |ship| ship.kind,
             else => null,
         };
     }
 
     pub fn getTier(self: Self) ?u8 {
         return switch (self.data) {
-            .ShipPart => |ship| ship.tier,
+            .ship_part => |ship| ship.tier,
             else => null,
         };
     }
 
     pub fn isShipPart(self: Self) bool {
         return switch (self.data) {
-            .ShipPart => true,
+            .ship_part => true,
             else => false,
         };
     }

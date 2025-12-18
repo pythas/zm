@@ -14,8 +14,8 @@ const Editor = @import("editor.zig").Editor;
 const scrollCallback = @import("world.zig").scrollCallback;
 
 pub const GameMode = enum {
-    InWorld,
-    ShipEditor,
+    in_world,
+    ship_editor,
 };
 
 pub const Game = struct {
@@ -29,7 +29,7 @@ pub const Game = struct {
     keyboard_state: KeyboardState,
     mouse_state: MouseState,
 
-    mode: GameMode = .InWorld,
+    mode: GameMode = .in_world,
     world: World,
 
     pub fn init(
@@ -68,21 +68,21 @@ pub const Game = struct {
         self.mouse_state.update();
 
         if (self.keyboard_state.isPressed(.o)) {
-            if (self.mode == .InWorld) {
-                self.mode = .ShipEditor;
+            if (self.mode == .in_world) {
+                self.mode = .ship_editor;
             } else {
                 try self.world.objects.items[0].recalculatePhysics(&self.world.physics);
-                self.mode = .InWorld;
+                self.mode = .in_world;
             }
         }
 
         switch (self.mode) {
-            .InWorld => {
+            .in_world => {
                 try self.world.update(dt, &self.keyboard_state, &self.mouse_state);
 
                 self.renderer.global.write(self.window, &self.world, dt, t, self.mode, 0.0, 0.0);
             },
-            .ShipEditor => {
+            .ship_editor => {
                 self.editor.update(&self.renderer, &self.world, dt, t);
             },
         }
@@ -93,7 +93,7 @@ pub const Game = struct {
         pass: zgpu.wgpu.RenderPassEncoder,
     ) !void {
         switch (self.mode) {
-            .InWorld => {
+            .in_world => {
                 const global = &self.renderer.global;
                 const world = &self.world;
 
@@ -113,7 +113,7 @@ pub const Game = struct {
 
                 // self.renderer.effect.draw(pass, global);
             },
-            .ShipEditor => {
+            .ship_editor => {
                 try self.editor.draw(&self.renderer, &self.world, pass);
             },
         }

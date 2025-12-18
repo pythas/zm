@@ -5,10 +5,10 @@ const PartKind = @import("tile.zig").PartKind;
 pub const PartStats = struct {
     pub fn getDensity(kind: PartKind) f32 {
         return switch (kind) {
-            .Engine => 2.0,
-            .Hull => 1.0,
-            .Laser => 1.0,
-            .RCS => 0.5,
+            .engine => 2.0,
+            .hull => 1.0,
+            .laser => 1.0,
+            .rcs => 0.5,
         };
     }
 
