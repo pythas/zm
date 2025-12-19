@@ -693,134 +693,6 @@
     {
       "x": 6,
       "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 7,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 8,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 9,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 10,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 11,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 12,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 13,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 14,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 15,
-      "y": 5,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 0,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 1,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 2,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 3,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 4,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 5,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 6,
-      "y": 6,
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
@@ -828,135 +700,7 @@
     },
     {
       "x": 7,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 8,
-      "y": 6,
-      "data_type": "ship_part",
-      "kind": "hull",
-      "base_material": null,
-      "rotation": "north"
-    },
-    {
-      "x": 9,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 10,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 11,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 12,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 13,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 14,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 15,
-      "y": 6,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 0,
-      "y": 7,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 1,
-      "y": 7,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 2,
-      "y": 7,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 3,
-      "y": 7,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 4,
-      "y": 7,
-      "data_type": "empty",
-      "kind": null,
-      "base_material": null,
-      "rotation": null
-    },
-    {
-      "x": 5,
-      "y": 7,
-      "data_type": "ship_part",
-      "kind": "hull",
-      "base_material": null,
-      "rotation": "north"
-    },
-    {
-      "x": 6,
-      "y": 7,
-      "data_type": "ship_part",
-      "kind": "hull",
-      "base_material": null,
-      "rotation": "north"
-    },
-    {
-      "x": 7,
-      "y": 7,
+      "y": 5,
       "data_type": "ship_part",
       "kind": "engine",
       "base_material": null,
@@ -964,7 +708,7 @@
     },
     {
       "x": 8,
-      "y": 7,
+      "y": 5,
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
@@ -972,15 +716,15 @@
     },
     {
       "x": 9,
-      "y": 7,
-      "data_type": "ship_part",
-      "kind": "hull",
+      "y": 5,
+      "data_type": "empty",
+      "kind": null,
       "base_material": null,
-      "rotation": "north"
+      "rotation": null
     },
     {
       "x": 10,
-      "y": 7,
+      "y": 5,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -988,7 +732,7 @@
     },
     {
       "x": 11,
-      "y": 7,
+      "y": 5,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -996,7 +740,7 @@
     },
     {
       "x": 12,
-      "y": 7,
+      "y": 5,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1004,7 +748,7 @@
     },
     {
       "x": 13,
-      "y": 7,
+      "y": 5,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1012,7 +756,7 @@
     },
     {
       "x": 14,
-      "y": 7,
+      "y": 5,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1020,7 +764,7 @@
     },
     {
       "x": 15,
-      "y": 7,
+      "y": 5,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1028,7 +772,7 @@
     },
     {
       "x": 0,
-      "y": 8,
+      "y": 6,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1036,7 +780,7 @@
     },
     {
       "x": 1,
-      "y": 8,
+      "y": 6,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1044,7 +788,7 @@
     },
     {
       "x": 2,
-      "y": 8,
+      "y": 6,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1052,7 +796,7 @@
     },
     {
       "x": 3,
-      "y": 8,
+      "y": 6,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1060,7 +804,7 @@
     },
     {
       "x": 4,
-      "y": 8,
+      "y": 6,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1068,7 +812,7 @@
     },
     {
       "x": 5,
-      "y": 8,
+      "y": 6,
       "data_type": "empty",
       "kind": null,
       "base_material": null,
@@ -1076,7 +820,7 @@
     },
     {
       "x": 6,
-      "y": 8,
+      "y": 6,
       "data_type": "ship_part",
       "kind": "engine",
       "base_material": null,
@@ -1084,15 +828,15 @@
     },
     {
       "x": 7,
-      "y": 8,
+      "y": 6,
       "data_type": "ship_part",
-      "kind": "laser",
+      "kind": "hull",
       "base_material": null,
       "rotation": "north"
     },
     {
       "x": 8,
-      "y": 8,
+      "y": 6,
       "data_type": "ship_part",
       "kind": "engine",
       "base_material": null,
@@ -1100,6 +844,262 @@
     },
     {
       "x": 9,
+      "y": 6,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 10,
+      "y": 6,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 11,
+      "y": 6,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 12,
+      "y": 6,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 13,
+      "y": 6,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 14,
+      "y": 6,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 15,
+      "y": 6,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 0,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 6,
+      "y": 7,
+      "data_type": "ship_part",
+      "kind": "hull",
+      "base_material": null,
+      "rotation": "north"
+    },
+    {
+      "x": 7,
+      "y": 7,
+      "data_type": "ship_part",
+      "kind": "laser",
+      "base_material": null,
+      "rotation": "north"
+    },
+    {
+      "x": 8,
+      "y": 7,
+      "data_type": "ship_part",
+      "kind": "hull",
+      "base_material": null,
+      "rotation": "north"
+    },
+    {
+      "x": 9,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 10,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 11,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 12,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 13,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 14,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 15,
+      "y": 7,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 0,
+      "y": 8,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 1,
+      "y": 8,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 2,
+      "y": 8,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 3,
+      "y": 8,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 4,
+      "y": 8,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 5,
+      "y": 8,
+      "data_type": "empty",
+      "kind": null,
+      "base_material": null,
+      "rotation": null
+    },
+    {
+      "x": 6,
+      "y": 8,
+      "data_type": "ship_part",
+      "kind": "hull",
+      "base_material": null,
+      "rotation": "north"
+    },
+    {
+      "x": 7,
+      "y": 8,
+      "data_type": "ship_part",
+      "kind": "reactor",
+      "base_material": null,
+      "rotation": "north"
+    },
+    {
+      "x": 8,
+      "y": 8,
+      "data_type": "ship_part",
+      "kind": "hull",
+      "base_material": null,
+      "rotation": "north"
+    },
+    {
+      "x": 9,
       "y": 8,
       "data_type": "empty",
       "kind": null,
@@ -1214,7 +1214,7 @@
       "x": 7,
       "y": 9,
       "data_type": "ship_part",
-      "kind": "hull",
+      "kind": "cargo",
       "base_material": null,
       "rotation": "north"
     },
@@ -1326,9 +1326,9 @@
       "x": 5,
       "y": 10,
       "data_type": "ship_part",
-      "kind": "engine",
+      "kind": "hull",
       "base_material": null,
-      "rotation": "south"
+      "rotation": "north"
     },
     {
       "x": 6,
@@ -1358,9 +1358,9 @@
       "x": 9,
       "y": 10,
       "data_type": "ship_part",
-      "kind": "engine",
+      "kind": "hull",
       "base_material": null,
-      "rotation": "south"
+      "rotation": "north"
     },
     {
       "x": 10,
