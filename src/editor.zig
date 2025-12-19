@@ -14,6 +14,8 @@ const Directions = @import("tile.zig").Directions;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
+const Tool = @import("inventory.zig").Tool;
+const Item = @import("inventory.zig").Item;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
@@ -31,6 +33,7 @@ const EditorLayout = struct {
     ship_panel_rect: UiRect,
     grid_rect: UiRect,
     inventory_rect: UiRect,
+    tools_rect: UiRect,
 
     pub fn compute(screen_w: f32, screen_h: f32) EditorLayout {
         _ = screen_w;
@@ -55,6 +58,10 @@ const EditorLayout = struct {
         const inv_h = tile_size_base * scaling * 8;
         const inv_rect = UiRect{ .x = ship_rect.x + ship_rect.w + padding, .y = padding, .w = inv_w, .h = inv_h };
 
+        const tools_w = tile_size_base * scaling * 8;
+        const tools_h = tile_size_base * scaling * 8;
+        const tools_rect = UiRect{ .x = ship_rect.x + ship_rect.w + padding, .y = inv_rect.y + inv_h + padding, .w = tools_w, .h = tools_h };
+
         return .{
             .scale = scaling,
             .tile_size = tile_size,
@@ -62,6 +69,7 @@ const EditorLayout = struct {
             .ship_panel_rect = ship_rect,
             .grid_rect = grid_rect,
             .inventory_rect = inv_rect,
+            .tools_rect = tools_rect,
         };
     }
 
@@ -97,6 +105,7 @@ pub const Editor = struct {
     mouse: MouseState,
     keyboard: KeyboardState,
     current_palette: EditorPalette,
+    current_tool: ?Tool,
 
     pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) Self {
         return .{
@@ -105,6 +114,7 @@ pub const Editor = struct {
             .mouse = MouseState.init(window),
             .keyboard = KeyboardState.init(window),
             .current_palette = .none,
+            .current_tool = null,
         };
     }
 
@@ -225,6 +235,29 @@ pub const Editor = struct {
                 }
             }
 
+            if (self.mouse.is_left_clicked) {
+                if (self.current_tool != null) {
+                    switch (self.current_tool.?) {
+                        .welding => {
+                            const tile = world.objects.items[0].getTile(tile_x, tile_y);
+
+                            if (tile) |ti| {
+                                if (ti.data == .ship_part) {
+                                    switch (ti.data.ship_part.kind) {
+                                        .engine => {
+                                            var t2 = ti.*;
+                                            t2.data.ship_part.broken = false;
+                                            world.objects.items[0].setTile(tile_x, tile_y, t2);
+                                        },
+                                        else => {},
+                                    }
+                                }
+                            }
+                        },
+                    }
+                }
+            }
+
             if (self.mouse.is_right_down) {
                 world.objects.items[0].setTile(tile_x, tile_y, try Tile.initEmpty());
             }
@@ -273,6 +306,7 @@ pub const Editor = struct {
             "Hull",
         )) {
             self.current_palette = .hull;
+            self.current_tool = null;
         }
 
         btn_x += btn_s + 10;
@@ -282,6 +316,7 @@ pub const Editor = struct {
             "Engine",
         )) {
             self.current_palette = .engine;
+            self.current_tool = null;
         }
 
         btn_x += btn_s + 10;
@@ -291,6 +326,7 @@ pub const Editor = struct {
             "Laser",
         )) {
             self.current_palette = .laser;
+            self.current_tool = null;
         }
 
         btn_x += btn_s + 10;
@@ -300,6 +336,7 @@ pub const Editor = struct {
             "Laser",
         )) {
             self.current_palette = .reactor;
+            self.current_tool = null;
         }
 
         btn_x += btn_s + 10;
@@ -309,6 +346,7 @@ pub const Editor = struct {
             "Laser",
         )) {
             self.current_palette = .cargo;
+            self.current_tool = null;
         }
 
         // ship
@@ -317,29 +355,49 @@ pub const Editor = struct {
         // inventory
         try ui.panel(layout.inventory_rect);
 
-        {
-            var inv_x = layout.inventory_rect.x + 10;
-            var inv_y = layout.inventory_rect.y + 10;
-            const slot_size: f32 = 20.0;
-            const slot_padding: f32 = 2.0;
+        const slot_size: f32 = 20.0;
+        const slot_padding: f32 = 2.0;
 
-            var inv_it = ship.inventories.valueIterator();
-            while (inv_it.next()) |inv| {
-                for (inv.stacks.items) |stack| {
-                    const slot_rect = UiRect{ .x = inv_x, .y = inv_y, .w = slot_size, .h = slot_size };
-                    _ = try ui.inventorySlot(slot_rect, stack.item, false);
+        var inv_x = layout.inventory_rect.x + 10;
+        var inv_y = layout.inventory_rect.y + 10;
 
-                    inv_x += slot_size + slot_padding;
-                    if (inv_x + slot_size > layout.inventory_rect.x + layout.inventory_rect.w) {
-                        inv_x = layout.inventory_rect.x + 10;
-                        inv_y += slot_size + slot_padding;
-                    }
+        var inv_it = ship.inventories.valueIterator();
+        while (inv_it.next()) |inv| {
+            for (inv.stacks.items) |stack| {
+                const slot_rect = UiRect{ .x = inv_x, .y = inv_y, .w = slot_size, .h = slot_size };
+                _ = try ui.inventorySlot(slot_rect, stack.item, false);
 
-                    if (inv_y + slot_size > layout.inventory_rect.y + layout.inventory_rect.h) {
-                        break;
-                    }
+                inv_x += slot_size + slot_padding;
+                if (inv_x + slot_size > layout.inventory_rect.x + layout.inventory_rect.w) {
+                    inv_x = layout.inventory_rect.x + 10;
+                    inv_y += slot_size + slot_padding;
+                }
+
+                if (inv_y + slot_size > layout.inventory_rect.y + layout.inventory_rect.h) {
+                    break;
                 }
             }
+        }
+
+        // tools
+        try ui.panel(layout.tools_rect);
+
+        var tool_x = layout.tools_rect.x + 10;
+        const tool_y = layout.tools_rect.y + 10;
+
+        if (world.research_manager.isUnlocked(.welding)) {
+            const tool_rect = UiRect{ .x = tool_x, .y = tool_y, .w = slot_size, .h = slot_size };
+            // Check if selected
+            var is_selected = false;
+            if (self.current_tool) |t| {
+                if (t == .welding) is_selected = true;
+            }
+
+            if (try ui.toolSlot(tool_rect, .{ .tool = .welding }, is_selected)) {
+                self.current_tool = .welding;
+                self.current_palette = .none;
+            }
+            tool_x += slot_size + slot_padding;
         }
 
         ui.endFrame(pass, &renderer.global);

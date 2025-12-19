@@ -125,6 +125,7 @@ pub const UiRenderer = struct {
 
     pub fn sprite(self: *Self, rect: UiRect, s: Sprite) !void {
         const data = packSpriteForGpu(s);
+
         try self.pushQuad(rect, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 }, data, 1);
     }
 
@@ -147,6 +148,51 @@ pub const UiRenderer = struct {
             .none => {},
             .resource => |r| {
                 const s = Assets.getResourceSprite(r);
+                const inset: f32 = 4.0;
+                const sprite_rect = UiRect{
+                    .x = rect.x + inset,
+                    .y = rect.y + inset,
+                    .w = rect.w - inset * 2.0,
+                    .h = rect.h - inset * 2.0,
+                };
+                try self.sprite(sprite_rect, s);
+            },
+            .tool => |t| {
+                const s = Assets.getToolSprite(t);
+                const inset: f32 = 4.0;
+                const sprite_rect = UiRect{
+                    .x = rect.x + inset,
+                    .y = rect.y + inset,
+                    .w = rect.w - inset * 2.0,
+                    .h = rect.h - inset * 2.0,
+                };
+                try self.sprite(sprite_rect, s);
+            },
+        }
+
+        return is_hovered and self.mouse.is_left_clicked;
+    }
+
+    pub fn toolSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !bool {
+        const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
+
+        var color = if (is_selected)
+            UiVec4{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }
+        else
+            UiVec4{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 };
+
+        color = if (is_hovered)
+            UiVec4{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 }
+        else
+            color;
+
+        try self.pushQuad(rect, color, 0, 0);
+
+        switch (item) {
+            .none => {},
+            .resource => {},
+            .tool => |t| {
+                const s = Assets.getToolSprite(t);
                 const inset: f32 = 4.0;
                 const sprite_rect = UiRect{
                     .x = rect.x + inset,

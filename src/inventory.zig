@@ -3,14 +3,20 @@ const std = @import("std");
 const Resource = @import("resource.zig").Resource;
 const ResourceStats = @import("resource.zig").ResourceStats;
 
+pub const Tool = enum {
+    welding,
+};
+
 pub const Item = union(enum) {
     none,
     resource: Resource,
+    tool: Tool,
 
     pub fn eql(self: Item, other: Item) bool {
         return switch (self) {
             .none => other == .none,
             .resource => |r| if (other == .resource) r == other.resource else false,
+            .tool => |t| if (other == .tool) t == other.tool else false,
         };
     }
 
@@ -18,6 +24,7 @@ pub const Item = union(enum) {
         return switch (self) {
             .none => 0,
             .resource => |r| ResourceStats.getMaxStack(r),
+            .tool => 1,
         };
     }
 };

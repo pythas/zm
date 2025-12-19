@@ -30,6 +30,7 @@ pub const Renderer = struct {
             "assets/asteroid.png",
             "assets/ship.png",
             "assets/resource.png",
+            "assets/tool.png",
         });
 
         var global = try GlobalRenderState.init(gctx, atlas.view);

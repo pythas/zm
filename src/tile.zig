@@ -92,6 +92,7 @@ pub const SpriteSheet = enum(u8) {
     terrain = 0,
     ships = 1,
     resources = 2,
+    tools = 3,
 };
 
 pub const Sprite = struct {

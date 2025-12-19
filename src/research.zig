@@ -59,4 +59,8 @@ pub const ResearchManager = struct {
 
         return true;
     }
+
+    pub fn isUnlocked(self: ResearchManager, id: ResearchId) bool {
+        return self.unlocked.contains(id);
+    }
 };
