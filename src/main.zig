@@ -4,8 +4,11 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 
 const Game = @import("game.zig").Game;
+const rng = @import("rng.zig");
 
 pub fn main() !void {
+    rng.init(0);
+
     try initWindow();
     defer zglfw.terminate();
 

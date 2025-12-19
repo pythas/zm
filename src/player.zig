@@ -13,6 +13,7 @@ const Physics = @import("box2d_physics.zig").Physics;
 const World = @import("world.zig").World;
 const PartKind = @import("tile.zig").PartKind;
 const PartStats = @import("ship.zig").PartStats;
+const rng = @import("rng.zig");
 
 pub const PlayerController = struct {
     const Self = @This();
@@ -226,14 +227,7 @@ pub const PlayerController = struct {
                             const cargo_list = try ship.getTilesByPartKindSortedByDist(.cargo, ship.position);
                             defer self.allocator.free(cargo_list);
 
-                            var prng = std.Random.DefaultPrng.init(blk: {
-                                var seed: u64 = undefined;
-                                try std.posix.getrandom(std.mem.asBytes(&seed));
-                                break :blk seed;
-                            });
-                            const rand = prng.random();
-
-                            var remaining = rand.intRangeAtMost(
+                            var remaining = rng.random().intRangeAtMost(
                                 u8,
                                 0,
                                 res_amount.amount,
@@ -313,13 +307,13 @@ pub const PlayerController = struct {
                                         const tan_vel = Vec2.init(-parent_ang_vel * r.y, parent_ang_vel * r.x);
                                         var final_vel = parent_vel.add(tan_vel);
 
-                                        // Add random drift
+                                        // add random drift
                                         const rand = std.crypto.random;
                                         const drift_speed = 30.0;
                                         final_vel.x += (rand.float(f32) - 0.5) * drift_speed;
                                         final_vel.y += (rand.float(f32) - 0.5) * drift_speed;
 
-                                        // Add random rotation
+                                        // add random rotation
                                         const rot_speed = 2.0;
                                         const final_ang_vel = parent_ang_vel + (rand.float(f32) - 0.5) * rot_speed;
 

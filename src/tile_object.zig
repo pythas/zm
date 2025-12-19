@@ -15,6 +15,7 @@ const InputState = @import("input.zig").InputState;
 const PartStats = @import("ship.zig").PartStats;
 const TileType = @import("tile.zig").TileType;
 const Inventory = @import("inventory.zig").Inventory;
+const Resource = @import("resource.zig").Resource;
 
 pub const ShipCapabilities = struct {
     force_forward: f32 = 0.0,
@@ -331,6 +332,7 @@ pub const TileObject = struct {
         return self.getTile(coords.x, coords.y).*;
     }
 
+    // inventory
     pub fn getInventory(self: *Self, x: usize, y: usize) ?*Inventory {
         if (x >= self.width or y >= self.height) {
             return null;
@@ -362,6 +364,18 @@ pub const TileObject = struct {
         }
     }
 
+    // // resources
+    // pub fn getMostCommonResource(self: Self) ?Resource {
+    //     var resources = std.AutoHashMap(usize, Resource).init(self.allocator);
+    //
+    //     for (self.tiles) |tile| {
+    //         if (!tile.isTerrain()) {
+    //             continue;
+    //         }
+    //     }
+    // }
+
+    // physics
     pub fn applyInputThrust(self: *Self, physics: *Physics, input: InputState) void {
         if (!self.body_id.isValid()) {
             return;

@@ -7,6 +7,7 @@ const BaseMaterial = @import("tile.zig").BaseMaterial;
 const PartKind = @import("tile.zig").PartKind;
 const TerrainTileType = @import("tile.zig").TerrainTileType;
 const ShipPartTileType = @import("tile.zig").ShipPartTileType;
+const rng = @import("rng.zig");
 
 const row_width = 32;
 
@@ -28,10 +29,31 @@ pub const Assets = struct {
 
     pub fn getTerrainSprite(terrain: TerrainTileType, mask: u8) Sprite {
         return switch (terrain.base_material) {
-            .rock => Sprite.init(terrain_sheet, mask),
+            .rock => getRockSprite(terrain, mask),
             else => Sprite.init(terrain_sheet, 0),
         };
     }
+
+    pub fn getRockSprite(terrain: TerrainTileType, mask: u8) Sprite {
+        const default = Sprite.init(terrain_sheet, setRow(0, mask));
+        const most_common_resource = terrain.getMostCommonResource();
+
+        if (most_common_resource == null) {
+            return default;
+        }
+
+        var offset: u8 = 0;
+
+        if (mask == 0b1111) {
+            offset += rng.random().intRangeAtMost(u8, 0, 2);
+        }
+
+        return switch (most_common_resource.?) {
+            .iron => Sprite.init(terrain_sheet, setRow(1, mask + offset)),
+            else => default,
+        };
+    }
+
     pub fn getShipPartSprite(ship: ShipPartTileType, mask: u8) Sprite {
         return switch (ship.kind) {
             .hull => getHullSprite(ship, mask),

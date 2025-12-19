@@ -29,8 +29,6 @@ pub const PartKind = enum(u8) {
 pub const BaseMaterial = enum(u8) {
     vacuum,
     rock,
-    metal,
-    ice,
 };
 
 pub const ResourceAmount = struct {
@@ -45,8 +43,24 @@ pub const TileType = enum {
 };
 
 pub const TerrainTileType = struct {
+    const Self = @This();
+
     base_material: BaseMaterial,
     resources: std.BoundedArray(ResourceAmount, 4) = .{},
+
+    pub fn getMostCommonResource(self: Self) ?Resource {
+        var max: ?u8 = null;
+        var resource: ?Resource = null;
+
+        for (self.resources.slice()) |resource_amount| {
+            if (max == null or resource_amount.amount > max.?) {
+                max = resource_amount.amount;
+                resource = resource_amount.resource;
+            }
+        }
+
+        return resource;
+    }
 };
 
 pub const ShipPartTileType = struct {
@@ -167,6 +181,13 @@ pub const Tile = struct {
         return switch (self.data) {
             .ship_part => |ship| ship.tier,
             else => null,
+        };
+    }
+
+    pub fn isTerrain(self: Self) bool {
+        return switch (self.data) {
+            .terrain => true,
+            else => false,
         };
     }
 

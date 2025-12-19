@@ -59,8 +59,8 @@ pub const World = struct {
 
         {
             const resources = [_]AsteroidGenerator.ResourceConfig{
-                .{ .resource = .iron, .probability = 0.8, .min_amount = 5, .max_amount = 20 },
-                .{ .resource = .gold, .probability = 0.1, .min_amount = 1, .max_amount = 5 },
+                .{ .resource = .iron, .probability = 0.4, .min_amount = 1, .max_amount = 3 },
+                .{ .resource = .nickel, .probability = 0.1, .min_amount = 1, .max_amount = 3 },
             };
 
             var asteroid = try AsteroidGenerator.createAsteroid(
@@ -187,3 +187,4 @@ pub fn scrollCallback(window: *zglfw.Window, xoffset: f64, yoffset: f64) callcon
 
     world.onScroll(xoffset, yoffset);
 }
+

@@ -3,12 +3,13 @@ const std = @import("std");
 pub const Resource = enum(u8) {
     none = 0,
     iron,
-    copper,   // Mentioned in DESIGN.md (Zone 1)
-    carbon,   // Mentioned in STORY.md (Refuel)
+    nickel,
+    copper,
+    carbon,
     gold,
     platinum,
-    titanium, // Mentioned in DESIGN.md
-    uranium,  // Mentioned in DESIGN.md
+    titanium,
+    uranium,
 };
 
 pub const ResourceStats = struct {
@@ -25,8 +26,6 @@ pub const ResourceStats = struct {
         };
     }
 
-    /// Density relative to standard rock (1.0)
-    /// Heavier asteroids might imply better loot!
     pub fn getDensity(res: Resource) f32 {
         return switch (res) {
             .none => 0.0,
@@ -43,7 +42,7 @@ pub const ResourceStats = struct {
     pub fn getMaxStack(res: Resource) u32 {
         return switch (res) {
             .none => 0,
-            else => 100, // Standard stack size, can be tuned per resource
+            else => 32,
         };
     }
 };
