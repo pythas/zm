@@ -490,7 +490,7 @@ pub const TileObject = struct {
                 const tile = self.getTile(x, y) orelse continue;
                 const ship_part = tile.getShipPart() orelse continue;
 
-                const power: f32 = switch (ship_part.kind) {
+                var power: f32 = switch (ship_part.kind) {
                     .engine => PartStats.getEnginePower(ship_part.tier),
                     else => continue,
                 };
@@ -499,6 +499,11 @@ pub const TileObject = struct {
                     .engine => .main,
                     else => continue,
                 };
+
+                // reduce power of broken engines
+                if (ship_part.broken) {
+                    power *= 0.1;
+                }
 
                 const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
                 const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;

@@ -55,6 +55,7 @@ pub const ShipPartTileType = struct {
     health: f32,
     variation: u8,
     rotation: Direction = .north,
+    broken: bool = false,
 };
 
 pub const TileData = union(TileType) {

@@ -20,7 +20,8 @@ const JsonTileFlat = struct {
     data_type: []const u8,
     kind: ?[]const u8 = null,
     base_material: ?[]const u8 = null,
-    rotation: ?[]const u8,
+    rotation: ?[]const u8 = null,
+    broken: ?bool = null,
 };
 
 const JsonShipData = struct {
@@ -44,11 +45,13 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
             var part_str: ?[]const u8 = null;
             var base_material_str: ?[]const u8 = null;
             var rotation: ?[]const u8 = null;
+            var broken: ?bool = null;
 
             switch (tile.data) {
                 .ship_part => |s| {
                     part_str = @tagName(s.kind);
                     rotation = @tagName(s.rotation);
+                    broken = s.broken;
                 },
                 .terrain => |t| base_material_str = @tagName(t.base_material),
                 else => {},
@@ -61,6 +64,7 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
                 .kind = part_str,
                 .base_material = base_material_str,
                 .rotation = rotation,
+                .broken = broken,
             });
         }
     }
@@ -115,6 +119,7 @@ pub fn loadShip(
                 const kind = std.meta.stringToEnum(PartKind, kind_str) orelse return ShipSerializationError.InvalidEnumString;
                 const rotation_str = json_tile.rotation orelse return ShipSerializationError.InvalidEnumString;
                 const rotation = std.meta.stringToEnum(Direction, rotation_str) orelse return ShipSerializationError.InvalidEnumString;
+                const broken = json_tile.broken orelse false;
 
                 break :blk .{
                     .ship_part = .{
@@ -123,6 +128,7 @@ pub fn loadShip(
                         .health = 100.0,
                         .variation = 0,
                         .rotation = rotation,
+                        .broken = broken,
                     },
                 };
             },

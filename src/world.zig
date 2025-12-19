@@ -10,9 +10,10 @@ const ResearchManager = @import("research.zig").ResearchManager;
 const Camera = @import("camera.zig").Camera;
 const Vec2 = @import("vec2.zig").Vec2;
 const Tile = @import("tile.zig").Tile;
-const ResourceAmount = @import("tile.zig").ResourceAmount;
 const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
+const AsteroidGenerator = @import("asteroid_generator.zig").AsteroidGenerator;
+const Resource = @import("resource.zig").Resource;
 
 pub const World = struct {
     const Self = @This();
@@ -57,45 +58,39 @@ pub const World = struct {
         try self.objects.append(ship);
 
         {
-            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(0.0, -150.0), 0);
-            asteroid.object_type = .asteroid;
-            for (0..asteroid.width) |y| {
-                for (0..asteroid.height) |x| {
-                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(
-                        .{
-                            .terrain = .{
-                                .base_material = .rock,
-                                .resources = try std.BoundedArray(ResourceAmount, 4).fromSlice(&.{
-                                    .{ .resource = .iron, .amount = 5 },
-                                    .{ .resource = .gold, .amount = 1 },
-                                }),
-                            },
-                        },
-                    );
-                }
-            }
+            const resources = [_]AsteroidGenerator.ResourceConfig{
+                .{ .resource = .iron, .probability = 0.8, .min_amount = 5, .max_amount = 20 },
+                .{ .resource = .gold, .probability = 0.1, .min_amount = 1, .max_amount = 5 },
+            };
+
+            var asteroid = try AsteroidGenerator.createAsteroid(
+                allocator,
+                self.generateObjectId(),
+                Vec2.init(0.0, -150.0),
+                16,
+                16,
+                .irregular,
+                &resources,
+            );
             try asteroid.recalculatePhysics(&physics);
             try self.objects.append(asteroid);
         }
 
         {
-            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(-200.0, -250.0), 0);
-            asteroid.object_type = .asteroid;
-            for (0..asteroid.width) |y| {
-                for (0..asteroid.height) |x| {
-                    asteroid.tiles[y * asteroid.width + x] = try Tile.init(
-                        .{
-                            .terrain = .{
-                                .base_material = .rock,
-                                .resources = try std.BoundedArray(ResourceAmount, 4).fromSlice(&.{
-                                    .{ .resource = .iron, .amount = 5 },
-                                    .{ .resource = .gold, .amount = 1 },
-                                }),
-                            },
-                        },
-                    );
-                }
-            }
+            const resources = [_]AsteroidGenerator.ResourceConfig{
+                .{ .resource = .iron, .probability = 0.5, .min_amount = 5, .max_amount = 10 },
+                .{ .resource = .copper, .probability = 0.3, .min_amount = 2, .max_amount = 8 },
+            };
+
+            var asteroid = try AsteroidGenerator.createAsteroid(
+                allocator,
+                self.generateObjectId(),
+                Vec2.init(-200.0, -250.0),
+                20,
+                20,
+                .irregular,
+                &resources,
+            );
             try asteroid.recalculatePhysics(&physics);
             try self.objects.append(asteroid);
         }

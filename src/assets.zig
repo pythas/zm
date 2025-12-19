@@ -35,8 +35,11 @@ pub const Assets = struct {
     pub fn getShipPartSprite(ship: ShipPartTileType, mask: u8) Sprite {
         return switch (ship.kind) {
             .hull => getHullSprite(ship, mask),
+            .reactor => getReactorSprite(ship),
             .engine => getEngineSprite(ship),
-            else => Sprite.initEmpty(),
+            .laser => getLaserSprite(ship),
+            .cargo => getCargoSprite(ship),
+            // else => Sprite.initEmpty(),
         };
     }
 
@@ -45,7 +48,43 @@ pub const Assets = struct {
         return Sprite.init(ship_sheet, setRow(0, mask));
     }
 
+    pub fn getReactorSprite(ship: ShipPartTileType) Sprite {
+        var index = @intFromEnum(ship.rotation);
+
+        if (ship.broken) {
+            index += 1;
+        }
+
+        return Sprite.init(ship_sheet, setRow(2, index));
+    }
+
     pub fn getEngineSprite(ship: ShipPartTileType) Sprite {
-        return Sprite.init(ship_sheet, setRow(1, @intFromEnum(ship.rotation)));
+        var index = @intFromEnum(ship.rotation);
+
+        if (ship.broken) {
+            index += 4;
+        }
+
+        return Sprite.init(ship_sheet, setRow(1, index));
+    }
+
+    pub fn getLaserSprite(ship: ShipPartTileType) Sprite {
+        var index = @intFromEnum(ship.rotation);
+
+        if (ship.broken) {
+            index += 1;
+        }
+
+        return Sprite.init(ship_sheet, setRow(3, index));
+    }
+
+    pub fn getCargoSprite(ship: ShipPartTileType) Sprite {
+        var index = @intFromEnum(ship.rotation);
+
+        if (ship.broken) {
+            index += 1;
+        }
+
+        return Sprite.init(ship_sheet, setRow(4, index));
     }
 };

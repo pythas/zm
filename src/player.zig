@@ -224,6 +224,7 @@ pub const PlayerController = struct {
 
                         for (resource_amounts.slice()) |res_amount| {
                             const cargo_list = try ship.getTilesByPartKindSortedByDist(.cargo, ship.position);
+                            defer self.allocator.free(cargo_list);
 
                             var prng = std.Random.DefaultPrng.init(blk: {
                                 var seed: u64 = undefined;
