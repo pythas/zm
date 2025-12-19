@@ -93,7 +93,7 @@ pub const PlayerController = struct {
 
                 const target_pos = object.getTileWorldPos(coords.x, coords.y);
 
-                const tile_refs = try ship.getTileByPartKind(.laser);
+                const tile_refs = try ship.getTilesByPartKind(.laser);
                 defer self.allocator.free(tile_refs);
 
                 const LaserCandidate = struct {
@@ -206,6 +206,65 @@ pub const PlayerController = struct {
             }
         }
 
+        // pickup
+        {
+            const pickup_radius = 4 * 8;
+            const pickup_radius_sq = pickup_radius * pickup_radius;
+
+            var i: usize = 0;
+            while (i < world.objects.items.len) {
+                var debris = &world.objects.items[i];
+
+                if (debris.object_type == .debris) {
+                    const dist_sq = debris.position.sub(ship.position).lengthSq();
+
+                    if (dist_sq < pickup_radius_sq) {
+                        const tile = debris.tiles[0];
+                        const resource_amounts = tile.data.terrain.resources;
+
+                        for (resource_amounts.slice()) |res_amount| {
+                            const cargo_list = try ship.getTilesByPartKindSortedByDist(.cargo, ship.position);
+
+                            var prng = std.Random.DefaultPrng.init(blk: {
+                                var seed: u64 = undefined;
+                                try std.posix.getrandom(std.mem.asBytes(&seed));
+                                break :blk seed;
+                            });
+                            const rand = prng.random();
+
+                            var remaining = rand.intRangeAtMost(
+                                u8,
+                                0,
+                                res_amount.amount,
+                            );
+
+                            for (cargo_list) |cargo| {
+                                const inventory = ship.getInventory(cargo.tile_x, cargo.tile_y) orelse try ship.addInventory(cargo.tile_x, cargo.tile_y, 20);
+
+                                const result = try inventory.add(.{ .resource = res_amount.resource }, remaining);
+                                remaining = @intCast(result.remaining);
+
+                                if (result.added > 0) {
+                                    _ = world.research_manager.reportResourcePickup(res_amount.resource, result.added);
+                                }
+
+                                if (remaining == 0) {
+                                    break;
+                                }
+                            }
+                        }
+
+                        world.physics.destroyBody(debris.body_id);
+                        debris.deinit();
+                        _ = world.objects.swapRemove(i);
+
+                        continue;
+                    }
+                }
+                i += 1;
+            }
+        }
+
         // actions
         var i: usize = self.tile_actions.items.len;
         while (i > 0) {
@@ -232,7 +291,14 @@ pub const PlayerController = struct {
                                     const debris_pos = target_obj.getTileWorldPos(tx, ty);
 
                                     const new_id = world.generateObjectId();
-                                    var debris = try TileObject.init(self.allocator, new_id, 1, 1, debris_pos, target_obj.rotation);
+                                    var debris = try TileObject.init(
+                                        self.allocator,
+                                        new_id,
+                                        1,
+                                        1,
+                                        debris_pos,
+                                        target_obj.rotation,
+                                    );
                                     debris.object_type = .debris;
                                     debris.setTile(0, 0, tile.*);
 

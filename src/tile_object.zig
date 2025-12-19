@@ -14,6 +14,7 @@ const TileData = @import("tile.zig").TileData;
 const InputState = @import("input.zig").InputState;
 const PartStats = @import("ship.zig").PartStats;
 const TileType = @import("tile.zig").TileType;
+const Inventory = @import("inventory.zig").Inventory;
 
 pub const ShipCapabilities = struct {
     force_forward: f32 = 0.0,
@@ -63,6 +64,8 @@ pub const TileObject = struct {
     radius: f32,
     tiles: []Tile,
 
+    inventories: std.AutoHashMap(usize, Inventory),
+
     thrusters: std.ArrayList(Thruster),
 
     gpu_grid: ?GpuTileGrid = null,
@@ -90,12 +93,19 @@ pub const TileObject = struct {
             .radius = 0.0,
             .tiles = tiles,
             .thrusters = std.ArrayList(Thruster).init(allocator),
+            .inventories = std.AutoHashMap(usize, Inventory).init(allocator),
         };
     }
 
     pub fn deinit(self: *Self) void {
         self.allocator.free(self.tiles);
         self.thrusters.deinit();
+
+        var it = self.inventories.valueIterator();
+        while (it.next()) |inv| {
+            inv.deinit();
+        }
+        self.inventories.deinit();
     }
 
     pub fn setTile(self: *Self, x: usize, y: usize, tile: Tile) void {
@@ -123,7 +133,7 @@ pub const TileObject = struct {
         self.dirty = true;
     }
 
-    pub fn getTileByPartKind(self: Self, part_kind: PartKind) ![]TileReference {
+    pub fn getTilesByPartKind(self: Self, part_kind: PartKind) ![]TileReference {
         var tile_refs = std.ArrayList(TileReference).init(self.allocator);
         errdefer tile_refs.deinit();
 
@@ -140,6 +150,51 @@ pub const TileObject = struct {
         }
 
         return tile_refs.toOwnedSlice();
+    }
+
+    pub fn getClosestTileByPartKind(
+        self: Self,
+        part_kind: PartKind,
+        target: Vec2,
+    ) ![]TileReference {
+        const tile_refs = self.getTilesByPartKind(part_kind);
+
+        var min: ?f32 = null;
+        var closest_tile_ref: ?TileReference = null;
+
+        for (tile_refs) |tile_ref| {
+            const d = self.getDistanceToTile(tile_ref.x, tile_ref.y, target);
+
+            if (min == null or d < min) {
+                min = d;
+                closest_tile_ref = tile_ref;
+            }
+        }
+
+        return closest_tile_ref;
+    }
+
+    pub fn getTilesByPartKindSortedByDist(
+        self: Self,
+        part_kind: PartKind,
+        target: Vec2,
+    ) ![]TileReference {
+        const tile_refs = try self.getTilesByPartKind(part_kind);
+
+        const SortContext = struct {
+            self: Self,
+            target: Vec2,
+
+            pub fn lessThan(ctx: @This(), lhs: TileReference, rhs: TileReference) bool {
+                const d1 = ctx.self.getDistanceToTile(lhs.tile_x, lhs.tile_y, ctx.target);
+                const d2 = ctx.self.getDistanceToTile(rhs.tile_x, rhs.tile_y, ctx.target);
+                return d1 < d2;
+            }
+        };
+
+        std.mem.sortUnstable(TileReference, tile_refs, SortContext{ .self = self, .target = target }, SortContext.lessThan);
+
+        return tile_refs;
     }
 
     pub fn getNeighbouringTile(
@@ -274,6 +329,37 @@ pub const TileObject = struct {
         const coords = self.getTileCoordsAtWorldPos(point) orelse return null;
 
         return self.getTile(coords.x, coords.y).*;
+    }
+
+    pub fn getInventory(self: *Self, x: usize, y: usize) ?*Inventory {
+        if (x >= self.width or y >= self.height) {
+            return null;
+        }
+
+        const index = y * self.width + x;
+        return self.inventories.getPtr(index);
+    }
+
+    pub fn addInventory(self: *Self, x: usize, y: usize, slot_limit: u32) !*Inventory {
+        const index = y * self.width + x;
+
+        if (self.inventories.getPtr(index)) |inventory| {
+            return inventory;
+        }
+
+        const inventory = Inventory.init(self.allocator, slot_limit);
+        try self.inventories.put(index, inventory);
+
+        return self.inventories.getPtr(index).?;
+    }
+
+    pub fn removeInventory(self: *Self, x: usize, y: usize) void {
+        const index = y * self.width + x;
+
+        if (self.inventories.fetchRemove(index)) |kv| {
+            var inv = kv.value;
+            inv.deinit();
+        }
     }
 
     pub fn applyInputThrust(self: *Self, physics: *Physics, input: InputState) void {

@@ -5,8 +5,8 @@ const Tile = @import("tile.zig").Tile;
 const TileData = @import("tile.zig").TileData;
 const PartKind = @import("tile.zig").PartKind;
 const BaseMaterial = @import("tile.zig").BaseMaterial;
-const Ore = @import("tile.zig").Ore;
-const OreAmount = @import("tile.zig").OreAmount;
+const Resource = @import("resource.zig").Resource;
+const ResourceAmount = @import("tile.zig").ResourceAmount;
 const Direction = @import("tile.zig").Direction;
 const SpriteSheet = @import("tile.zig").SpriteSheet;
 const Sprite = @import("tile.zig").Sprite;
@@ -110,21 +110,6 @@ pub fn loadShip(
         const data_tag = std.meta.stringToEnum(std.meta.Tag(TileData), json_tile.data_type) orelse return ShipSerializationError.InvalidEnumString;
 
         const tile_data: TileData = switch (data_tag) {
-            .empty => .empty,
-            .terrain => blk: {
-                const mat_str = json_tile.base_material orelse return ShipSerializationError.InvalidEnumString;
-                const mat = std.meta.stringToEnum(BaseMaterial, mat_str) orelse return ShipSerializationError.InvalidEnumString;
-
-                break :blk .{
-                    .terrain = .{
-                        .base_material = mat,
-                        .ores = .{
-                            .{ .ore = .none, .richness = 0 },
-                            .{ .ore = .none, .richness = 0 },
-                        },
-                    },
-                };
-            },
             .ship_part => blk: {
                 const kind_str = json_tile.kind orelse return ShipSerializationError.InvalidEnumString;
                 const kind = std.meta.stringToEnum(PartKind, kind_str) orelse return ShipSerializationError.InvalidEnumString;
@@ -141,6 +126,7 @@ pub fn loadShip(
                     },
                 };
             },
+            else => .empty,
         };
 
         const new_tile = try Tile.init(tile_data);

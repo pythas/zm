@@ -8,6 +8,7 @@ pub const PartStats = struct {
             .engine => 2.0,
             .hull => 1.0,
             .laser => 1.0,
+            else => 1.0,
         };
     }
 
@@ -22,7 +23,7 @@ pub const PartStats = struct {
 
     pub fn getLaserRangeSq(tier: u8) f32 {
         const range: f32 = switch (tier) {
-            1 => 80.0,
+            1 => 100.0,
             2 => 160.0,
             3 => 320.0,
             else => 0.0,

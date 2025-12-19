@@ -79,6 +79,8 @@ pub const EditorPalette = enum {
     hull,
     engine,
     laser,
+    reactor,
+    cargo,
 };
 
 pub const Editor = struct {
@@ -199,6 +201,20 @@ pub const Editor = struct {
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);
                     },
+                    .reactor => {
+                        const ht = try Tile.init(
+                            .{ .ship_part = .{ .kind = .reactor, .tier = 1, .health = 100.0, .variation = 0 } },
+                        );
+
+                        world.objects.items[0].setTile(tile_x, tile_y, ht);
+                    },
+                    .cargo => {
+                        const ht = try Tile.init(
+                            .{ .ship_part = .{ .kind = .cargo, .tier = 1, .health = 100.0, .variation = 0 } },
+                        );
+
+                        world.objects.items[0].setTile(tile_x, tile_y, ht);
+                    },
                 }
             }
 
@@ -267,6 +283,24 @@ pub const Editor = struct {
             "Laser",
         )) {
             self.current_palette = .laser;
+        }
+
+        btn_x += btn_s + 10;
+        if (try ui.button(
+            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
+            self.current_palette == .reactor,
+            "Laser",
+        )) {
+            self.current_palette = .reactor;
+        }
+
+        btn_x += btn_s + 10;
+        if (try ui.button(
+            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
+            self.current_palette == .cargo,
+            "Laser",
+        )) {
+            self.current_palette = .cargo;
         }
 
         // ship

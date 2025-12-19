@@ -6,9 +6,11 @@ const Physics = @import("box2d_physics.zig").Physics;
 const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
 const PlayerController = @import("player.zig").PlayerController;
+const ResearchManager = @import("research.zig").ResearchManager;
 const Camera = @import("camera.zig").Camera;
 const Vec2 = @import("vec2.zig").Vec2;
 const Tile = @import("tile.zig").Tile;
+const ResourceAmount = @import("tile.zig").ResourceAmount;
 const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
 
@@ -19,6 +21,7 @@ pub const World = struct {
 
     camera: Camera,
     player_controller: PlayerController,
+    research_manager: ResearchManager,
 
     next_object_id: u64 = 0,
     objects: std.ArrayList(TileObject),
@@ -39,6 +42,7 @@ pub const World = struct {
             .camera = camera,
             .objects = std.ArrayList(TileObject).init(allocator),
             .player_controller = player_controller,
+            .research_manager = ResearchManager.init(),
             .physics = physics,
         };
 
@@ -53,7 +57,7 @@ pub const World = struct {
         try self.objects.append(ship);
 
         {
-            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(0.0, -250.0), 0);
+            var asteroid = try TileObject.init(allocator, self.generateObjectId(), 16, 16, Vec2.init(0.0, -150.0), 0);
             asteroid.object_type = .asteroid;
             for (0..asteroid.width) |y| {
                 for (0..asteroid.height) |x| {
@@ -61,16 +65,10 @@ pub const World = struct {
                         .{
                             .terrain = .{
                                 .base_material = .rock,
-                                .ores = .{
-                                    .{
-                                        .ore = .iron,
-                                        .richness = 1,
-                                    },
-                                    .{
-                                        .ore = .none,
-                                        .richness = 0,
-                                    },
-                                },
+                                .resources = try std.BoundedArray(ResourceAmount, 4).fromSlice(&.{
+                                    .{ .resource = .iron, .amount = 5 },
+                                    .{ .resource = .gold, .amount = 1 },
+                                }),
                             },
                         },
                     );
@@ -89,16 +87,10 @@ pub const World = struct {
                         .{
                             .terrain = .{
                                 .base_material = .rock,
-                                .ores = .{
-                                    .{
-                                        .ore = .iron,
-                                        .richness = 1,
-                                    },
-                                    .{
-                                        .ore = .none,
-                                        .richness = 0,
-                                    },
-                                },
+                                .resources = try std.BoundedArray(ResourceAmount, 4).fromSlice(&.{
+                                    .{ .resource = .iron, .amount = 5 },
+                                    .{ .resource = .gold, .amount = 1 },
+                                }),
                             },
                         },
                     );
