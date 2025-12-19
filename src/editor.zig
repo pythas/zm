@@ -158,7 +158,7 @@ pub const Editor = struct {
                 switch (self.current_palette) {
                     .hull => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .hull, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .ship_part = .{ .kind = .hull, .tier = 1, .health = 100.0 } },
                         );
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);
@@ -186,7 +186,7 @@ pub const Editor = struct {
                         if (is_connected) {
                             if (engine_dir) |ed| {
                                 var et = try Tile.init(
-                                    .{ .ship_part = .{ .kind = .engine, .tier = 1, .health = 100.0, .variation = 0 } },
+                                    .{ .ship_part = .{ .kind = .engine, .tier = 1, .health = 100.0 } },
                                 );
                                 et.data.ship_part.rotation = ed;
 
@@ -196,21 +196,21 @@ pub const Editor = struct {
                     },
                     .laser => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .laser, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .ship_part = .{ .kind = .laser, .tier = 1, .health = 100.0 } },
                         );
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);
                     },
                     .reactor => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .reactor, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .ship_part = .{ .kind = .reactor, .tier = 1, .health = 100.0 } },
                         );
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);
                     },
                     .cargo => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .cargo, .tier = 1, .health = 100.0, .variation = 0 } },
+                            .{ .ship_part = .{ .kind = .cargo, .tier = 1, .health = 100.0 } },
                         );
 
                         world.objects.items[0].setTile(tile_x, tile_y, ht);

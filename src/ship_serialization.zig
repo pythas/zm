@@ -126,7 +126,6 @@ pub fn loadShip(
                         .kind = kind,
                         .tier = 1,
                         .health = 100.0,
-                        .variation = 0,
                         .rotation = rotation,
                         .broken = broken,
                     },
