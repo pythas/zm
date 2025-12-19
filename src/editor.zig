@@ -320,22 +320,22 @@ pub const Editor = struct {
         {
             var inv_x = layout.inventory_rect.x + 10;
             var inv_y = layout.inventory_rect.y + 10;
-            const slot_s: f32 = 20.0;
-            const slot_p: f32 = 2.0;
+            const slot_size: f32 = 20.0;
+            const slot_padding: f32 = 2.0;
 
             var inv_it = ship.inventories.valueIterator();
             while (inv_it.next()) |inv| {
                 for (inv.stacks.items) |stack| {
-                    const slot_rect = UiRect{ .x = inv_x, .y = inv_y, .w = slot_s, .h = slot_s };
+                    const slot_rect = UiRect{ .x = inv_x, .y = inv_y, .w = slot_size, .h = slot_size };
                     _ = try ui.inventorySlot(slot_rect, stack.item, false);
 
-                    inv_x += slot_s + slot_p;
-                    if (inv_x + slot_s > layout.inventory_rect.x + layout.inventory_rect.w) {
+                    inv_x += slot_size + slot_padding;
+                    if (inv_x + slot_size > layout.inventory_rect.x + layout.inventory_rect.w) {
                         inv_x = layout.inventory_rect.x + 10;
-                        inv_y += slot_s + slot_p;
+                        inv_y += slot_size + slot_padding;
                     }
 
-                    if (inv_y + slot_s > layout.inventory_rect.y + layout.inventory_rect.h) {
+                    if (inv_y + slot_size > layout.inventory_rect.y + layout.inventory_rect.h) {
                         break;
                     }
                 }
