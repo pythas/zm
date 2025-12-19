@@ -89,9 +89,9 @@ pub const TileReference = struct {
 };
 
 pub const SpriteSheet = enum(u8) {
-    world = 0,
-    terrain = 1,
-    ships = 2,
+    terrain = 0,
+    ships = 1,
+    resources = 2,
 };
 
 pub const Sprite = struct {
@@ -109,7 +109,7 @@ pub const Sprite = struct {
 
     pub fn initEmpty() Self {
         return .{
-            .sheet = .world,
+            .sheet = .terrain,
             .index = 0,
         };
     }

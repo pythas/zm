@@ -29,8 +29,8 @@ const EditorLayout = struct {
 
     palette_rect: UiRect,
     ship_panel_rect: UiRect,
-
     grid_rect: UiRect,
+    inventory_rect: UiRect,
 
     pub fn compute(screen_w: f32, screen_h: f32) EditorLayout {
         _ = screen_w;
@@ -51,12 +51,17 @@ const EditorLayout = struct {
         const grid_h = tile_size * tilemapHeight;
         const grid_rect = UiRect{ .x = ship_rect.x + padding, .y = ship_rect.y + padding, .w = grid_w, .h = grid_h };
 
+        const inv_w = tile_size_base * scaling * 8;
+        const inv_h = tile_size_base * scaling * 8;
+        const inv_rect = UiRect{ .x = ship_rect.x + ship_rect.w + padding, .y = padding, .w = inv_w, .h = inv_h };
+
         return .{
             .scale = scaling,
             .tile_size = tile_size,
             .palette_rect = pal_rect,
             .ship_panel_rect = ship_rect,
             .grid_rect = grid_rect,
+            .inventory_rect = inv_rect,
         };
     }
 
@@ -76,6 +81,7 @@ const EditorLayout = struct {
 };
 
 pub const EditorPalette = enum {
+    none,
     hull,
     engine,
     laser,
@@ -98,7 +104,7 @@ pub const Editor = struct {
             .window = window,
             .mouse = MouseState.init(window),
             .keyboard = KeyboardState.init(window),
-            .current_palette = .hull,
+            .current_palette = .none,
         };
     }
 
@@ -156,6 +162,7 @@ pub const Editor = struct {
 
             if (self.mouse.is_left_down) {
                 switch (self.current_palette) {
+                    .none => {},
                     .hull => {
                         const ht = try Tile.init(
                             .{ .ship_part = .{ .kind = .hull, .tier = 1, .health = 100.0 } },
@@ -245,6 +252,7 @@ pub const Editor = struct {
         const screen_h: f32 = @floatFromInt(wh[1]);
 
         const layout = EditorLayout.compute(screen_w, screen_h);
+        const ship = &world.objects.items[0];
 
         var ui = &renderer.ui;
         ui.beginFrame();
@@ -306,16 +314,42 @@ pub const Editor = struct {
         // ship
         try ui.panel(layout.ship_panel_rect);
 
+        // inventory
+        try ui.panel(layout.inventory_rect);
+
+        {
+            var inv_x = layout.inventory_rect.x + 10;
+            var inv_y = layout.inventory_rect.y + 10;
+            const slot_s: f32 = 20.0;
+            const slot_p: f32 = 2.0;
+
+            var inv_it = ship.inventories.valueIterator();
+            while (inv_it.next()) |inv| {
+                for (inv.stacks.items) |stack| {
+                    const slot_rect = UiRect{ .x = inv_x, .y = inv_y, .w = slot_s, .h = slot_s };
+                    _ = try ui.inventorySlot(slot_rect, stack.item, false);
+
+                    inv_x += slot_s + slot_p;
+                    if (inv_x + slot_s > layout.inventory_rect.x + layout.inventory_rect.w) {
+                        inv_x = layout.inventory_rect.x + 10;
+                        inv_y += slot_s + slot_p;
+                    }
+
+                    if (inv_y + slot_s > layout.inventory_rect.y + layout.inventory_rect.h) {
+                        break;
+                    }
+                }
+            }
+        }
+
         ui.endFrame(pass, &renderer.global);
 
         // grid sprites
-        const obj = &world.objects.items[0];
-
-        try renderer.sprite.prepareObject(obj);
+        try renderer.sprite.prepareObject(ship);
 
         const instances = [_]SpriteRenderData{
             .{
-                .wh = .{ @floatFromInt(obj.width * 8), @floatFromInt(obj.height * 8), 0, 0 },
+                .wh = .{ @floatFromInt(ship.width * 8), @floatFromInt(ship.height * 8), 0, 0 },
                 .position = .{ layout.grid_rect.x + layout.grid_rect.w / 2, layout.grid_rect.y + layout.grid_rect.h / 2, 0, 0 },
                 .rotation = .{ 0, 0, 0, 0 },
                 .scale = layout.scale,

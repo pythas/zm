@@ -7,14 +7,20 @@ const shader_utils = @import("../shader_utils.zig");
 const MouseState = @import("../input.zig").MouseState;
 const World = @import("../world.zig").World;
 const Tile = @import("../tile.zig").Tile;
+const Sprite = @import("../tile.zig").Sprite;
 const Texture = @import("../texture.zig").Texture;
+const Assets = @import("../assets.zig").Assets;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
+const packSpriteForGpu = @import("common.zig").packSpriteForGpu;
+const Item = @import("../inventory.zig").Item;
 
 const UiVertex = struct {
     position: UiVec2,
     uv: UiVec2,
     color: UiVec4,
+    data: u32,
+    mode: u32,
 };
 
 pub const UiVec2 = struct {
@@ -99,22 +105,60 @@ pub const UiRenderer = struct {
         self.mouse.update();
     }
 
-    fn pushQuad(self: *Self, rect: UiRect, color: UiVec4) !void {
+    fn pushQuad(self: *Self, rect: UiRect, color: UiVec4, data: u32, mode: u32) !void {
         const x = rect.x;
         const y = rect.y;
         const w = rect.w;
         const h = rect.h;
 
-        try self.vertices.append(.{ .position = .{ .x = x, .y = y }, .uv = .{ .x = 0, .y = 0 }, .color = color });
-        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y }, .uv = .{ .x = 1, .y = 0 }, .color = color });
-        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y + h }, .uv = .{ .x = 1, .y = 1 }, .color = color });
-        try self.vertices.append(.{ .position = .{ .x = x, .y = y }, .uv = .{ .x = 0, .y = 0 }, .color = color });
-        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y + h }, .uv = .{ .x = 1, .y = 1 }, .color = color });
-        try self.vertices.append(.{ .position = .{ .x = x, .y = y + h }, .uv = .{ .x = 0, .y = 1 }, .color = color });
+        try self.vertices.append(.{ .position = .{ .x = x, .y = y }, .uv = .{ .x = 0, .y = 0 }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y }, .uv = .{ .x = 1, .y = 0 }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y + h }, .uv = .{ .x = 1, .y = 1 }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x, .y = y }, .uv = .{ .x = 0, .y = 0 }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y + h }, .uv = .{ .x = 1, .y = 1 }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x, .y = y + h }, .uv = .{ .x = 0, .y = 1 }, .color = color, .data = data, .mode = mode });
     }
 
     pub fn panel(self: *Self, rect: UiRect) !void {
-        try self.pushQuad(rect, .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 });
+        try self.pushQuad(rect, .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 }, 0, 0);
+    }
+
+    pub fn sprite(self: *Self, rect: UiRect, s: Sprite) !void {
+        const data = packSpriteForGpu(s);
+        try self.pushQuad(rect, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 }, data, 1);
+    }
+
+    pub fn inventorySlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !bool {
+        const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
+
+        var color = if (is_selected)
+            UiVec4{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }
+        else
+            UiVec4{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 };
+
+        color = if (is_hovered)
+            UiVec4{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 }
+        else
+            color;
+
+        try self.pushQuad(rect, color, 0, 0);
+
+        switch (item) {
+            .none => {},
+            .resource => |r| {
+                const s = Assets.getResourceSprite(r);
+                const inset: f32 = 4.0;
+                const sprite_rect = UiRect{
+                    .x = rect.x + inset,
+                    .y = rect.y + inset,
+                    .w = rect.w - inset * 2.0,
+                    .h = rect.h - inset * 2.0,
+                };
+                try self.sprite(sprite_rect, s);
+            },
+        }
+
+        return is_hovered and self.mouse.is_left_clicked;
     }
 
     pub fn button(self: *Self, rect: UiRect, is_active: bool, label_text: []const u8) !bool {
@@ -131,7 +175,7 @@ pub const UiRenderer = struct {
         else
             color;
 
-        try self.pushQuad(rect, color);
+        try self.pushQuad(rect, color, 0, 0);
 
         // TODO: Add label
         // self.label(...)
@@ -183,14 +227,14 @@ fn createPipeline(
     const vs_module = shader_utils.createShaderModuleWithCommon(
         gctx.device,
         @embedFile("../shaders/ui_vertex.wgsl"),
-        "vs_main",
+        "main",
     );
     defer vs_module.release();
 
     const fs_module = shader_utils.createShaderModuleWithCommon(
         gctx.device,
         @embedFile("../shaders/ui_fragment.wgsl"),
-        "fs_main",
+        "main",
     );
     defer fs_module.release();
 
@@ -229,6 +273,16 @@ fn createPipeline(
             .format = .float32x4,
             .offset = @offsetOf(UiVertex, "color"),
             .shader_location = 2,
+        },
+        .{
+            .format = .uint32,
+            .offset = @offsetOf(UiVertex, "data"),
+            .shader_location = 3,
+        },
+        .{
+            .format = .uint32,
+            .offset = @offsetOf(UiVertex, "mode"),
+            .shader_location = 4,
         },
     };
 

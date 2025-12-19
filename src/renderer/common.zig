@@ -5,6 +5,7 @@ const zglfw = @import("zglfw");
 
 const World = @import("../world.zig").World;
 const Tile = @import("../tile.zig").Tile;
+const Sprite = @import("../tile.zig").Sprite;
 const TileType = @import("../tile.zig").TileType;
 const Texture = @import("../texture.zig").Texture;
 const GameMode = @import("../game.zig").GameMode;
@@ -182,6 +183,14 @@ pub fn packTileForGpu(tile: Tile, mask: u8) u32 {
     const sheet: u32 = @intFromEnum(sprite.sheet) & 0x0F; // 4 bits
     const tile_type_id: u32 = @as(u32, @intFromEnum(@as(TileType, tile.data))) & 0x0F; // 4 bits
     const sprite_index: u32 = sprite.index & 0x03FF; // 10 bits
+
+    return (sheet << 14) | (tile_type_id << 10) | sprite_index;
+}
+
+pub fn packSpriteForGpu(sprite: Sprite) u32 {
+    const sheet: u32 = @intFromEnum(sprite.sheet) & 0x0F;
+    const tile_type_id: u32 = 1; // force visible (terrain)
+    const sprite_index: u32 = sprite.index & 0x03FF;
 
     return (sheet << 14) | (tile_type_id << 10) | sprite_index;
 }

@@ -7,12 +7,14 @@ const BaseMaterial = @import("tile.zig").BaseMaterial;
 const PartKind = @import("tile.zig").PartKind;
 const TerrainTileType = @import("tile.zig").TerrainTileType;
 const ShipPartTileType = @import("tile.zig").ShipPartTileType;
+const Resource = @import("resource.zig").Resource;
 const rng = @import("rng.zig");
 
 const row_width = 32;
 
 const terrain_sheet: SpriteSheet = .terrain;
 const ship_sheet: SpriteSheet = .ships;
+const resource_sheet: SpriteSheet = .resources;
 
 fn setRow(row: u16, index: u16) u16 {
     return row * row_width + index;
@@ -25,6 +27,16 @@ pub const Assets = struct {
             .terrain => |terrain| getTerrainSprite(terrain, mask),
             .ship_part => |ship| getShipPartSprite(ship, mask),
         };
+    }
+
+    pub fn getResourceSprite(resource: Resource) Sprite {
+        if (resource == .none) {
+            return Sprite.initEmpty();
+        }
+
+        const index = @intFromEnum(resource) - 1;
+
+        return Sprite.init(resource_sheet, @intCast(index));
     }
 
     pub fn getTerrainSprite(terrain: TerrainTileType, mask: u8) Sprite {

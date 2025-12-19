@@ -27,9 +27,9 @@ pub const Renderer = struct {
         window: *zglfw.Window,
     ) !Self {
         const atlas = try Atlas.init(allocator, gctx, &.{
-            "assets/world.png",
             "assets/asteroid.png",
             "assets/ship.png",
+            "assets/resource.png",
         });
 
         var global = try GlobalRenderState.init(gctx, atlas.view);
