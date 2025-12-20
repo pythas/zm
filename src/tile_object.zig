@@ -14,6 +14,7 @@ const TileData = @import("tile.zig").TileData;
 const InputState = @import("input.zig").InputState;
 const PartStats = @import("ship.zig").PartStats;
 const TileType = @import("tile.zig").TileType;
+const Item = @import("inventory.zig").Item;
 const Inventory = @import("inventory.zig").Inventory;
 const Resource = @import("resource.zig").Resource;
 
@@ -364,16 +365,40 @@ pub const TileObject = struct {
         }
     }
 
-    // // resources
-    // pub fn getMostCommonResource(self: Self) ?Resource {
-    //     var resources = std.AutoHashMap(usize, Resource).init(self.allocator);
-    //
-    //     for (self.tiles) |tile| {
-    //         if (!tile.isTerrain()) {
-    //             continue;
-    //         }
-    //     }
-    // }
+    pub fn getInventoryCountByItem(self: *Self, item: Item) u32 {
+        var count: u32 = 0;
+
+        var it = self.inventories.valueIterator();
+        while (it.next()) |inv| {
+            for (inv.stacks.items) |stack| {
+                if (stack.item.eql(item)) {
+                    count += stack.amount;
+                }
+            }
+        }
+
+        return count;
+    }
+
+    pub fn removeNumberOfItemsFromInventory(self: *Self, item: Item, amount: u32) void {
+        var remaining = amount;
+
+        var it = self.inventories.valueIterator();
+        while (it.next()) |inv| {
+            for (inv.stacks.items) |*stack| {
+                if (remaining == 0) {
+                    return;
+                }
+
+                if (stack.item.eql(item) and stack.amount > 0) {
+                    const take = @min(stack.amount, remaining);
+
+                    stack.amount -= take;
+                    remaining -= take;
+                }
+            }
+        }
+    }
 
     // physics
     pub fn applyInputThrust(self: *Self, physics: *Physics, input: InputState) void {

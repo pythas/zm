@@ -1215,7 +1215,7 @@
       "x": 7,
       "y": 9,
       "data_type": "ship_part",
-      "kind": "cargo",
+      "kind": "storage",
       "base_material": null,
       "rotation": "north"
     },

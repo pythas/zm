@@ -7,23 +7,12 @@ pub const tilemapHeight = 16;
 
 const Resource = @import("resource.zig").Resource;
 
-pub const Item = union(enum) {
-    none,
-    resource: Resource,
-    part: PartKind,
-};
-
-pub const ItemAmount = struct {
-    item: Item = .none,
-    amount: u32 = 0,
-};
-
 pub const PartKind = enum(u8) {
     hull,
     reactor,
     engine,
     laser,
-    cargo,
+    storage,
 };
 
 pub const BaseMaterial = enum(u8) {

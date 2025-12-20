@@ -224,8 +224,8 @@ pub const PlayerController = struct {
                         const resource_amounts = tile.data.terrain.resources;
 
                         for (resource_amounts.slice()) |res_amount| {
-                            const cargo_list = try ship.getTilesByPartKindSortedByDist(.cargo, ship.position);
-                            defer self.allocator.free(cargo_list);
+                            const storage_list = try ship.getTilesByPartKindSortedByDist(.storage, ship.position);
+                            defer self.allocator.free(storage_list);
 
                             var remaining = rng.random().intRangeAtMost(
                                 u8,
@@ -233,8 +233,8 @@ pub const PlayerController = struct {
                                 res_amount.amount,
                             );
 
-                            for (cargo_list) |cargo| {
-                                const inventory = ship.getInventory(cargo.tile_x, cargo.tile_y) orelse try ship.addInventory(cargo.tile_x, cargo.tile_y, 20);
+                            for (storage_list) |storage| {
+                                const inventory = ship.getInventory(storage.tile_x, storage.tile_y) orelse try ship.addInventory(storage.tile_x, storage.tile_y, 20);
 
                                 const result = try inventory.add(.{ .resource = res_amount.resource }, remaining);
                                 remaining = @intCast(result.remaining);

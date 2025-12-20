@@ -9,7 +9,7 @@ pub const PartStats = struct {
             .reactor => "Reactor",
             .engine => "Engine",
             .laser => "Laser",
-            .cargo => "Cargo",
+            .storage => "Storage",
         };
     }
 

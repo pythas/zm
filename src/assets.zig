@@ -82,7 +82,7 @@ pub const Assets = struct {
             .reactor => getReactorSprite(ship),
             .engine => getEngineSprite(ship),
             .laser => getLaserSprite(ship),
-            .cargo => getCargoSprite(ship),
+            .storage => getStorageSprite(ship),
             // else => Sprite.initEmpty(),
         };
     }
@@ -122,7 +122,7 @@ pub const Assets = struct {
         return Sprite.init(ship_sheet, setRow(3, index));
     }
 
-    pub fn getCargoSprite(ship: ShipPartTileType) Sprite {
+    pub fn getStorageSprite(ship: ShipPartTileType) Sprite {
         var index = @intFromEnum(ship.rotation);
 
         if (ship.broken) {

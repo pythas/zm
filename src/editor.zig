@@ -98,7 +98,7 @@ pub const EditorPalette = enum {
     engine,
     laser,
     reactor,
-    cargo,
+    storage,
 };
 
 pub const Editor = struct {
@@ -140,9 +140,11 @@ pub const Editor = struct {
         self.mouse.update();
         self.keyboard.update();
 
+        const ship = &world.objects.items[0];
+
         if (self.keyboard.isDown(.left_ctrl)) {
             if (self.keyboard.isPressed(.s)) {
-                ship_serialization.saveShip(self.allocator, world.objects.items[0], "ship.json") catch |err| {
+                ship_serialization.saveShip(self.allocator, ship.*, "ship.json") catch |err| {
                     std.debug.print("Failed to save ship: {}\n", .{err});
                 };
             }
@@ -163,11 +165,11 @@ pub const Editor = struct {
             // TODO: Make sure tile is connected
 
             if (self.keyboard.isPressed(.r)) {
-                if (world.objects.items[0].getTile(tile_x, tile_y)) |tile| {
+                if (ship.getTile(tile_x, tile_y)) |tile| {
                     if (tile.data == .ship_part and tile.data.ship_part.kind == .engine) {
                         var new_tile = tile.*;
                         new_tile.data.ship_part.rotation = @enumFromInt((@intFromEnum(new_tile.data.ship_part.rotation) + 1) % 4);
-                        world.objects.items[0].setTile(tile_x, tile_y, new_tile);
+                        ship.setTile(tile_x, tile_y, new_tile);
                     }
                 }
             }
@@ -180,14 +182,14 @@ pub const Editor = struct {
                             .{ .ship_part = .{ .kind = .hull, .tier = 1, .health = 100.0 } },
                         );
 
-                        world.objects.items[0].setTile(tile_x, tile_y, ht);
+                        ship.setTile(tile_x, tile_y, ht);
                     },
                     .engine => {
                         var engine_dir: ?Direction = null;
                         var is_connected = false;
 
                         for (Directions) |d| {
-                            const n = world.objects.items[0].getNeighbouringTile(
+                            const n = ship.getNeighbouringTile(
                                 tile_x,
                                 tile_y,
                                 d.direction,
@@ -209,7 +211,7 @@ pub const Editor = struct {
                                 );
                                 et.data.ship_part.rotation = ed;
 
-                                world.objects.items[0].setTile(tile_x, tile_y, et);
+                                ship.setTile(tile_x, tile_y, et);
                             }
                         }
                     },
@@ -218,21 +220,21 @@ pub const Editor = struct {
                             .{ .ship_part = .{ .kind = .laser, .tier = 1, .health = 100.0 } },
                         );
 
-                        world.objects.items[0].setTile(tile_x, tile_y, ht);
+                        ship.setTile(tile_x, tile_y, ht);
                     },
                     .reactor => {
                         const ht = try Tile.init(
                             .{ .ship_part = .{ .kind = .reactor, .tier = 1, .health = 100.0 } },
                         );
 
-                        world.objects.items[0].setTile(tile_x, tile_y, ht);
+                        ship.setTile(tile_x, tile_y, ht);
                     },
-                    .cargo => {
+                    .storage => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .cargo, .tier = 1, .health = 100.0 } },
+                            .{ .ship_part = .{ .kind = .storage, .tier = 1, .health = 100.0 } },
                         );
 
-                        world.objects.items[0].setTile(tile_x, tile_y, ht);
+                        ship.setTile(tile_x, tile_y, ht);
                     },
                 }
             }
@@ -241,13 +243,20 @@ pub const Editor = struct {
                 if (self.current_tool != null) {
                     switch (self.current_tool.?) {
                         .welding => {
-                            if (world.objects.items[0].getTile(tile_x, tile_y)) |tile| {
+                            if (ship.getTile(tile_x, tile_y)) |tile| {
                                 if (tile.data == .ship_part) {
                                     switch (tile.data.ship_part.kind) {
                                         .engine => {
-                                            var new_tile = tile.*;
-                                            new_tile.data.ship_part.broken = false;
-                                            world.objects.items[0].setTile(tile_x, tile_y, new_tile);
+                                            const iron = Item{ .resource = .iron };
+                                            const count_iron = ship.getInventoryCountByItem(iron);
+
+                                            if (count_iron >= 10) {
+                                                var new_tile = tile.*;
+                                                new_tile.data.ship_part.broken = false;
+                                                ship.setTile(tile_x, tile_y, new_tile);
+
+                                                ship.removeNumberOfItemsFromInventory(iron, 10);
+                                            }
                                         },
                                         else => {},
                                     }
@@ -259,7 +268,7 @@ pub const Editor = struct {
             }
 
             if (self.mouse.is_right_down) {
-                world.objects.items[0].setTile(tile_x, tile_y, try Tile.initEmpty());
+                ship.setTile(tile_x, tile_y, try Tile.initEmpty());
             }
         }
 
@@ -333,7 +342,7 @@ pub const Editor = struct {
         if (try ui.button(
             .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
             self.current_palette == .reactor,
-            "Laser",
+            "Reactor",
         )) {
             self.current_palette = .reactor;
             self.current_tool = null;
@@ -342,10 +351,10 @@ pub const Editor = struct {
         btn_x += btn_s + 10;
         if (try ui.button(
             .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .cargo,
-            "Laser",
+            self.current_palette == .storage,
+            "Storage",
         )) {
-            self.current_palette = .cargo;
+            self.current_palette = .storage;
             self.current_tool = null;
         }
 
@@ -372,7 +381,7 @@ pub const Editor = struct {
             const tile_x: usize = @intCast(tile_pos.x);
             const tile_y: usize = @intCast(tile_pos.y);
 
-            if (world.objects.items[0].getTile(tile_x, tile_y)) |tile| {
+            if (ship.getTile(tile_x, tile_y)) |tile| {
                 if (tile.getShipPart()) |ship_part| {
                     const name = PartStats.getName(ship_part.kind);
                     var prefix: []const u8 = "";
