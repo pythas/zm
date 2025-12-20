@@ -30,7 +30,7 @@ pub const Renderer = struct {
         window: *zglfw.Window,
     ) !Self {
         const font = try allocator.create(Font);
-        font.* = try Font.init(allocator, "assets/rissole-12.bdf");
+        font.* = try Font.init(allocator, "assets/spleen-6x12.bdf");
 
         const atlas = try Atlas.init(allocator, gctx, &.{
             .{ .path = "assets/asteroid.png" },
