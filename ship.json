@@ -704,8 +704,7 @@
       "data_type": "ship_part",
       "kind": "engine",
       "base_material": null,
-      "rotation": "north",
-      "broken": true
+      "rotation": "north", "health": 0.0
     },
     {
       "x": 8,
@@ -1345,8 +1344,7 @@
       "data_type": "ship_part",
       "kind": "engine",
       "base_material": null,
-      "rotation": "south",
-      "broken": true
+      "rotation": "south", "health": 0.0
     },
     {
       "x": 8,
@@ -1362,8 +1360,7 @@
       "data_type": "ship_part",
       "kind": "engine",
       "base_material": null,
-      "rotation": "south",
-      "broken": true
+      "rotation": "south", "health": 0.0
     },
     {
       "x": 10,

@@ -4,6 +4,7 @@ const TileObject = @import("tile_object.zig").TileObject;
 const Tile = @import("tile.zig").Tile;
 const TileData = @import("tile.zig").TileData;
 const PartKind = @import("tile.zig").PartKind;
+const PartStats = @import("ship.zig").PartStats;
 const BaseMaterial = @import("tile.zig").BaseMaterial;
 const Resource = @import("resource.zig").Resource;
 const ResourceAmount = @import("tile.zig").ResourceAmount;
@@ -21,7 +22,7 @@ const JsonTileFlat = struct {
     kind: ?[]const u8 = null,
     base_material: ?[]const u8 = null,
     rotation: ?[]const u8 = null,
-    broken: ?bool = null,
+    health: ?f32 = null,
 };
 
 const JsonShipData = struct {
@@ -45,13 +46,13 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
             var part_str: ?[]const u8 = null;
             var base_material_str: ?[]const u8 = null;
             var rotation: ?[]const u8 = null;
-            var broken: ?bool = null;
+            var health: ?f32 = null;
 
             switch (tile.data) {
                 .ship_part => |s| {
                     part_str = @tagName(s.kind);
                     rotation = @tagName(s.rotation);
-                    broken = s.broken;
+                    health = s.health;
                 },
                 .terrain => |t| base_material_str = @tagName(t.base_material),
                 else => {},
@@ -64,7 +65,7 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
                 .kind = part_str,
                 .base_material = base_material_str,
                 .rotation = rotation,
-                .broken = broken,
+                .health = health,
             });
         }
     }
@@ -119,15 +120,14 @@ pub fn loadShip(
                 const kind = std.meta.stringToEnum(PartKind, kind_str) orelse return ShipSerializationError.InvalidEnumString;
                 const rotation_str = json_tile.rotation orelse return ShipSerializationError.InvalidEnumString;
                 const rotation = std.meta.stringToEnum(Direction, rotation_str) orelse return ShipSerializationError.InvalidEnumString;
-                const broken = json_tile.broken orelse false;
+                const health = json_tile.health orelse PartStats.getMaxHealth(kind, 1);
 
                 break :blk .{
                     .ship_part = .{
                         .kind = kind,
                         .tier = 1,
-                        .health = 100.0,
+                        .health = health,
                         .rotation = rotation,
-                        .broken = broken,
                     },
                 };
             },

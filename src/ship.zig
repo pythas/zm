@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const PartKind = @import("tile.zig").PartKind;
+const ShipPartTileType = @import("tile.zig").ShipPartTileType;
 
 pub const PartStats = struct {
     pub fn getName(kind: PartKind) []const u8 {
@@ -11,6 +12,22 @@ pub const PartStats = struct {
             .laser => "Laser",
             .storage => "Storage",
         };
+    }
+
+    pub fn getMaxHealth(kind: PartKind, tier: u8) f32 {
+        _ = kind;
+        _ = tier;
+        return 100.0;
+    }
+
+    pub fn getFunctionalThreshold(kind: PartKind, tier: u8) f32 {
+        _ = kind;
+        _ = tier;
+        return 30.0;
+    }
+
+    pub fn isBroken(part: ShipPartTileType) bool {
+        return part.health < getFunctionalThreshold(part.kind, part.tier);
     }
 
     pub fn getDensity(kind: PartKind) f32 {

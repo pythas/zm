@@ -179,7 +179,7 @@ pub const Editor = struct {
                     .none => {},
                     .hull => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .hull, .tier = 1, .health = 100.0 } },
+                            .{ .ship_part = .{ .kind = .hull, .tier = 1, .health = PartStats.getMaxHealth(.hull, 1) } },
                         );
 
                         ship.setTile(tile_x, tile_y, ht);
@@ -207,7 +207,7 @@ pub const Editor = struct {
                         if (is_connected) {
                             if (engine_dir) |ed| {
                                 var et = try Tile.init(
-                                    .{ .ship_part = .{ .kind = .engine, .tier = 1, .health = 100.0 } },
+                                    .{ .ship_part = .{ .kind = .engine, .tier = 1, .health = PartStats.getMaxHealth(.engine, 1) } },
                                 );
                                 et.data.ship_part.rotation = ed;
 
@@ -217,21 +217,21 @@ pub const Editor = struct {
                     },
                     .laser => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .laser, .tier = 1, .health = 100.0 } },
+                            .{ .ship_part = .{ .kind = .laser, .tier = 1, .health = PartStats.getMaxHealth(.laser, 1) } },
                         );
 
                         ship.setTile(tile_x, tile_y, ht);
                     },
                     .reactor => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .reactor, .tier = 1, .health = 100.0 } },
+                            .{ .ship_part = .{ .kind = .reactor, .tier = 1, .health = PartStats.getMaxHealth(.reactor, 1) } },
                         );
 
                         ship.setTile(tile_x, tile_y, ht);
                     },
                     .storage => {
                         const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .storage, .tier = 1, .health = 100.0 } },
+                            .{ .ship_part = .{ .kind = .storage, .tier = 1, .health = PartStats.getMaxHealth(.storage, 1) } },
                         );
 
                         ship.setTile(tile_x, tile_y, ht);
@@ -252,7 +252,7 @@ pub const Editor = struct {
 
                                             if (count_iron >= 10) {
                                                 var new_tile = tile.*;
-                                                new_tile.data.ship_part.broken = false;
+                                                new_tile.data.ship_part.health = PartStats.getFunctionalThreshold(new_tile.data.ship_part.kind, new_tile.data.ship_part.tier);
                                                 ship.setTile(tile_x, tile_y, new_tile);
 
                                                 ship.removeNumberOfItemsFromInventory(iron, 10);
@@ -387,7 +387,7 @@ pub const Editor = struct {
                     var prefix: []const u8 = "";
                     var extra: []const u8 = "";
 
-                    if (ship_part.broken == true) {
+                    if (PartStats.isBroken(ship_part)) {
                         prefix = "Broken ";
 
                         if (self.current_tool) |t| {

@@ -9,6 +9,7 @@ const TerrainTileType = @import("tile.zig").TerrainTileType;
 const ShipPartTileType = @import("tile.zig").ShipPartTileType;
 const Resource = @import("resource.zig").Resource;
 const Tool = @import("inventory.zig").Tool;
+const PartStats = @import("ship.zig").PartStats;
 const rng = @import("rng.zig");
 
 const row_width = 32;
@@ -95,7 +96,7 @@ pub const Assets = struct {
     pub fn getReactorSprite(ship: ShipPartTileType) Sprite {
         var index = @intFromEnum(ship.rotation);
 
-        if (ship.broken) {
+        if (PartStats.isBroken(ship)) {
             index += 1;
         }
 
@@ -105,7 +106,7 @@ pub const Assets = struct {
     pub fn getEngineSprite(ship: ShipPartTileType) Sprite {
         var index = @intFromEnum(ship.rotation);
 
-        if (ship.broken) {
+        if (PartStats.isBroken(ship)) {
             index += 4;
         }
 
@@ -115,7 +116,7 @@ pub const Assets = struct {
     pub fn getLaserSprite(ship: ShipPartTileType) Sprite {
         var index = @intFromEnum(ship.rotation);
 
-        if (ship.broken) {
+        if (PartStats.isBroken(ship)) {
             index += 1;
         }
 
@@ -125,7 +126,7 @@ pub const Assets = struct {
     pub fn getStorageSprite(ship: ShipPartTileType) Sprite {
         var index = @intFromEnum(ship.rotation);
 
-        if (ship.broken) {
+        if (PartStats.isBroken(ship)) {
             index += 1;
         }
 

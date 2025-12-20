@@ -540,7 +540,7 @@ pub const TileObject = struct {
                 };
 
                 // reduce power of broken engines
-                if (ship_part.broken) {
+                if (PartStats.isBroken(ship_part)) {
                     power *= 0.1;
                 }
 

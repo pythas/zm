@@ -53,11 +53,12 @@ pub const TerrainTileType = struct {
 };
 
 pub const ShipPartTileType = struct {
+    const Self = @This();
+
     kind: PartKind,
     tier: u8,
     health: f32,
     rotation: Direction = .north,
-    broken: bool = false,
 };
 
 pub const TileData = union(TileType) {
