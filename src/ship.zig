@@ -3,6 +3,16 @@ const std = @import("std");
 const PartKind = @import("tile.zig").PartKind;
 
 pub const PartStats = struct {
+    pub fn getName(kind: PartKind) []const u8 {
+        return switch (kind) {
+            .hull => "Hull",
+            .reactor => "Reactor",
+            .engine => "Engine",
+            .laser => "Laser",
+            .cargo => "Cargo",
+        };
+    }
+
     pub fn getDensity(kind: PartKind) f32 {
         return switch (kind) {
             .engine => 2.0,

@@ -262,11 +262,17 @@ pub const UiRenderer = struct {
     }
 
     pub fn label(self: *Self, pos: UiVec2, text: []const u8, font: *const Font) !void {
-        var x = pos.x;
-        const y = pos.y;
+        const start_x = pos.x;
+        var x = start_x;
+        var y = pos.y;
         const color = UiVec4{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 };
 
         for (text) |char| {
+            if (char == '\n') {
+                y += font.line_height;
+                x = start_x;
+            }
+
             if (font.glyphs.get(char)) |glyph| {
                 const qx = x + glyph.offset_x;
                 const qy = y - glyph.offset_y - glyph.height;
@@ -285,13 +291,36 @@ pub const UiRenderer = struct {
     }
 
     pub fn tooltip(self: *Self, x: f32, y: f32, text: []const u8, font: *const Font) !void {
-        var w: f32 = 0;
+        var line_breaks: f32 = 0;
         for (text) |char| {
-            if (font.glyphs.get(char)) |glyph| {
-                w += glyph.dwidth;
+            if (char == '\n') {
+                line_breaks += 1;
             }
         }
-        const h = font.line_height;
+
+        var max: f32 = 0;
+        var current_w: f32 = 0;
+        for (text) |char| {
+            if (char == '\n') {
+                if (current_w > max) {
+                    max = current_w;
+                }
+
+                current_w = 0;
+                continue;
+            }
+
+            if (font.glyphs.get(char)) |glyph| {
+                current_w += glyph.dwidth;
+            }
+        }
+
+        if (current_w > max) {
+            max = current_w;
+        }
+
+        const w = max;
+        const h = font.line_height * (line_breaks + 1);
         const padding = 4.0;
 
         const rect = UiRect{ .x = x, .y = y, .w = w + padding * 2, .h = h + padding * 2 };
@@ -299,6 +328,7 @@ pub const UiRenderer = struct {
 
         try self.label(.{ .x = x + padding, .y = y + padding + font.ascent }, text, font);
     }
+
     pub fn flush(
         self: *Self,
         pass: zgpu.wgpu.RenderPassEncoder,

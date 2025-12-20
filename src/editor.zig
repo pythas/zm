@@ -16,9 +16,13 @@ const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
 const Tool = @import("inventory.zig").Tool;
 const Item = @import("inventory.zig").Item;
+const PartStats = @import("ship.zig").PartStats;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
+
+const hover_offset_x = 10;
+const hover_offset_y = 10;
 
 const EditorLayout = struct {
     const scaling: f32 = 3.0;
@@ -349,6 +353,11 @@ pub const Editor = struct {
             self.current_tool = null;
         }
 
+        // hover
+        var hovered_item_name: ?[]const u8 = null;
+        var hover_pos_x: f32 = 0;
+        var hover_pos_y: f32 = 0;
+
         // ship grid
         try ui.panel(layout.ship_panel_rect);
 
@@ -363,6 +372,36 @@ pub const Editor = struct {
         };
         try renderer.sprite.writeInstances(&instances);
 
+        if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
+            const tile_x: usize = @intCast(tile_pos.x);
+            const tile_y: usize = @intCast(tile_pos.y);
+
+            if (world.objects.items[0].getTile(tile_x, tile_y)) |tile| {
+                if (tile.getShipPart()) |ship_part| {
+                    const name = PartStats.getName(ship_part.kind);
+                    var prefix: []const u8 = "";
+                    var extra: []const u8 = "";
+
+                    if (ship_part.broken == true) {
+                        prefix = "Broken ";
+
+                        if (self.current_tool) |t| {
+                            if (t == .welding) {
+                                extra = "\nRepair: 10 iron";
+                            }
+                        }
+                    }
+
+                    var buf: [255]u8 = undefined;
+                    const text = std.fmt.bufPrint(&buf, "{s}{s}{s}", .{ prefix, name, extra }) catch "!";
+
+                    hovered_item_name = text;
+                    hover_pos_x = self.mouse.x + hover_offset_x;
+                    hover_pos_y = self.mouse.y + hover_offset_y;
+                }
+            }
+        }
+
         // inventory
         try ui.panel(layout.inventory_rect);
 
@@ -372,10 +411,6 @@ pub const Editor = struct {
         var inv_x = layout.inventory_rect.x + 10;
         var inv_y = layout.inventory_rect.y + 10;
 
-        var hovered_item_name: ?[]const u8 = null;
-        var hover_pos_x: f32 = 0;
-        var hover_pos_y: f32 = 0;
-
         var inv_it = ship.inventories.valueIterator();
         while (inv_it.next()) |inv| {
             for (inv.stacks.items) |stack| {
@@ -384,8 +419,8 @@ pub const Editor = struct {
                 if (slot_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
                     if (stack.item != .none) {
                         hovered_item_name = stack.item.getName();
-                        hover_pos_x = self.mouse.x + 10;
-                        hover_pos_y = self.mouse.y + 10;
+                        hover_pos_x = self.mouse.x + hover_offset_x;
+                        hover_pos_y = self.mouse.y + hover_offset_y;
                     }
                 }
 
@@ -420,8 +455,8 @@ pub const Editor = struct {
 
             if (tool_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
                 hovered_item_name = item.getName();
-                hover_pos_x = self.mouse.x + 10;
-                hover_pos_y = self.mouse.y + 10;
+                hover_pos_x = self.mouse.x + hover_offset_x;
+                hover_pos_y = self.mouse.y + hover_offset_y;
             }
 
             if (try ui.toolSlot(tool_rect, item, is_selected)) {
