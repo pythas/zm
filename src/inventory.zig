@@ -33,7 +33,7 @@ pub const Item = union(enum) {
             .none => "None",
             .resource => |r| ResourceStats.getName(r),
             .tool => |t| switch (t) {
-                .welding => "Welding Tool",
+                .welding => "Basic Welding",
             },
         };
     }

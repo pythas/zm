@@ -163,13 +163,11 @@ pub const Editor = struct {
             // TODO: Make sure tile is connected
 
             if (self.keyboard.isPressed(.r)) {
-                const tile = world.objects.items[0].getTile(tile_x, tile_y);
-
-                if (tile) |ti| {
-                    if (ti.data == .ship_part and ti.data.ship_part.kind == .engine) {
-                        var t2 = ti.*;
-                        t2.data.ship_part.rotation = @enumFromInt((@intFromEnum(t2.data.ship_part.rotation) + 1) % 4);
-                        world.objects.items[0].setTile(tile_x, tile_y, t2);
+                if (world.objects.items[0].getTile(tile_x, tile_y)) |tile| {
+                    if (tile.data == .ship_part and tile.data.ship_part.kind == .engine) {
+                        var new_tile = tile.*;
+                        new_tile.data.ship_part.rotation = @enumFromInt((@intFromEnum(new_tile.data.ship_part.rotation) + 1) % 4);
+                        world.objects.items[0].setTile(tile_x, tile_y, new_tile);
                     }
                 }
             }
@@ -243,15 +241,13 @@ pub const Editor = struct {
                 if (self.current_tool != null) {
                     switch (self.current_tool.?) {
                         .welding => {
-                            const tile = world.objects.items[0].getTile(tile_x, tile_y);
-
-                            if (tile) |ti| {
-                                if (ti.data == .ship_part) {
-                                    switch (ti.data.ship_part.kind) {
+                            if (world.objects.items[0].getTile(tile_x, tile_y)) |tile| {
+                                if (tile.data == .ship_part) {
+                                    switch (tile.data.ship_part.kind) {
                                         .engine => {
-                                            var t2 = ti.*;
-                                            t2.data.ship_part.broken = false;
-                                            world.objects.items[0].setTile(tile_x, tile_y, t2);
+                                            var new_tile = tile.*;
+                                            new_tile.data.ship_part.broken = false;
+                                            world.objects.items[0].setTile(tile_x, tile_y, new_tile);
                                         },
                                         else => {},
                                     }
