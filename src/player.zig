@@ -309,7 +309,7 @@ pub const PlayerController = struct {
 
                                         // add random drift
                                         const rand = std.crypto.random;
-                                        const drift_speed = 30.0;
+                                        const drift_speed = 10.0;
                                         final_vel.x += (rand.float(f32) - 0.5) * drift_speed;
                                         final_vel.y += (rand.float(f32) - 0.5) * drift_speed;
 
@@ -340,7 +340,7 @@ pub const PlayerController = struct {
 
     pub fn startMining(self: *Self, source: TileCoords, target: TileReference) !void {
         try self.tile_actions.append(
-            TileAction.init(.mine, source, target, 1.0),
+            TileAction.init(.mine, source, target, 3.0),
         );
     }
 };
