@@ -349,8 +349,19 @@ pub const Editor = struct {
             self.current_tool = null;
         }
 
-        // ship
+        // ship grid
         try ui.panel(layout.ship_panel_rect);
+
+        try renderer.sprite.prepareObject(ship);
+        const instances = [_]SpriteRenderData{
+            .{
+                .wh = .{ @floatFromInt(ship.width * 8), @floatFromInt(ship.height * 8), 0, 0 },
+                .position = .{ layout.grid_rect.x + layout.grid_rect.w / 2, layout.grid_rect.y + layout.grid_rect.h / 2, 0, 0 },
+                .rotation = .{ 0, 0, 0, 0 },
+                .scale = layout.scale,
+            },
+        };
+        try renderer.sprite.writeInstances(&instances);
 
         // inventory
         try ui.panel(layout.inventory_rect);
@@ -420,25 +431,14 @@ pub const Editor = struct {
             tool_x += slot_size + slot_padding;
         }
 
-        if (hovered_item_name) |name| {
-            try ui.tooltip(hover_pos_x, hover_pos_y, name, renderer.font);
-        }
-
-        ui.endFrame(pass, &renderer.global);
-
-        // grid sprites
-        try renderer.sprite.prepareObject(ship);
-
-        const instances = [_]SpriteRenderData{
-            .{
-                .wh = .{ @floatFromInt(ship.width * 8), @floatFromInt(ship.height * 8), 0, 0 },
-                .position = .{ layout.grid_rect.x + layout.grid_rect.w / 2, layout.grid_rect.y + layout.grid_rect.h / 2, 0, 0 },
-                .rotation = .{ 0, 0, 0, 0 },
-                .scale = layout.scale,
-            },
-        };
-        try renderer.sprite.writeInstances(&instances);
+        ui.flush(pass, &renderer.global);
 
         renderer.sprite.draw(pass, &renderer.global, world.objects.items[0..1]);
+
+        // tooltips
+        if (hovered_item_name) |name| {
+            try ui.tooltip(hover_pos_x, hover_pos_y, name, renderer.font);
+            ui.flush(pass, &renderer.global);
+        }
     }
 };

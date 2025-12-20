@@ -59,6 +59,7 @@ pub const UiRenderer = struct {
     pipeline: zgpu.RenderPipelineHandle,
     buffer: zgpu.BufferHandle,
     vertices: std.ArrayList(UiVertex),
+    buffer_offset: u64 = 0,
 
     mouse: MouseState,
 
@@ -103,6 +104,7 @@ pub const UiRenderer = struct {
         self: *Self,
     ) void {
         self.vertices.clearRetainingCapacity();
+        self.buffer_offset = 0;
         self.mouse.update();
     }
 
@@ -297,8 +299,8 @@ pub const UiRenderer = struct {
 
         try self.label(.{ .x = x + padding, .y = y + padding + font.ascent }, text, font);
     }
-    pub fn endFrame(
-        self: Self,
+    pub fn flush(
+        self: *Self,
         pass: zgpu.wgpu.RenderPassEncoder,
         global: *const GlobalRenderState,
     ) void {
@@ -309,7 +311,7 @@ pub const UiRenderer = struct {
         const slice = std.mem.sliceAsBytes(self.vertices.items);
         self.gctx.queue.writeBuffer(
             self.gctx.lookupResource(self.buffer).?,
-            0,
+            self.buffer_offset,
             u8,
             slice,
         );
@@ -322,8 +324,11 @@ pub const UiRenderer = struct {
 
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, global_bind_group, null);
-        pass.setVertexBuffer(0, buffer, 0, @sizeOf(UiVertex) * count);
+        pass.setVertexBuffer(0, buffer, self.buffer_offset, @sizeOf(UiVertex) * count);
         pass.draw(count, 1, 0, 0);
+
+        self.buffer_offset += @sizeOf(UiVertex) * count;
+        self.vertices.clearRetainingCapacity();
     }
 };
 
