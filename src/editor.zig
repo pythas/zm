@@ -400,13 +400,20 @@ pub const Editor = struct {
 
         if (world.research_manager.isUnlocked(.welding)) {
             const tool_rect = UiRect{ .x = tool_x, .y = tool_y, .w = slot_size, .h = slot_size };
-            // Check if selected
+            const item = Item{ .tool = .welding };
+
             var is_selected = false;
             if (self.current_tool) |t| {
                 if (t == .welding) is_selected = true;
             }
 
-            if (try ui.toolSlot(tool_rect, .{ .tool = .welding }, is_selected)) {
+            if (tool_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+                hovered_item_name = item.getName();
+                hover_pos_x = self.mouse.x + 10;
+                hover_pos_y = self.mouse.y + 10;
+            }
+
+            if (try ui.toolSlot(tool_rect, item, is_selected)) {
                 self.current_tool = .welding;
                 self.current_palette = .none;
             }

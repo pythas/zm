@@ -180,20 +180,10 @@ pub const UiRenderer = struct {
                 };
                 try self.sprite(sprite_rect, s);
             },
-            .tool => |t| {
-                const s = Assets.getToolSprite(t);
-                const inset: f32 = 4.0;
-                const sprite_rect = UiRect{
-                    .x = rect.x + inset,
-                    .y = rect.y + inset,
-                    .w = rect.w - inset * 2.0,
-                    .h = rect.h - inset * 2.0,
-                };
-                try self.sprite(sprite_rect, s);
-            },
+            else => return false,
         }
 
-        if (amount > 1) {
+        if (amount > 0) {
             var buf: [16]u8 = undefined;
             const text = std.fmt.bufPrint(&buf, "{d}", .{amount}) catch "!";
 
