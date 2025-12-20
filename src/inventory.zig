@@ -27,6 +27,16 @@ pub const Item = union(enum) {
             .tool => 1,
         };
     }
+
+    pub fn getName(self: Item) []const u8 {
+        return switch (self) {
+            .none => "None",
+            .resource => |r| ResourceStats.getName(r),
+            .tool => |t| switch (t) {
+                .welding => "Welding Tool",
+            },
+        };
+    }
 };
 
 pub const Stack = struct {

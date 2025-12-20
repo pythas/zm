@@ -93,6 +93,7 @@ pub const SpriteSheet = enum(u8) {
     ships = 1,
     resources = 2,
     tools = 3,
+    font = 4,
 };
 
 pub const Sprite = struct {

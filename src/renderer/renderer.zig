@@ -3,12 +3,14 @@ const zgpu = @import("zgpu");
 const zglfw = @import("zglfw");
 
 const Atlas = @import("common.zig").Atlas;
+const AtlasLayer = @import("common.zig").AtlasLayer;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const SpriteRenderer = @import("sprite_renderer.zig").SpriteRenderer;
 const EffectRenderer = @import("effect_renderer.zig").EffectRenderer;
 const BeamRenderer = @import("beam_renderer.zig").BeamRenderer;
 const UiRenderer = @import("ui_renderer.zig").UiRenderer;
 const World = @import("../world.zig").World;
+const Font = @import("font.zig").Font;
 
 pub const Renderer = struct {
     const Self = @This();
@@ -20,17 +22,22 @@ pub const Renderer = struct {
     effect: EffectRenderer,
     beam: BeamRenderer,
     ui: UiRenderer,
+    font: *Font,
 
     pub fn init(
         allocator: std.mem.Allocator,
         gctx: *zgpu.GraphicsContext,
         window: *zglfw.Window,
     ) !Self {
+        const font = try allocator.create(Font);
+        font.* = try Font.init(allocator, "assets/rissole-12.bdf");
+
         const atlas = try Atlas.init(allocator, gctx, &.{
-            "assets/asteroid.png",
-            "assets/ship.png",
-            "assets/resource.png",
-            "assets/tool.png",
+            .{ .path = "assets/asteroid.png" },
+            .{ .path = "assets/ship.png" },
+            .{ .path = "assets/resource.png" },
+            .{ .path = "assets/tool.png" },
+            .{ .raw = font.texture_data },
         });
 
         var global = try GlobalRenderState.init(gctx, atlas.view);
@@ -47,6 +54,7 @@ pub const Renderer = struct {
             .effect = effect,
             .beam = beam,
             .ui = ui,
+            .font = font,
         };
     }
 
@@ -57,5 +65,7 @@ pub const Renderer = struct {
         self.effect.deinit();
         self.beam.deinit();
         self.ui.deinit();
+        self.font.deinit();
+        self.allocator.destroy(self.font);
     }
 };

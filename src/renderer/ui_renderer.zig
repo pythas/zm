@@ -14,6 +14,7 @@ const GlobalRenderState = @import("common.zig").GlobalRenderState;
 const packTileForGpu = @import("common.zig").packTileForGpu;
 const packSpriteForGpu = @import("common.zig").packSpriteForGpu;
 const Item = @import("../inventory.zig").Item;
+const Font = @import("font.zig").Font;
 
 const UiVertex = struct {
     position: UiVec2,
@@ -119,6 +120,28 @@ pub const UiRenderer = struct {
         try self.vertices.append(.{ .position = .{ .x = x, .y = y + h }, .uv = .{ .x = 0, .y = 1 }, .color = color, .data = data, .mode = mode });
     }
 
+    fn pushTextQuad(self: *Self, rect: UiRect, uv_rect: [4]f32, color: UiVec4) !void {
+        const x = rect.x;
+        const y = rect.y;
+        const w = rect.w;
+        const h = rect.h;
+
+        const u = uv_rect[0];
+        const v = uv_rect[1];
+        const du = uv_rect[2];
+        const dv = uv_rect[3];
+
+        const mode = 2;
+        const data = 0;
+
+        try self.vertices.append(.{ .position = .{ .x = x, .y = y }, .uv = .{ .x = u, .y = v }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y }, .uv = .{ .x = u + du, .y = v }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y + h }, .uv = .{ .x = u + du, .y = v + dv }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x, .y = y }, .uv = .{ .x = u, .y = v }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x + w, .y = y + h }, .uv = .{ .x = u + du, .y = v + dv }, .color = color, .data = data, .mode = mode });
+        try self.vertices.append(.{ .position = .{ .x = x, .y = y + h }, .uv = .{ .x = u, .y = v + dv }, .color = color, .data = data, .mode = mode });
+    }
+
     pub fn panel(self: *Self, rect: UiRect) !void {
         try self.pushQuad(rect, .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 }, 0, 0);
     }
@@ -129,7 +152,7 @@ pub const UiRenderer = struct {
         try self.pushQuad(rect, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 }, data, 1);
     }
 
-    pub fn inventorySlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !bool {
+    pub fn inventorySlot(self: *Self, rect: UiRect, item: Item, amount: u32, is_selected: bool, font: *const Font) !bool {
         const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)
@@ -168,6 +191,23 @@ pub const UiRenderer = struct {
                 };
                 try self.sprite(sprite_rect, s);
             },
+        }
+
+        if (amount > 1) {
+            var buf: [16]u8 = undefined;
+            const text = std.fmt.bufPrint(&buf, "{d}", .{amount}) catch "!";
+
+            var text_w: f32 = 0;
+            for (text) |char| {
+                if (font.glyphs.get(char)) |glyph| {
+                    text_w += glyph.dwidth;
+                }
+            }
+
+            // bottom-right with 2px padding
+            const tx = rect.x + rect.w - text_w - 2.0;
+            const ty = rect.y + rect.h - 2.0;
+            try self.label(.{ .x = tx, .y = ty }, text, font);
         }
 
         return is_hovered and self.mouse.is_left_clicked;
@@ -229,13 +269,44 @@ pub const UiRenderer = struct {
         return is_hovered and self.mouse.is_left_clicked;
     }
 
-    pub fn label(self: *Self, pos: UiVec2, text: []const u8) void {
-        _ = self;
-        _ = pos;
-        _ = text;
-        // TODO: ...
+    pub fn label(self: *Self, pos: UiVec2, text: []const u8, font: *const Font) !void {
+        var x = pos.x;
+        const y = pos.y;
+        const color = UiVec4{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 };
+
+        for (text) |char| {
+            if (font.glyphs.get(char)) |glyph| {
+                const qx = x + glyph.offset_x;
+                const qy = y - glyph.offset_y - glyph.height;
+                const qw = glyph.width;
+                const qh = glyph.height;
+
+                try self.pushTextQuad(
+                    .{ .x = qx, .y = qy, .w = qw, .h = qh },
+                    glyph.uv_rect,
+                    color,
+                );
+
+                x += glyph.dwidth;
+            }
+        }
     }
 
+    pub fn tooltip(self: *Self, x: f32, y: f32, text: []const u8, font: *const Font) !void {
+        var w: f32 = 0;
+        for (text) |char| {
+            if (font.glyphs.get(char)) |glyph| {
+                w += glyph.dwidth;
+            }
+        }
+        const h = font.line_height;
+        const padding = 4.0;
+
+        const rect = UiRect{ .x = x, .y = y, .w = w + padding * 2, .h = h + padding * 2 };
+        try self.panel(rect);
+
+        try self.label(.{ .x = x + padding, .y = y + padding + font.ascent }, text, font);
+    }
     pub fn endFrame(
         self: Self,
         pass: zgpu.wgpu.RenderPassEncoder,

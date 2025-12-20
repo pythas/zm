@@ -361,11 +361,24 @@ pub const Editor = struct {
         var inv_x = layout.inventory_rect.x + 10;
         var inv_y = layout.inventory_rect.y + 10;
 
+        var hovered_item_name: ?[]const u8 = null;
+        var hover_pos_x: f32 = 0;
+        var hover_pos_y: f32 = 0;
+
         var inv_it = ship.inventories.valueIterator();
         while (inv_it.next()) |inv| {
             for (inv.stacks.items) |stack| {
                 const slot_rect = UiRect{ .x = inv_x, .y = inv_y, .w = slot_size, .h = slot_size };
-                _ = try ui.inventorySlot(slot_rect, stack.item, false);
+
+                if (slot_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+                    if (stack.item != .none) {
+                        hovered_item_name = stack.item.getName();
+                        hover_pos_x = self.mouse.x + 10;
+                        hover_pos_y = self.mouse.y + 10;
+                    }
+                }
+
+                _ = try ui.inventorySlot(slot_rect, stack.item, stack.amount, false, renderer.font);
 
                 inv_x += slot_size + slot_padding;
                 if (inv_x + slot_size > layout.inventory_rect.x + layout.inventory_rect.w) {
@@ -398,6 +411,10 @@ pub const Editor = struct {
                 self.current_palette = .none;
             }
             tool_x += slot_size + slot_padding;
+        }
+
+        if (hovered_item_name) |name| {
+            try ui.tooltip(hover_pos_x, hover_pos_y, name, renderer.font);
         }
 
         ui.endFrame(pass, &renderer.global);

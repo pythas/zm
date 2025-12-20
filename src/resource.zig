@@ -17,6 +17,7 @@ pub const ResourceStats = struct {
         return switch (res) {
             .none => "None",
             .iron => "Iron",
+            .nickel => "Nickel",
             .copper => "Copper",
             .carbon => "Carbon",
             .gold => "Gold",
@@ -30,6 +31,7 @@ pub const ResourceStats = struct {
         return switch (res) {
             .none => 0.0,
             .iron => 1.5,
+            .nickel => 1.4,
             .copper => 1.4,
             .carbon => 0.8,
             .gold => 2.5,

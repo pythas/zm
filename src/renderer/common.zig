@@ -111,6 +111,11 @@ pub const GlobalRenderState = struct {
     }
 };
 
+pub const AtlasLayer = union(enum) {
+    path: []const u8,
+    raw: []const u8,
+};
+
 pub const Atlas = struct {
     texture: zgpu.TextureHandle,
     view: zgpu.TextureViewHandle,
@@ -118,16 +123,16 @@ pub const Atlas = struct {
     pub fn init(
         allocator: std.mem.Allocator,
         gctx: *zgpu.GraphicsContext,
-        paths: []const []const u8,
+        layers: []const AtlasLayer,
     ) !Atlas {
-        const layers = paths.len;
+        const layer_count = layers.len;
 
         const texture = gctx.createTexture(.{
             .usage = .{ .texture_binding = true, .copy_dst = true },
             .size = .{
                 .width = 256,
                 .height = 256,
-                .depth_or_array_layers = @intCast(layers),
+                .depth_or_array_layers = @intCast(layer_count),
             },
             .format = wgpu.TextureFormat.rgba8_unorm,
             .mip_level_count = 1,
@@ -135,17 +140,24 @@ pub const Atlas = struct {
 
         const view = gctx.createTextureView(texture, .{
             .dimension = .tvdim_2d_array,
-            .array_layer_count = @intCast(layers),
+            .array_layer_count = @intCast(layer_count),
         });
 
         const texture_size = 256 * 256 * 4;
         var texture_data = try allocator.alloc(u8, texture_size);
         defer allocator.free(texture_data);
 
-        for (paths, 0..) |path, i| {
-            const tex = try Texture.init(allocator, path);
-            defer tex.deinit();
-            @memcpy(texture_data[0..texture_size], tex.data);
+        for (layers, 0..) |layer, i| {
+            switch (layer) {
+                .path => |p| {
+                    const tex = try Texture.init(allocator, p);
+                    defer tex.deinit();
+                    @memcpy(texture_data[0..texture_size], tex.data);
+                },
+                .raw => |d| {
+                    @memcpy(texture_data[0..texture_size], d);
+                },
+            }
 
             gctx.queue.writeTexture(
                 .{

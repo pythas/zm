@@ -13,11 +13,18 @@ struct FragmentInput {
 fn main(
   input: FragmentInput
 ) -> @location(0) vec4<f32> {
-    if (input.mode == 1u) {
-        let tile = unpack_tile(input.data);
-        let uv = get_sprite_uv(tile, input.uv);
-        let tex_color = textureSampleLevel(atlas_texture, atlas_sampler, uv, tile.sheet, 0.0);
-        return tex_color * input.color;
-    }
-    return input.color;
+  if (input.mode == 1u) {
+    let tile = unpack_tile(input.data);
+    let uv = get_sprite_uv(tile, input.uv);
+    let tex_color = textureSampleLevel(atlas_texture, atlas_sampler, uv, tile.sheet, 0.0);
+
+    return tex_color * input.color;
+  } else if (input.mode == 2u) {
+    let sheet = 4u;
+    let tex_color = textureSampleLevel(atlas_texture, atlas_sampler, input.uv, sheet, 0.0);
+
+    return tex_color * input.color;
+  }
+
+  return input.color;
 }
