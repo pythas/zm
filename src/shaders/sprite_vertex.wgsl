@@ -32,18 +32,20 @@ fn main(
   let quad_pos = quad[vertex_index];
   output.uv = quad_pos;
 
+  let centered = quad_pos - vec2<f32>(0.5, 0.5);
+  let sprite_size = input.size.xy * input.scale;
+  let scaled_pos = centered * sprite_size;
+  
   let angle = input.rotation.x;
   let rotation_matrix: mat2x2<f32> = mat2x2<f32>(
       cos(angle), sin(angle),
       -sin(angle), cos(angle)
   );
 
-  let rotated_pos = rotation_matrix * (quad_pos - vec2<f32>(0.5, 0.5));
- 
-  let sprite_size = input.size.xy * input.scale;
+  let rotated_pos = rotation_matrix * scaled_pos;
   let sprite_position = input.position.xy;
 
-  let world_pos = sprite_position + rotated_pos * sprite_size;
+  let world_pos = sprite_position + rotated_pos;
   var ndc_pos: vec2<f32>;
 
   if globals.mode == 0u {

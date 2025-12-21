@@ -110,6 +110,15 @@ pub const TileObject = struct {
         self.inventories.deinit();
     }
 
+    pub fn repairAll(self: *Self) void {
+        for (self.tiles, 0..) |tile, i| {
+            if (tile.data == .ship_part) {
+                self.tiles[i].data.ship_part.health = 100.0; // TODO: Load from PartStats
+            }
+        }
+        self.dirty = true;
+    }
+
     pub fn setTile(self: *Self, x: usize, y: usize, tile: Tile) void {
         if (x >= self.width or y >= self.height) {
             return;

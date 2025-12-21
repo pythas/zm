@@ -37,6 +37,10 @@
             .url = "git+https://github.com/allyourcodebase/box2d?ref=main#0482245bf59bec743a7cb29961a480c3f7497f0c",
             .hash = "box2d-3.1.1-crFBk74aAAD-TJGY5mHVDB0sV5JntTq0MnlaHYxb5yl5",
         },
+        .znoise = .{
+            .url = "https://github.com/zig-gamedev/znoise/archive/refs/heads/main.tar.gz",
+            .hash = "znoise-0.3.0-dev-gK1op6KkAQCdq8ZRO_VfIrjCdskBgnoPO4V5W43lvmoT",
+        },
     },
     .paths = .{
         "build.zig",

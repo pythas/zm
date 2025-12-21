@@ -110,4 +110,3 @@ pub const AsteroidGenerator = struct {
         return asteroid;
     }
 };
-

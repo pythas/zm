@@ -18,10 +18,10 @@ pub const KeyboardState = struct {
 
     window: *zglfw.Window,
 
-    curr: u16 = 0,
-    prev: u16 = 0,
+    curr: u32 = 0,
+    prev: u32 = 0,
 
-    pub const Key = enum(u4) {
+    pub const Key = enum(u5) {
         w,
         a,
         s,
@@ -38,6 +38,7 @@ pub const KeyboardState = struct {
         space,
         left_shift,
         left_ctrl,
+        f1,
     };
 
     pub fn init(window: *zglfw.Window) Self {
@@ -66,6 +67,7 @@ pub const KeyboardState = struct {
         if (self.window.getKey(.space) == .press) self.curr |= bit(.space);
         if (self.window.getKey(.left_shift) == .press) self.curr |= bit(.left_shift);
         if (self.window.getKey(.left_control) == .press) self.curr |= bit(.left_ctrl);
+        if (self.window.getKey(.F1) == .press) self.curr |= bit(.f1);
     }
 
     pub fn isDown(self: *const Self, k: Key) bool {
@@ -83,8 +85,8 @@ pub const KeyboardState = struct {
         return !self.isDown(k) and self.wasDown(k);
     }
 
-    inline fn bit(k: Key) u16 {
-        return @as(u16, 1) << @intFromEnum(k);
+    inline fn bit(k: Key) u32 {
+        return @as(u32, 1) << @intFromEnum(k);
     }
 };
 

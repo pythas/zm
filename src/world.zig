@@ -14,9 +14,20 @@ const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
 const AsteroidGenerator = @import("asteroid_generator.zig").AsteroidGenerator;
 const Resource = @import("resource.zig").Resource;
+const WorldGen = @import("world_gen.zig");
+const WorldGenerator = WorldGen.WorldGenerator;
+const SectorConfig = WorldGen.SectorConfig;
+const SectorType = WorldGen.SectorType;
+const rng = @import("rng.zig");
+
+pub const ChunkCoord = struct {
+    x: i32,
+    y: i32,
+};
 
 pub const World = struct {
     const Self = @This();
+    const CHUNK_SIZE = 512.0; // Size of a generation chunk in world units
 
     allocator: std.mem.Allocator,
 
@@ -29,6 +40,11 @@ pub const World = struct {
 
     physics: Physics,
 
+    // world generation
+    world_generator: WorldGenerator,
+    sector_config: SectorConfig,
+    generated_chunks: std.AutoHashMap(ChunkCoord, void),
+
     pub fn init(allocator: std.mem.Allocator) !Self {
         var physics = try Physics.init(allocator);
 
@@ -37,6 +53,11 @@ pub const World = struct {
         );
 
         const player_controller = PlayerController.init(allocator, 0);
+        const world_generator = WorldGenerator.init(12345); // TODO: load from settings
+        const sector_config = SectorConfig{
+            .seed = 12345,
+            .sector_type = .cradle,
+        };
 
         var self: Self = .{
             .allocator = allocator,
@@ -45,6 +66,9 @@ pub const World = struct {
             .player_controller = player_controller,
             .research_manager = ResearchManager.init(),
             .physics = physics,
+            .world_generator = world_generator,
+            .sector_config = sector_config,
+            .generated_chunks = std.AutoHashMap(ChunkCoord, void).init(allocator),
         };
 
         const ship_id = self.generateObjectId();
@@ -57,43 +81,7 @@ pub const World = struct {
         try ship.recalculatePhysics(&physics);
         try self.objects.append(ship);
 
-        {
-            const resources = [_]AsteroidGenerator.ResourceConfig{
-                .{ .resource = .iron, .probability = 0.4, .min_amount = 1, .max_amount = 3 },
-                .{ .resource = .nickel, .probability = 0.1, .min_amount = 1, .max_amount = 3 },
-            };
-
-            var asteroid = try AsteroidGenerator.createAsteroid(
-                allocator,
-                self.generateObjectId(),
-                Vec2.init(0.0, -150.0),
-                16,
-                16,
-                .irregular,
-                &resources,
-            );
-            try asteroid.recalculatePhysics(&physics);
-            try self.objects.append(asteroid);
-        }
-
-        {
-            const resources = [_]AsteroidGenerator.ResourceConfig{
-                .{ .resource = .iron, .probability = 0.5, .min_amount = 5, .max_amount = 10 },
-                .{ .resource = .copper, .probability = 0.3, .min_amount = 2, .max_amount = 8 },
-            };
-
-            var asteroid = try AsteroidGenerator.createAsteroid(
-                allocator,
-                self.generateObjectId(),
-                Vec2.init(-200.0, -250.0),
-                20,
-                20,
-                .irregular,
-                &resources,
-            );
-            try asteroid.recalculatePhysics(&physics);
-            try self.objects.append(asteroid);
-        }
+        try self.updateWorldGeneration(Vec2.init(0, 0));
 
         return self;
     }
@@ -105,6 +93,7 @@ pub const World = struct {
         self.objects.deinit();
         self.physics.deinit();
         self.player_controller.deinit();
+        self.generated_chunks.deinit();
     }
 
     pub fn generateObjectId(self: *Self) u64 {
@@ -117,8 +106,11 @@ pub const World = struct {
 
     pub fn getObjectById(self: *World, id: u64) ?*TileObject {
         for (self.objects.items) |*obj| {
-            if (obj.id == id) return obj;
+            if (obj.id == id) {
+                return obj;
+            }
         }
+
         return null;
     }
 
@@ -134,6 +126,7 @@ pub const World = struct {
             if (!obj.body_id.isValid()) {
                 continue;
             }
+
             const pos = self.physics.getPosition(obj.body_id);
             const rot = self.physics.getRotation(obj.body_id);
 
@@ -147,6 +140,10 @@ pub const World = struct {
             keyboard_state,
             mouse_state,
         );
+
+        if (self.objects.items.len > 0) {
+            try self.updateWorldGeneration(self.objects.items[0].position);
+        }
 
         for (self.objects.items) |*obj| {
             if (!obj.body_id.isValid()) {
@@ -169,6 +166,110 @@ pub const World = struct {
         }
     }
 
+    fn updateWorldGeneration(self: *Self, pos: Vec2) !void {
+        const chunk_x = @as(i32, @intFromFloat(math.floor(pos.x / CHUNK_SIZE)));
+        const chunk_y = @as(i32, @intFromFloat(math.floor(pos.y / CHUNK_SIZE)));
+        const range = 4;
+
+        var y = chunk_y - range;
+        while (y <= chunk_y + range) : (y += 1) {
+            var x = chunk_x - range;
+            while (x <= chunk_x + range) : (x += 1) {
+                const coord = ChunkCoord{ .x = x, .y = y };
+                if (!self.generated_chunks.contains(coord)) {
+                    try self.generateChunk(coord);
+                    try self.generated_chunks.put(coord, {});
+                }
+            }
+        }
+
+        self.unloadFarChunks(pos);
+    }
+
+    fn unloadFarChunks(self: *Self, player_pos: Vec2) void {
+        const unload_dist = CHUNK_SIZE * 6.0;
+        const unload_dist_sq = unload_dist * unload_dist;
+
+        var i: usize = self.objects.items.len;
+        while (i > 1) {
+            i -= 1;
+            const obj = &self.objects.items[i];
+
+            const dx = obj.position.x - player_pos.x;
+            const dy = obj.position.y - player_pos.y;
+            const dist_sq = dx * dx + dy * dy;
+
+            if (dist_sq > unload_dist_sq) {
+                const chunk_x = @as(i32, @intFromFloat(math.floor(obj.position.x / CHUNK_SIZE)));
+                const chunk_y = @as(i32, @intFromFloat(math.floor(obj.position.y / CHUNK_SIZE)));
+                const coord = ChunkCoord{ .x = chunk_x, .y = chunk_y };
+
+                // TODO: we should probably persist it so we can regenerate the chunk later
+                _ = self.generated_chunks.remove(coord);
+
+                self.physics.destroyBody(obj.body_id);
+                obj.deinit();
+                _ = self.objects.swapRemove(i);
+            }
+        }
+    }
+
+    fn generateChunk(self: *Self, coord: ChunkCoord) !void {
+        const chunk_world_x = @as(f32, @floatFromInt(coord.x)) * CHUNK_SIZE;
+        const chunk_world_y = @as(f32, @floatFromInt(coord.y)) * CHUNK_SIZE;
+        const center = Vec2.init(chunk_world_x + CHUNK_SIZE * 0.5, chunk_world_y + CHUNK_SIZE * 0.5);
+
+        if (center.length() < 200.0) {
+            return;
+        }
+
+        const zone = self.sector_config.getZone(center);
+        const rules = WorldGenerator.getRules(self.sector_config.sector_type, zone);
+
+        if (self.world_generator.shouldSpawnAsteroid(coord.x, coord.y, rules.density)) {
+            const rand = rng.random();
+            const width_range = rules.max_size - rules.min_size;
+
+            const w = rules.min_size + rand.uintAtMost(usize, width_range);
+            const h = rules.min_size + rand.uintAtMost(usize, width_range);
+
+            const jitter_x = rand.float(f32) * (CHUNK_SIZE * 0.6) + (CHUNK_SIZE * 0.2);
+            const jitter_y = rand.float(f32) * (CHUNK_SIZE * 0.6) + (CHUNK_SIZE * 0.2);
+            const spawn_pos = Vec2.init(chunk_world_x + jitter_x, chunk_world_y + jitter_y);
+
+            var resources = try std.ArrayList(AsteroidGenerator.ResourceConfig).initCapacity(self.allocator, 5);
+            defer resources.deinit();
+
+            if (rules.iron_prob > 0) resources.appendAssumeCapacity(.{ .resource = .iron, .probability = rules.iron_prob, .min_amount = 2, .max_amount = 10 });
+            if (rules.carbon_prob > 0) resources.appendAssumeCapacity(.{ .resource = .carbon, .probability = rules.carbon_prob, .min_amount = 2, .max_amount = 10 });
+            if (rules.copper_prob > 0) resources.appendAssumeCapacity(.{ .resource = .copper, .probability = rules.copper_prob, .min_amount = 2, .max_amount = 8 });
+            if (rules.gold_prob > 0) resources.appendAssumeCapacity(.{ .resource = .gold, .probability = rules.gold_prob, .min_amount = 1, .max_amount = 5 });
+            if (rules.uranium_prob > 0) resources.appendAssumeCapacity(.{ .resource = .uranium, .probability = rules.uranium_prob, .min_amount = 1, .max_amount = 3 });
+
+            var asteroid = try AsteroidGenerator.createAsteroid(
+                self.allocator,
+                self.generateObjectId(),
+                spawn_pos,
+                w,
+                h,
+                .irregular,
+                resources.items,
+            );
+
+            try asteroid.recalculatePhysics(&self.physics);
+
+            // add initial motion
+            const vel_x = (rand.float(f32) - 0.5) * 10.0;
+            const vel_y = (rand.float(f32) - 0.5) * 10.0;
+            const ang_vel = (rand.float(f32) - 0.5) * 1.0;
+
+            self.physics.setLinearVelocity(asteroid.body_id, Vec2.init(vel_x, vel_y));
+            self.physics.setAngularVelocity(asteroid.body_id, ang_vel);
+
+            try self.objects.append(asteroid);
+        }
+    }
+
     pub fn onScroll(self: *Self, xoffset: f64, yoffset: f64) void {
         _ = xoffset;
 
@@ -187,4 +288,3 @@ pub fn scrollCallback(window: *zglfw.Window, xoffset: f64, yoffset: f64) callcon
 
     world.onScroll(xoffset, yoffset);
 }
-

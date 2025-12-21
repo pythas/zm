@@ -76,6 +76,14 @@ pub const Game = struct {
             }
         }
 
+        if (self.keyboard_state.isPressed(.f1)) {
+            self.world.research_manager.unlockAll();
+            if (self.world.objects.items.len > 0) {
+                self.world.objects.items[0].repairAll();
+                std.log.info("Game: CHEAT - Ship Repaired", .{});
+            }
+        }
+
         switch (self.mode) {
             .in_world => {
                 try self.world.update(dt, &self.keyboard_state, &self.mouse_state);

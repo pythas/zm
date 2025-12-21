@@ -4,6 +4,16 @@ const Resource = @import("resource.zig").Resource;
 
 pub const ResearchId = enum {
     welding,
+    standard_thruster,
+    mining_beam,
+    coal_generator,
+    analysis_lab,
+    auto_turret,
+    recall_drive,
+    quantum_storage,
+    fission_reactor,
+    jump_gate,
+    warp_drive,
 };
 
 pub const ResearchManager = struct {
@@ -18,6 +28,13 @@ pub const ResearchManager = struct {
             .unlocked = std.EnumSet(ResearchId).initEmpty(),
             .total_resources = std.EnumMap(Resource, u32).initFull(0),
         };
+    }
+
+    pub fn unlockAll(self: *Self) void {
+        inline for (std.meta.fields(ResearchId)) |field| {
+            self.unlocked.insert(@enumFromInt(field.value));
+        }
+        std.log.info("Research: CHEAT - All Tech Unlocked", .{});
     }
 
     pub fn reportResourcePickup(self: *Self, material: Resource, amount: u32) bool {
