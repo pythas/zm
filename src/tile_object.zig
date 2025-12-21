@@ -485,10 +485,17 @@ pub const TileObject = struct {
         var physics_tiles = std.ArrayList(PhysicsTileData).init(self.allocator);
         defer physics_tiles.deinit();
 
-        for (0..self.width) |x| {
-            for (0..self.height) |y| {
-                const tile = self.getTile(x, y) orelse continue;
+        const visited = try self.allocator.alloc(bool, self.width * self.height);
+        defer self.allocator.free(visited);
+        @memset(visited, false);
 
+        for (0..self.height) |y| {
+            for (0..self.width) |x| {
+                if (visited[y * self.width + x]) {
+                    continue;
+                }
+
+                const tile = self.getTile(x, y) orelse continue;
                 const density: f32 = switch (tile.data) {
                     .ship_part => |ship_data| PartStats.getDensity(ship_data.kind),
                     .terrain => 1.0,
@@ -499,13 +506,63 @@ pub const TileObject = struct {
                     continue;
                 }
 
+                // greedy meshing
+                var w: usize = 1;
+                var h: usize = 1;
+
+                // expand horizontal
+                while (x + w < self.width) : (w += 1) {
+                    if (visited[y * self.width + (x + w)]) break;
+
+                    const next_tile = self.getTile(x + w, y) orelse break;
+                    const next_density: f32 = switch (next_tile.data) {
+                        .ship_part => |ship_data| PartStats.getDensity(ship_data.kind),
+                        .terrain => 1.0,
+                        .empty => 0.0,
+                    };
+
+                    if (next_density != density) break;
+                }
+
+                // expand vertical
+                can_expand_h: while (y + h < self.height) : (h += 1) {
+                    for (0..w) |dx| {
+                        if (visited[(y + h) * self.width + (x + dx)]) break :can_expand_h;
+
+                        const next_tile = self.getTile(x + dx, y + h) orelse break :can_expand_h;
+                        const next_density: f32 = switch (next_tile.data) {
+                            .ship_part => |ship_data| PartStats.getDensity(ship_data.kind),
+                            .terrain => 1.0,
+                            .empty => 0.0,
+                        };
+
+                        if (next_density != density) break :can_expand_h;
+                    }
+                }
+
+                // mark visited
+                for (0..h) |dy| {
+                    for (0..w) |dx| {
+                        visited[(y + dy) * self.width + (x + dx)] = true;
+                    }
+                }
+
                 const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
                 const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
-                const x_pos = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
-                const y_pos = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
+
+                const start_x = @as(f32, @floatFromInt(x)) * 8.0;
+                const start_y = @as(f32, @floatFromInt(y)) * 8.0;
+
+                const width_px = @as(f32, @floatFromInt(w)) * 8.0;
+                const height_px = @as(f32, @floatFromInt(h)) * 8.0;
+
+                const final_center_x = (start_x - object_center_x) + (width_px * 0.5);
+                const final_center_y = (start_y - object_center_y) + (height_px * 0.5);
 
                 try physics_tiles.append(PhysicsTileData{
-                    .pos = Vec2.init(x_pos, y_pos),
+                    .pos = Vec2.init(final_center_x, final_center_y),
+                    .half_width = width_px * 0.5,
+                    .half_height = height_px * 0.5,
                     .density = density,
                     .layer = if (self.object_type == .debris) .debris else .default,
                 });

@@ -27,7 +27,7 @@ pub const ChunkCoord = struct {
 
 pub const World = struct {
     const Self = @This();
-    const CHUNK_SIZE = 512.0; // Size of a generation chunk in world units
+    const chunkSize = 512.0;
 
     allocator: std.mem.Allocator,
 
@@ -167,8 +167,8 @@ pub const World = struct {
     }
 
     fn updateWorldGeneration(self: *Self, pos: Vec2) !void {
-        const chunk_x = @as(i32, @intFromFloat(math.floor(pos.x / CHUNK_SIZE)));
-        const chunk_y = @as(i32, @intFromFloat(math.floor(pos.y / CHUNK_SIZE)));
+        const chunk_x = @as(i32, @intFromFloat(math.floor(pos.x / chunkSize)));
+        const chunk_y = @as(i32, @intFromFloat(math.floor(pos.y / chunkSize)));
         const range = 4;
 
         var y = chunk_y - range;
@@ -176,6 +176,7 @@ pub const World = struct {
             var x = chunk_x - range;
             while (x <= chunk_x + range) : (x += 1) {
                 const coord = ChunkCoord{ .x = x, .y = y };
+
                 if (!self.generated_chunks.contains(coord)) {
                     try self.generateChunk(coord);
                     try self.generated_chunks.put(coord, {});
@@ -187,7 +188,7 @@ pub const World = struct {
     }
 
     fn unloadFarChunks(self: *Self, player_pos: Vec2) void {
-        const unload_dist = CHUNK_SIZE * 6.0;
+        const unload_dist = chunkSize * 6.0;
         const unload_dist_sq = unload_dist * unload_dist;
 
         var i: usize = self.objects.items.len;
@@ -200,8 +201,8 @@ pub const World = struct {
             const dist_sq = dx * dx + dy * dy;
 
             if (dist_sq > unload_dist_sq) {
-                const chunk_x = @as(i32, @intFromFloat(math.floor(obj.position.x / CHUNK_SIZE)));
-                const chunk_y = @as(i32, @intFromFloat(math.floor(obj.position.y / CHUNK_SIZE)));
+                const chunk_x = @as(i32, @intFromFloat(math.floor(obj.position.x / chunkSize)));
+                const chunk_y = @as(i32, @intFromFloat(math.floor(obj.position.y / chunkSize)));
                 const coord = ChunkCoord{ .x = chunk_x, .y = chunk_y };
 
                 // TODO: we should probably persist it so we can regenerate the chunk later
@@ -215,10 +216,11 @@ pub const World = struct {
     }
 
     fn generateChunk(self: *Self, coord: ChunkCoord) !void {
-        const chunk_world_x = @as(f32, @floatFromInt(coord.x)) * CHUNK_SIZE;
-        const chunk_world_y = @as(f32, @floatFromInt(coord.y)) * CHUNK_SIZE;
-        const center = Vec2.init(chunk_world_x + CHUNK_SIZE * 0.5, chunk_world_y + CHUNK_SIZE * 0.5);
+        const chunk_world_x = @as(f32, @floatFromInt(coord.x)) * chunkSize;
+        const chunk_world_y = @as(f32, @floatFromInt(coord.y)) * chunkSize;
+        const center = Vec2.init(chunk_world_x + chunkSize * 0.5, chunk_world_y + chunkSize * 0.5);
 
+        // safe zone
         if (center.length() < 200.0) {
             return;
         }
@@ -233,8 +235,8 @@ pub const World = struct {
             const w = rules.min_size + rand.uintAtMost(usize, width_range);
             const h = rules.min_size + rand.uintAtMost(usize, width_range);
 
-            const jitter_x = rand.float(f32) * (CHUNK_SIZE * 0.6) + (CHUNK_SIZE * 0.2);
-            const jitter_y = rand.float(f32) * (CHUNK_SIZE * 0.6) + (CHUNK_SIZE * 0.2);
+            const jitter_x = rand.float(f32) * (chunkSize * 0.6) + (chunkSize * 0.2);
+            const jitter_y = rand.float(f32) * (chunkSize * 0.6) + (chunkSize * 0.2);
             const spawn_pos = Vec2.init(chunk_world_x + jitter_x, chunk_world_y + jitter_y);
 
             var resources = try std.ArrayList(AsteroidGenerator.ResourceConfig).initCapacity(self.allocator, 5);

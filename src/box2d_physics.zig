@@ -24,6 +24,8 @@ pub const CollisionLayer = enum {
 
 pub const TileData = struct {
     pos: Vec2,
+    half_width: f32,
+    half_height: f32,
     density: f32,
     layer: CollisionLayer = .default,
 };
@@ -52,8 +54,7 @@ pub const Physics = struct {
     }
 
     pub fn update(self: *Self, dt: f32) void {
-        // Box2D uses sub-stepping internally, we just call step once
-        c.b2World_Step(self.world_id, dt, 4); // 4 sub-steps for stability
+        c.b2World_Step(self.world_id, dt, 4);
     }
 
     pub fn createBody(self: *Self, pos: Vec2, rotation: f32) !BodyId {
@@ -169,7 +170,6 @@ pub const Physics = struct {
         c.b2Body_SetAngularVelocity(body_id.id, velocity);
     }
 
-    // For creating compound shapes (tile ships)
     pub fn createTileShape(self: *Self, body_id: BodyId, tiles: []const TileData) !void {
         _ = self;
         if (!body_id.isValid()) return;
@@ -185,17 +185,15 @@ pub const Physics = struct {
                 },
                 .debris => {
                     shape_def.filter.categoryBits = 0x0002;
-                    shape_def.filter.maskBits = 0x0000; // Collides with nothing
+                    shape_def.filter.maskBits = 0x0000;
                 },
             }
 
-            // Create a box fixture for each tile (4 unit radius = 8x8 tile)
-            // Shrink slightly to prevent internal edge collisions and debris overlap
-            const h = 4.0 - 0.05;
-            const box = c.b2MakeOffsetBox(h, h, c.b2Vec2{ .x = tile.pos.x, .y = tile.pos.y }, c.b2MakeRot(0.0));
+            const hx = tile.half_width;
+            const hy = tile.half_height;
+            const box = c.b2MakeOffsetBox(hx, hy, c.b2Vec2{ .x = tile.pos.x, .y = tile.pos.y }, c.b2MakeRot(0.0));
 
             _ = c.b2CreatePolygonShape(body_id.id, &shape_def, &box);
         }
     }
 };
-
