@@ -190,8 +190,8 @@ pub const Atlas = struct {
     }
 };
 
-pub fn packTileForGpu(tile: Tile, mask: u8) u32 {
-    const sprite = Assets.getSprite(tile.data, mask);
+pub fn packTileForGpu(tile: Tile, mask: u8, x: usize, y: usize) u32 {
+    const sprite = Assets.getSprite(tile.data, mask, x, y);
     const sheet: u32 = @intFromEnum(sprite.sheet) & 0x0F; // 4 bits
     const tile_type_id: u32 = @as(u32, @intFromEnum(@as(TileType, tile.data))) & 0x0F; // 4 bits
     const sprite_index: u32 = sprite.index & 0x03FF; // 10 bits

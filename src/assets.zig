@@ -24,10 +24,10 @@ fn setRow(row: u16, index: u16) u16 {
 }
 
 pub const Assets = struct {
-    pub fn getSprite(data: TileData, mask: u8) Sprite {
+    pub fn getSprite(data: TileData, mask: u8, x: usize, y: usize) Sprite {
         return switch (data) {
             .empty => Sprite.initEmpty(),
-            .terrain => |terrain| getTerrainSprite(terrain, mask),
+            .terrain => |terrain| getTerrainSprite(terrain, mask, x, y),
             .ship_part => |ship| getShipPartSprite(ship, mask),
         };
     }
@@ -50,14 +50,14 @@ pub const Assets = struct {
         return Sprite.init(tool_sheet, @intCast(index));
     }
 
-    pub fn getTerrainSprite(terrain: TerrainTileType, mask: u8) Sprite {
+    pub fn getTerrainSprite(terrain: TerrainTileType, mask: u8, x: usize, y: usize) Sprite {
         return switch (terrain.base_material) {
-            .rock => getRockSprite(terrain, mask),
+            .rock => getRockSprite(terrain, mask, x, y),
             else => Sprite.init(terrain_sheet, 0),
         };
     }
 
-    pub fn getRockSprite(terrain: TerrainTileType, mask: u8) Sprite {
+    pub fn getRockSprite(terrain: TerrainTileType, mask: u8, x: usize, y: usize) Sprite {
         const default = Sprite.init(terrain_sheet, setRow(0, mask));
         const most_common_resource = terrain.getMostCommonResource();
 
@@ -68,7 +68,11 @@ pub const Assets = struct {
         var offset: u8 = 0;
 
         if (mask == 0b1111) {
-            offset += rng.random().intRangeAtMost(u8, 0, 2);
+            var seed: u64 = @intCast(x);
+            seed = (seed << 32) | @as(u64, @intCast(y));
+            var prng = std.Random.DefaultPrng.init(seed);
+
+            offset += prng.random().intRangeAtMost(u8, 0, 2);
         }
 
         return switch (most_common_resource.?) {
