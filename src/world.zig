@@ -248,6 +248,8 @@ pub const World = struct {
             if (rules.gold_prob > 0) resources.appendAssumeCapacity(.{ .resource = .gold, .probability = rules.gold_prob, .min_amount = 1, .max_amount = 5 });
             if (rules.uranium_prob > 0) resources.appendAssumeCapacity(.{ .resource = .uranium, .probability = rules.uranium_prob, .min_amount = 1, .max_amount = 3 });
 
+            const variant = rand.uintAtMost(u8, 3);
+
             var asteroid = try AsteroidGenerator.createAsteroid(
                 self.allocator,
                 self.generateObjectId(),
@@ -255,6 +257,7 @@ pub const World = struct {
                 w,
                 h,
                 .irregular,
+                variant,
                 resources.items,
             );
 

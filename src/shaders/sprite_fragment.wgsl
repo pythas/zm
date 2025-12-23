@@ -44,6 +44,15 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
   let uv = get_sprite_uv(tile, tile_uv);
   var color = textureSampleLevel(atlas_texture, atlas_sampler, uv, tile.sheet, 0.0);
 
+  if (tile.has_overlay != 0u) {
+    let overlay_tile = Tile(0u, tile.overlay_sheet, tile.overlay_sprite, 0u, 0u, 0u);
+    let overlay_uv = get_sprite_uv(overlay_tile, tile_uv);
+    let overlay_color = textureSampleLevel(atlas_texture, atlas_sampler, overlay_uv, tile.overlay_sheet, 0.0);
+    
+    // Blend overlay on top, masked by base alpha to keep shape
+    color = mix(color, overlay_color, overlay_color.a * color.a);
+  }
+
   if (tile.category == 0u) {
       color = vec4<f32>(0.0);
   }

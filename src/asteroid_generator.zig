@@ -27,6 +27,7 @@ pub const AsteroidGenerator = struct {
         width: usize,
         height: usize,
         shape: Shape,
+        variant: u8,
         resources: []const ResourceConfig,
     ) !TileObject {
         var asteroid = try TileObject.init(
@@ -98,6 +99,7 @@ pub const AsteroidGenerator = struct {
                         .{
                             .terrain = .{
                                 .base_material = .rock,
+                                .variant = variant,
                                 .resources = tile_resources,
                             },
                         },

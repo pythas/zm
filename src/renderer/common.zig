@@ -192,11 +192,26 @@ pub const Atlas = struct {
 
 pub fn packTileForGpu(tile: Tile, mask: u8, x: usize, y: usize) u32 {
     const sprite = Assets.getSprite(tile.data, mask, x, y);
+
+    var overlay_sprite: u32 = 0;
+    var overlay_sheet: u32 = 0;
+    var has_overlay: u32 = 0;
+
+    if (tile.isTerrain()) {
+        if (tile.data.terrain.getMostCommonResource()) |res_amount| {
+            if (Assets.getResourceOverlay(res_amount.resource, x, y)) |overlay| {
+                overlay_sprite = overlay.index & 0x03FF;
+                overlay_sheet = @intFromEnum(overlay.sheet) & 0x0F;
+                has_overlay = 1;
+            }
+        }
+    }
+
     const sheet: u32 = @intFromEnum(sprite.sheet) & 0x0F; // 4 bits
-    const tile_type_id: u32 = @as(u32, @intFromEnum(@as(TileType, tile.data))) & 0x0F; // 4 bits
+    const tile_type_id: u32 = @as(u32, @intFromEnum(@as(TileType, tile.data))) & 0x07; // 3 bits now
     const sprite_index: u32 = sprite.index & 0x03FF; // 10 bits
 
-    return (sheet << 14) | (tile_type_id << 10) | sprite_index;
+    return (has_overlay << 31) | (overlay_sheet << 27) | (overlay_sprite << 17) | (sheet << 13) | (tile_type_id << 10) | sprite_index;
 }
 
 pub fn packSpriteForGpu(sprite: Sprite) u32 {
@@ -204,5 +219,6 @@ pub fn packSpriteForGpu(sprite: Sprite) u32 {
     const tile_type_id: u32 = 1; // force visible (terrain)
     const sprite_index: u32 = sprite.index & 0x03FF;
 
-    return (sheet << 14) | (tile_type_id << 10) | sprite_index;
+    // No overlay for raw sprites
+    return (sheet << 13) | (tile_type_id << 10) | sprite_index;
 }

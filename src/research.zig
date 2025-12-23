@@ -4,16 +4,6 @@ const Resource = @import("resource.zig").Resource;
 
 pub const ResearchId = enum {
     welding,
-    standard_thruster,
-    mining_beam,
-    coal_generator,
-    analysis_lab,
-    auto_turret,
-    recall_drive,
-    quantum_storage,
-    fission_reactor,
-    jump_gate,
-    warp_drive,
 };
 
 pub const ResearchManager = struct {
@@ -47,10 +37,6 @@ pub const ResearchManager = struct {
         if (material == .iron and new_total >= 10) {
             if (self.unlock(.welding)) newly_unlocked = true;
         }
-
-        // if (material == .carbon and new_total >= 20) {
-        //     if (self.unlock(.coal_generator)) newly_unlocked = true;
-        // }
 
         return newly_unlocked;
     }

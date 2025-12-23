@@ -35,20 +35,21 @@ pub const TerrainTileType = struct {
     const Self = @This();
 
     base_material: BaseMaterial,
+    variant: u8 = 0,
     resources: std.BoundedArray(ResourceAmount, 4) = .{},
 
-    pub fn getMostCommonResource(self: Self) ?Resource {
+    pub fn getMostCommonResource(self: Self) ?ResourceAmount {
         var max: ?u8 = null;
-        var resource: ?Resource = null;
+        var best: ?ResourceAmount = null;
 
         for (self.resources.slice()) |resource_amount| {
             if (max == null or resource_amount.amount > max.?) {
                 max = resource_amount.amount;
-                resource = resource_amount.resource;
+                best = resource_amount;
             }
         }
 
-        return resource;
+        return best;
     }
 };
 

@@ -57,28 +57,37 @@ pub const Assets = struct {
         };
     }
 
-    pub fn getRockSprite(terrain: TerrainTileType, mask: u8, x: usize, y: usize) Sprite {
-        const default = Sprite.init(terrain_sheet, setRow(0, mask));
-        const most_common_resource = terrain.getMostCommonResource();
-
-        if (most_common_resource == null) {
-            return default;
-        }
-
-        var offset: u8 = 0;
-
-        if (mask == 0b1111) {
-            var seed: u64 = @intCast(x);
-            seed = (seed << 32) | @as(u64, @intCast(y));
-            var prng = std.Random.DefaultPrng.init(seed);
-
-            offset += prng.random().intRangeAtMost(u8, 0, 2);
-        }
-
-        return switch (most_common_resource.?) {
-            .iron => Sprite.init(terrain_sheet, setRow(1, mask + offset)),
-            else => default,
+    pub fn getResourceOverlay(resource: Resource, x: usize, y: usize) ?Sprite {
+        const base_index: u16 = switch (resource) {
+            .iron => 0,
+            .nickel => 1,
+            .copper => 2,
+            .carbon => 3,
+            .gold => 4,
+            .platinum => 5,
+            .titanium => 6,
+            .uranium => 7,
+            else => return null,
         };
+
+        var seed: u64 = @intCast(x);
+        seed = (seed << 32) | @as(u64, @intCast(y));
+        var prng = std.Random.DefaultPrng.init(seed);
+        const variant = prng.random().uintAtMost(u8, 1); // 0 or 1
+
+        // row 30 for variant 0, row 31 for variant 1
+        const row = 30 + variant;
+
+        return Sprite.init(terrain_sheet, setRow(row, base_index));
+    }
+
+    pub fn getRockSprite(terrain: TerrainTileType, mask: u8, x: usize, y: usize) Sprite {
+        _ = x;
+        _ = y;
+        const base_row: u16 = @min(terrain.variant, 3);
+
+        const default = Sprite.init(terrain_sheet, setRow(base_row, mask));
+        return default;
     }
 
     pub fn getShipPartSprite(ship: ShipPartTileType, mask: u8) Sprite {
