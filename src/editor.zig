@@ -411,20 +411,27 @@ pub const Editor = struct {
             "Construct",
             renderer.font,
         )) {
-            // TODO: add crafting delay
-            const remaining = try ship.addItemToInventory(
-                .{ .component = .chemical_thruster },
-                1,
-                ship.position,
-            );
+            const iron = Item{ .resource = .iron };
+            const count_iron = ship.getInventoryCountByItem(iron);
 
-            if (remaining == 0) {
-                std.log.info("Editor: Constructed chemical_thruster", .{});
-            } else {
-                std.log.warn("Editor: Failed to add chemical_thruster to inventory (no space?)", .{});
+            if (count_iron >= 20) {
+                // TODO: add crafting delay
+
+                const remaining = try ship.addItemToInventory(
+                    .{ .component = .chemical_thruster },
+                    1,
+                    ship.position,
+                );
+
+                if (remaining == 0) {
+                    std.log.info("Editor: Constructed chemical_thruster", .{});
+                } else {
+                    std.log.warn("Editor: Failed to add chemical_thruster to inventory (no space?)", .{});
+                }
+
+                // TODO: report construction
+
             }
-
-            // TODO: report
         }
 
         ui.flush(pass, &renderer.global);

@@ -47,7 +47,7 @@ pub const Item = union(enum) {
                 .welding => "Basic Welding",
             },
             .recipe => |r| switch (r) {
-                .chemical_thruster => "Chemical Thruster Blueprint",
+                .chemical_thruster => "Chemical Thruster\nCost: 20 iron",
             },
             .component => |c| switch (c) {
                 .chemical_thruster => "Chemical Thruster",
