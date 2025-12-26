@@ -412,11 +412,17 @@ pub const Editor = struct {
             renderer.font,
         )) {
             // TODO: add crafting delay
-            _ = try ship.addItemToInventory(
+            const remaining = try ship.addItemToInventory(
                 .{ .component = .chemical_thruster },
                 1,
                 ship.position,
             );
+
+            if (remaining == 0) {
+                std.log.info("Editor: Constructed chemical_thruster", .{});
+            } else {
+                std.log.warn("Editor: Failed to add chemical_thruster to inventory (no space?)", .{});
+            }
 
             // TODO: report
         }

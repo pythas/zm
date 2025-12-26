@@ -224,9 +224,14 @@ pub const PlayerController = struct {
                         const resource_amount = tile.data.terrain.resources;
 
                         for (resource_amount.slice()) |res_amount| {
+                            const amount = rng.random().intRangeAtMost(
+                                u8,
+                                0,
+                                res_amount.amount,
+                            );
                             const remaining = try ship.addItemToInventory(
                                 .{ .resource = res_amount.resource },
-                                res_amount.amount,
+                                amount,
                                 debris.position,
                             );
                             const added = res_amount.amount - remaining;

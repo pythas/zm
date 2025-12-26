@@ -47,7 +47,7 @@ pub const Assets = struct {
     pub fn getComponentSprite(part_kind: PartKind) Sprite {
         const index = @intFromEnum(part_kind);
 
-        return Sprite.init(resource_sheet, @intCast(index));
+        return Sprite.init(resource_sheet, setRow(15, @intCast(index)));
     }
 
     pub fn getToolSprite(tool: Tool) Sprite {

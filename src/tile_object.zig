@@ -373,11 +373,7 @@ pub const TileObject = struct {
         const storage_list = try self.getTilesByPartKindSortedByDist(.storage, from_position);
         defer self.allocator.free(storage_list);
 
-        var remaining = rng.random().intRangeAtMost(
-            u8,
-            0,
-            amount,
-        );
+        var remaining = amount;
 
         for (storage_list) |storage| {
             const inventory = self.getInventory(
