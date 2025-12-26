@@ -120,6 +120,11 @@ pub const Game = struct {
                 self.renderer.beam.draw(pass, global, beam_instance_count);
 
                 // self.renderer.effect.draw(pass, global);
+
+                self.renderer.ui.beginFrame();
+                const fb_size = self.window.getFramebufferSize();
+                try world.notifications.draw(&self.renderer.ui, @floatFromInt(fb_size[0]), self.renderer.font);
+                self.renderer.ui.flush(pass, global);
             },
             .ship_editor => {
                 try self.editor.draw(&self.renderer, &self.world, pass);

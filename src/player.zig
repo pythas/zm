@@ -14,6 +14,7 @@ const World = @import("world.zig").World;
 const PartKind = @import("tile.zig").PartKind;
 const PartStats = @import("ship.zig").PartStats;
 const rng = @import("rng.zig");
+const UiVec4 = @import("renderer/ui_renderer.zig").UiVec4;
 
 pub const PlayerController = struct {
     const Self = @This();
@@ -234,13 +235,17 @@ pub const PlayerController = struct {
                                 amount,
                                 debris.position,
                             );
-                            const added = res_amount.amount - remaining;
+                            const added = amount - remaining;
 
                             if (added > 0) {
                                 _ = world.research_manager.reportResourcePickup(
                                     res_amount.resource,
                                     added,
                                 );
+
+                                var buf: [64]u8 = undefined;
+                                const text = std.fmt.bufPrint(&buf, "+ {d} {s}", .{ added, @tagName(res_amount.resource) }) catch "+ resource";
+                                world.notifications.add(text, .{ .r = 0.8, .g = 1.0, .b = 0.8, .a = 1.0 });
                             }
                         }
 

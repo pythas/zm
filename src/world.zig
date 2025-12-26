@@ -7,6 +7,7 @@ const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
 const PlayerController = @import("player.zig").PlayerController;
 const ResearchManager = @import("research.zig").ResearchManager;
+const NotificationSystem = @import("notification.zig").NotificationSystem;
 const Camera = @import("camera.zig").Camera;
 const Vec2 = @import("vec2.zig").Vec2;
 const Tile = @import("tile.zig").Tile;
@@ -34,6 +35,7 @@ pub const World = struct {
     camera: Camera,
     player_controller: PlayerController,
     research_manager: ResearchManager,
+    notifications: NotificationSystem,
 
     next_object_id: u64 = 0,
     objects: std.ArrayList(TileObject),
@@ -53,6 +55,7 @@ pub const World = struct {
         );
 
         const player_controller = PlayerController.init(allocator, 0);
+        const notifications = NotificationSystem.init(allocator);
         const world_generator = WorldGenerator.init(12345); // TODO: load from settings
         const sector_config = SectorConfig{
             .seed = 12345,
@@ -65,6 +68,7 @@ pub const World = struct {
             .objects = std.ArrayList(TileObject).init(allocator),
             .player_controller = player_controller,
             .research_manager = ResearchManager.init(),
+            .notifications = notifications,
             .physics = physics,
             .world_generator = world_generator,
             .sector_config = sector_config,
@@ -93,6 +97,7 @@ pub const World = struct {
         self.objects.deinit();
         self.physics.deinit();
         self.player_controller.deinit();
+        self.notifications.deinit();
         self.generated_chunks.deinit();
     }
 
@@ -121,6 +126,7 @@ pub const World = struct {
         mouse_state: *const MouseState,
     ) !void {
         self.physics.update(dt);
+        self.notifications.update(dt);
 
         for (self.objects.items) |*obj| {
             if (!obj.body_id.isValid()) {
