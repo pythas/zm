@@ -33,11 +33,12 @@ pub const Renderer = struct {
         font.* = try Font.init(allocator, "assets/spleen-6x12.bdf");
 
         const atlas = try Atlas.init(allocator, gctx, &.{
+            .{ .raw = font.texture_data },
             .{ .path = "assets/asteroid.png" },
             .{ .path = "assets/ship.png" },
             .{ .path = "assets/resource.png" },
             .{ .path = "assets/tool.png" },
-            .{ .raw = font.texture_data },
+            .{ .path = "assets/recipe.png" },
         });
 
         var global = try GlobalRenderState.init(gctx, atlas.view);

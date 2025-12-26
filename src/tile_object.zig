@@ -17,18 +17,8 @@ const TileType = @import("tile.zig").TileType;
 const Item = @import("inventory.zig").Item;
 const Inventory = @import("inventory.zig").Inventory;
 const Resource = @import("resource.zig").Resource;
-
-pub const ShipCapabilities = struct {
-    force_forward: f32 = 0.0,
-    force_backward: f32 = 0.0,
-    force_side_left: f32 = 0.0,
-    force_side_right: f32 = 0.0,
-
-    engine_imbalance_torque: f32 = 0.0,
-    side_imbalance_torque: f32 = 0.0,
-
-    rcs_torque: f32 = 0.0,
-};
+const ResearchManager = @import("research.zig").ResearchManager;
+const rng = @import("rng.zig");
 
 pub const ThrusterKind = enum {
     main,
@@ -374,6 +364,42 @@ pub const TileObject = struct {
         }
     }
 
+    pub fn addItemToInventory(
+        self: *Self,
+        item: Item,
+        amount: u8,
+        from_position: Vec2,
+    ) !u32 {
+        const storage_list = try self.getTilesByPartKindSortedByDist(.storage, from_position);
+        defer self.allocator.free(storage_list);
+
+        var remaining = rng.random().intRangeAtMost(
+            u8,
+            0,
+            amount,
+        );
+
+        for (storage_list) |storage| {
+            const inventory = self.getInventory(
+                storage.tile_x,
+                storage.tile_y,
+            ) orelse try self.addInventory(
+                storage.tile_x,
+                storage.tile_y,
+                20,
+            );
+
+            const result = try inventory.add(item, remaining);
+            remaining = @intCast(result.remaining);
+
+            if (remaining == 0) {
+                break;
+            }
+        }
+
+        return remaining;
+    }
+
     pub fn getInventoryCountByItem(self: *Self, item: Item) u32 {
         var count: u32 = 0;
 
@@ -596,12 +622,12 @@ pub const TileObject = struct {
                 const ship_part = tile.getShipPart() orelse continue;
 
                 var power: f32 = switch (ship_part.kind) {
-                    .engine => PartStats.getEnginePower(ship_part.tier),
+                    .chemical_thruster => PartStats.getEnginePower(ship_part.tier),
                     else => continue,
                 };
 
                 const kind: ThrusterKind = switch (ship_part.kind) {
-                    .engine => .main,
+                    .chemical_thruster => .main,
                     else => continue,
                 };
 

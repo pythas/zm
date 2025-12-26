@@ -20,7 +20,7 @@ fn main(
 
     return tex_color * input.color;
   } else if (input.mode == 2u) {
-    let sheet = 4u;
+    let sheet = 0u;
     let tex_color = textureSampleLevel(atlas_texture, atlas_sampler, input.uv, sheet, 0.0);
 
     return tex_color * input.color;

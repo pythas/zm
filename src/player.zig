@@ -221,31 +221,21 @@ pub const PlayerController = struct {
 
                     if (dist_sq < pickup_radius_sq) {
                         const tile = debris.tiles[0];
-                        const resource_amounts = tile.data.terrain.resources;
+                        const resource_amount = tile.data.terrain.resources;
 
-                        for (resource_amounts.slice()) |res_amount| {
-                            const storage_list = try ship.getTilesByPartKindSortedByDist(.storage, ship.position);
-                            defer self.allocator.free(storage_list);
-
-                            var remaining = rng.random().intRangeAtMost(
-                                u8,
-                                0,
+                        for (resource_amount.slice()) |res_amount| {
+                            const remaining = try ship.addItemToInventory(
+                                .{ .resource = res_amount.resource },
                                 res_amount.amount,
+                                debris.position,
                             );
+                            const added = res_amount.amount - remaining;
 
-                            for (storage_list) |storage| {
-                                const inventory = ship.getInventory(storage.tile_x, storage.tile_y) orelse try ship.addInventory(storage.tile_x, storage.tile_y, 20);
-
-                                const result = try inventory.add(.{ .resource = res_amount.resource }, remaining);
-                                remaining = @intCast(result.remaining);
-
-                                if (result.added > 0) {
-                                    _ = world.research_manager.reportResourcePickup(res_amount.resource, result.added);
-                                }
-
-                                if (remaining == 0) {
-                                    break;
-                                }
+                            if (added > 0) {
+                                _ = world.research_manager.reportResourcePickup(
+                                    res_amount.resource,
+                                    added,
+                                );
                             }
                         }
 

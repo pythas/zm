@@ -16,6 +16,7 @@ const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
 const Tool = @import("inventory.zig").Tool;
 const Item = @import("inventory.zig").Item;
+const Recipe = @import("inventory.zig").Recipe;
 const PartStats = @import("ship.zig").PartStats;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
@@ -33,11 +34,12 @@ const EditorLayout = struct {
     scale: f32,
     tile_size: f32,
 
-    palette_rect: UiRect,
     ship_panel_rect: UiRect,
     grid_rect: UiRect,
     inventory_rect: UiRect,
     tools_rect: UiRect,
+    recipe_rect: UiRect,
+    crafting_rect: UiRect,
 
     pub fn compute(screen_w: f32, screen_h: f32) EditorLayout {
         _ = screen_w;
@@ -45,35 +47,70 @@ const EditorLayout = struct {
 
         const tile_size = tile_size_base * scaling;
 
-        const pal_w = (tile_size_base * tilemapWidth * scaling) + (padding * 2);
-        const pal_h = header_height;
-        const pal_rect = UiRect{ .x = padding, .y = padding, .w = pal_w, .h = pal_h };
-
         const ship_w = (tile_size_base * tilemapWidth * scaling) + (padding * 2);
         const ship_h = (tile_size_base * tilemapWidth * scaling) + (padding * 2);
-        const ship_y = pal_rect.y + pal_rect.h + padding;
-        const ship_rect = UiRect{ .x = padding, .y = ship_y, .w = ship_w, .h = ship_h };
+        const ship_y = padding;
+        const ship_rect = UiRect{
+            .x = padding,
+            .y = ship_y,
+            .w = ship_w,
+            .h = ship_h,
+        };
 
         const grid_w = tile_size * tilemapWidth;
         const grid_h = tile_size * tilemapHeight;
-        const grid_rect = UiRect{ .x = ship_rect.x + padding, .y = ship_rect.y + padding, .w = grid_w, .h = grid_h };
+        const grid_rect = UiRect{
+            .x = ship_rect.x + padding,
+            .y = ship_rect.y + padding,
+            .w = grid_w,
+            .h = grid_h,
+        };
 
         const inv_w = tile_size_base * scaling * 8;
         const inv_h = tile_size_base * scaling * 8;
-        const inv_rect = UiRect{ .x = ship_rect.x + ship_rect.w + padding, .y = padding, .w = inv_w, .h = inv_h };
+        const inv_rect = UiRect{
+            .x = ship_rect.x + ship_rect.w + padding,
+            .y = padding,
+            .w = inv_w,
+            .h = inv_h,
+        };
 
         const tools_w = tile_size_base * scaling * 8;
-        const tools_h = tile_size_base * scaling * 8;
-        const tools_rect = UiRect{ .x = ship_rect.x + ship_rect.w + padding, .y = inv_rect.y + inv_h + padding, .w = tools_w, .h = tools_h };
+        const tools_h = tile_size_base * scaling * 4;
+        const tools_rect = UiRect{
+            .x = inv_rect.x + inv_rect.w + padding,
+            .y = padding,
+            .w = tools_w,
+            .h = tools_h,
+        };
+
+        const recipe_w = tile_size_base * scaling * 8;
+        const recipe_h = tile_size_base * scaling * 4;
+        const recipe_rect = UiRect{
+            .x = ship_rect.x + ship_rect.w + padding,
+            .y = inv_rect.y + inv_rect.h + padding,
+            .w = recipe_w,
+            .h = recipe_h,
+        };
+
+        const crafting_w = tile_size_base * scaling * 8;
+        const crafting_h = tile_size_base * scaling * 1;
+        const crafting_rect = UiRect{
+            .x = recipe_rect.x,
+            .y = recipe_rect.y + recipe_rect.h + padding,
+            .w = crafting_w,
+            .h = crafting_h,
+        };
 
         return .{
             .scale = scaling,
             .tile_size = tile_size,
-            .palette_rect = pal_rect,
             .ship_panel_rect = ship_rect,
             .grid_rect = grid_rect,
             .inventory_rect = inv_rect,
             .tools_rect = tools_rect,
+            .recipe_rect = recipe_rect,
+            .crafting_rect = crafting_rect,
         };
     }
 
@@ -92,15 +129,6 @@ const EditorLayout = struct {
     }
 };
 
-pub const EditorPalette = enum {
-    none,
-    hull,
-    engine,
-    laser,
-    reactor,
-    storage,
-};
-
 pub const Editor = struct {
     const Self = @This();
 
@@ -108,8 +136,8 @@ pub const Editor = struct {
     window: *zglfw.Window,
     mouse: MouseState,
     keyboard: KeyboardState,
-    current_palette: EditorPalette,
-    current_tool: ?Tool,
+    current_tool: ?Tool = null,
+    current_recipe: ?Recipe = null,
 
     pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) Self {
         return .{
@@ -117,8 +145,6 @@ pub const Editor = struct {
             .window = window,
             .mouse = MouseState.init(window),
             .keyboard = KeyboardState.init(window),
-            .current_palette = .none,
-            .current_tool = null,
         };
     }
 
@@ -166,76 +192,11 @@ pub const Editor = struct {
 
             if (self.keyboard.isPressed(.r)) {
                 if (ship.getTile(tile_x, tile_y)) |tile| {
-                    if (tile.data == .ship_part and tile.data.ship_part.kind == .engine) {
+                    if (tile.data == .ship_part and tile.data.ship_part.kind == .chemical_thruster) {
                         var new_tile = tile.*;
                         new_tile.data.ship_part.rotation = @enumFromInt((@intFromEnum(new_tile.data.ship_part.rotation) + 1) % 4);
                         ship.setTile(tile_x, tile_y, new_tile);
                     }
-                }
-            }
-
-            if (self.mouse.is_left_down) {
-                switch (self.current_palette) {
-                    .none => {},
-                    .hull => {
-                        const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .hull, .tier = 1, .health = PartStats.getMaxHealth(.hull, 1) } },
-                        );
-
-                        ship.setTile(tile_x, tile_y, ht);
-                    },
-                    .engine => {
-                        var engine_dir: ?Direction = null;
-                        var is_connected = false;
-
-                        for (Directions) |d| {
-                            const n = ship.getNeighbouringTile(
-                                tile_x,
-                                tile_y,
-                                d.direction,
-                            ) orelse continue;
-
-                            if (n.data == .empty) {
-                                if (engine_dir == null) {
-                                    engine_dir = d.direction;
-                                }
-                            } else {
-                                is_connected = true;
-                            }
-                        }
-
-                        if (is_connected) {
-                            if (engine_dir) |ed| {
-                                var et = try Tile.init(
-                                    .{ .ship_part = .{ .kind = .engine, .tier = 1, .health = PartStats.getMaxHealth(.engine, 1) } },
-                                );
-                                et.data.ship_part.rotation = ed;
-
-                                ship.setTile(tile_x, tile_y, et);
-                            }
-                        }
-                    },
-                    .laser => {
-                        const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .laser, .tier = 1, .health = PartStats.getMaxHealth(.laser, 1) } },
-                        );
-
-                        ship.setTile(tile_x, tile_y, ht);
-                    },
-                    .reactor => {
-                        const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .reactor, .tier = 1, .health = PartStats.getMaxHealth(.reactor, 1) } },
-                        );
-
-                        ship.setTile(tile_x, tile_y, ht);
-                    },
-                    .storage => {
-                        const ht = try Tile.init(
-                            .{ .ship_part = .{ .kind = .storage, .tier = 1, .health = PartStats.getMaxHealth(.storage, 1) } },
-                        );
-
-                        ship.setTile(tile_x, tile_y, ht);
-                    },
                 }
             }
 
@@ -246,7 +207,7 @@ pub const Editor = struct {
                             if (ship.getTile(tile_x, tile_y)) |tile| {
                                 if (tile.data == .ship_part) {
                                     switch (tile.data.ship_part.kind) {
-                                        .engine => {
+                                        .chemical_thruster => {
                                             const iron = Item{ .resource = .iron };
                                             const count_iron = ship.getInventoryCountByItem(iron);
 
@@ -256,6 +217,7 @@ pub const Editor = struct {
                                                 ship.setTile(tile_x, tile_y, new_tile);
 
                                                 ship.removeNumberOfItemsFromInventory(iron, 10);
+                                                _ = world.research_manager.reportRepair("broken_chemical_thruster");
                                             }
                                         },
                                         else => {},
@@ -301,62 +263,6 @@ pub const Editor = struct {
 
         // background
         try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h });
-
-        // palette
-        try ui.panel(layout.palette_rect);
-
-        var btn_x = layout.palette_rect.x + 10;
-        const btn_y = layout.palette_rect.y + 10;
-        const btn_s = 30;
-
-        if (try ui.button(
-            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .hull,
-            "Hull",
-        )) {
-            self.current_palette = .hull;
-            self.current_tool = null;
-        }
-
-        btn_x += btn_s + 10;
-        if (try ui.button(
-            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .engine,
-            "Engine",
-        )) {
-            self.current_palette = .engine;
-            self.current_tool = null;
-        }
-
-        btn_x += btn_s + 10;
-        if (try ui.button(
-            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .laser,
-            "Laser",
-        )) {
-            self.current_palette = .laser;
-            self.current_tool = null;
-        }
-
-        btn_x += btn_s + 10;
-        if (try ui.button(
-            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .reactor,
-            "Reactor",
-        )) {
-            self.current_palette = .reactor;
-            self.current_tool = null;
-        }
-
-        btn_x += btn_s + 10;
-        if (try ui.button(
-            .{ .x = btn_x, .y = btn_y, .w = btn_s, .h = btn_s },
-            self.current_palette == .storage,
-            "Storage",
-        )) {
-            self.current_palette = .storage;
-            self.current_tool = null;
-        }
 
         // hover
         var hovered_item_name: ?[]const u8 = null;
@@ -465,10 +371,54 @@ pub const Editor = struct {
             }
 
             if (try ui.toolSlot(tool_rect, item, is_selected)) {
-                self.current_tool = .welding;
-                self.current_palette = .none;
+                self.current_tool = if (is_selected) null else .welding;
             }
             tool_x += slot_size + slot_padding;
+        }
+
+        // crafting
+        try ui.panel(layout.recipe_rect);
+
+        var recipe_x = layout.recipe_rect.x + 10;
+        const recipe_y = layout.recipe_rect.y + 10;
+
+        if (world.research_manager.isUnlocked(.chemical_thruster)) {
+            const recipe_rect = UiRect{ .x = recipe_x, .y = recipe_y, .w = slot_size, .h = slot_size };
+            const item = Item{ .recipe = .chemical_thruster };
+
+            var is_selected = false;
+            if (self.current_recipe) |r| {
+                if (r == .chemical_thruster) is_selected = true;
+            }
+
+            if (recipe_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+                hovered_item_name = item.getName();
+                hover_pos_x = self.mouse.x + hover_offset_x;
+                hover_pos_y = self.mouse.y + hover_offset_y;
+            }
+
+            if (try ui.recipeSlot(recipe_rect, item, is_selected)) {
+                self.current_recipe = if (is_selected) null else .chemical_thruster;
+            }
+
+            recipe_x += slot_size + slot_padding;
+        }
+
+        if (try ui.button(
+            layout.crafting_rect,
+            false,
+            self.current_recipe == null,
+            "Construct",
+            renderer.font,
+        )) {
+            // TODO: add crafting delay
+            _ = try ship.addItemToInventory(
+                .{ .component = .chemical_thruster },
+                1,
+                ship.position,
+            );
+
+            // TODO: report
         }
 
         ui.flush(pass, &renderer.global);

@@ -182,6 +182,17 @@ pub const UiRenderer = struct {
                 };
                 try self.sprite(sprite_rect, s);
             },
+            .component => |c| {
+                const s = Assets.getComponentSprite(c);
+                const inset: f32 = 4.0;
+                const sprite_rect = UiRect{
+                    .x = rect.x + inset,
+                    .y = rect.y + inset,
+                    .w = rect.w - inset * 2.0,
+                    .h = rect.h - inset * 2.0,
+                };
+                try self.sprite(sprite_rect, s);
+            },
             else => return false,
         }
 
@@ -234,31 +245,89 @@ pub const UiRenderer = struct {
                 };
                 try self.sprite(sprite_rect, s);
             },
+            .recipe => {},
+            .component => {},
         }
 
         return is_hovered and self.mouse.is_left_clicked;
     }
 
-    pub fn button(self: *Self, rect: UiRect, is_active: bool, label_text: []const u8) !bool {
-        _ = label_text;
+    pub fn recipeSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !bool {
+        const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
+        var color = if (is_selected)
+            UiVec4{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }
+        else
+            UiVec4{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 };
+
+        color = if (is_hovered)
+            UiVec4{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 }
+        else
+            color;
+
+        try self.pushQuad(rect, color, 0, 0);
+
+        switch (item) {
+            .none => {},
+            .resource => {},
+            .tool => {},
+            .recipe => |r| {
+                const s = Assets.getRecipeSprite(r);
+                const inset: f32 = 4.0;
+                const sprite_rect = UiRect{
+                    .x = rect.x + inset,
+                    .y = rect.y + inset,
+                    .w = rect.w - inset * 2.0,
+                    .h = rect.h - inset * 2.0,
+                };
+                try self.sprite(sprite_rect, s);
+            },
+            .component => {},
+        }
+
+        return is_hovered and self.mouse.is_left_clicked;
+    }
+
+    pub fn button(
+        self: *Self,
+        rect: UiRect,
+        is_active: bool,
+        is_disabled: bool,
+        text: []const u8,
+        font: *const Font,
+    ) !bool {
         const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
         var color = if (is_active)
             UiVec4{ .r = 0.25, .g = 0.25, .b = 0.35, .a = 1.0 }
         else
             UiVec4{ .r = 0.18, .g = 0.18, .b = 0.22, .a = 1.0 };
 
-        color = if (is_hovered)
+        color = if (is_disabled)
+            UiVec4{ .r = 0.10, .g = 0.10, .b = 0.18, .a = 1.0 }
+        else if (is_hovered)
             UiVec4{ .r = 0.35, .g = 0.35, .b = 0.45, .a = 1.0 }
         else
             color;
 
         try self.pushQuad(rect, color, 0, 0);
 
-        // TODO: Add label
-        // self.label(...)
+        var text_w: f32 = 0;
+        for (text) |char| {
+            if (font.glyphs.get(char)) |glyph| {
+                text_w += glyph.dwidth;
+            }
+        }
 
-        return is_hovered and self.mouse.is_left_clicked;
+        const text_x = rect.x + (rect.w - text_w) / 2.0;
+        const text_y = rect.y + (rect.h + font.ascent) / 2.0;
+
+        try self.label(
+            UiVec2{ .x = text_x, .y = text_y },
+            text,
+            font,
+        );
+
+        return !is_disabled and is_hovered and self.mouse.is_left_clicked;
     }
 
     pub fn label(self: *Self, pos: UiVec2, text: []const u8, font: *const Font) !void {

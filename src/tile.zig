@@ -10,7 +10,7 @@ const Resource = @import("resource.zig").Resource;
 pub const PartKind = enum(u8) {
     hull,
     reactor,
-    engine,
+    chemical_thruster,
     laser,
     storage,
 };
@@ -80,11 +80,12 @@ pub const TileReference = struct {
 };
 
 pub const SpriteSheet = enum(u8) {
-    terrain = 0,
-    ships = 1,
-    resources = 2,
-    tools = 3,
-    font = 4,
+    font = 0,
+    terrain = 1,
+    ships = 2,
+    resources = 3,
+    tools = 4,
+    recipe = 5,
 };
 
 pub const Sprite = struct {

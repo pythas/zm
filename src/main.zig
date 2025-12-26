@@ -47,7 +47,7 @@ fn initWindow() !void {
 
 fn createMainWindow() !*zglfw.Window {
     zglfw.windowHint(.client_api, .no_api);
-    const window = try zglfw.Window.create(800, 600, "zre", null);
+    const window = try zglfw.Window.create(1000, 700, "zre", null);
     window.setSizeLimits(400, 400, -1, -1);
     return window;
 }

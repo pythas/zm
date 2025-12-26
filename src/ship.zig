@@ -8,7 +8,7 @@ pub const PartStats = struct {
         return switch (kind) {
             .hull => "Hull",
             .reactor => "Reactor",
-            .engine => "Engine",
+            .chemical_thruster => "Chemical Thruster",
             .laser => "Laser",
             .storage => "Storage",
         };
@@ -32,7 +32,7 @@ pub const PartStats = struct {
 
     pub fn getDensity(kind: PartKind) f32 {
         return switch (kind) {
-            .engine => 2.0,
+            .chemical_thruster => 2.0,
             .hull => 1.0,
             .laser => 1.0,
             else => 1.0,

@@ -9,6 +9,7 @@ const TerrainTileType = @import("tile.zig").TerrainTileType;
 const ShipPartTileType = @import("tile.zig").ShipPartTileType;
 const Resource = @import("resource.zig").Resource;
 const Tool = @import("inventory.zig").Tool;
+const Recipe = @import("inventory.zig").Recipe;
 const PartStats = @import("ship.zig").PartStats;
 const rng = @import("rng.zig");
 
@@ -18,6 +19,7 @@ const terrain_sheet: SpriteSheet = .terrain;
 const ship_sheet: SpriteSheet = .ships;
 const resource_sheet: SpriteSheet = .resources;
 const tool_sheet: SpriteSheet = .tools;
+const recipe_sheet: SpriteSheet = .recipe;
 
 fn setRow(row: u16, index: u16) u16 {
     return row * row_width + index;
@@ -42,12 +44,26 @@ pub const Assets = struct {
         return Sprite.init(resource_sheet, @intCast(index));
     }
 
+    pub fn getComponentSprite(part_kind: PartKind) Sprite {
+        const index = @intFromEnum(part_kind);
+
+        return Sprite.init(resource_sheet, @intCast(index));
+    }
+
     pub fn getToolSprite(tool: Tool) Sprite {
         const index = switch (tool) {
             .welding => 0,
         };
 
         return Sprite.init(tool_sheet, @intCast(index));
+    }
+
+    pub fn getRecipeSprite(recipe: Recipe) Sprite {
+        const index = switch (recipe) {
+            .chemical_thruster => 0,
+        };
+
+        return Sprite.init(recipe_sheet, @intCast(index));
     }
 
     pub fn getTerrainSprite(terrain: TerrainTileType, mask: u8, x: usize, y: usize) Sprite {
@@ -94,7 +110,7 @@ pub const Assets = struct {
         return switch (ship.kind) {
             .hull => getHullSprite(ship, mask),
             .reactor => getReactorSprite(ship),
-            .engine => getEngineSprite(ship),
+            .chemical_thruster => getEngineSprite(ship),
             .laser => getLaserSprite(ship),
             .storage => getStorageSprite(ship),
             // else => Sprite.initEmpty(),

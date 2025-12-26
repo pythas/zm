@@ -8,7 +8,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -16,7 +17,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -24,7 +26,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -32,7 +35,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -40,7 +44,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -48,7 +53,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -56,7 +62,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -64,7 +71,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -72,7 +80,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -80,7 +89,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -88,7 +98,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -96,7 +107,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -104,7 +116,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -112,7 +125,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -120,7 +134,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -128,7 +143,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -136,7 +152,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -144,7 +161,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -152,7 +170,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -160,7 +179,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -168,7 +188,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -176,7 +197,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -184,7 +206,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -192,7 +215,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -200,7 +224,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -208,7 +233,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -216,7 +242,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -224,7 +251,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -232,7 +260,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -240,7 +269,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -248,7 +278,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -256,7 +287,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -264,7 +296,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -272,7 +305,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -280,7 +314,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -288,7 +323,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -296,7 +332,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -304,7 +341,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -312,7 +350,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -320,7 +359,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -328,7 +368,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -336,7 +377,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -344,7 +386,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -352,7 +395,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -360,7 +404,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -368,7 +413,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -376,7 +422,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -384,7 +431,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -392,7 +440,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -400,7 +449,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -408,7 +458,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -416,7 +467,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -424,7 +476,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -432,7 +485,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -440,7 +494,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -448,7 +503,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -456,7 +512,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -464,7 +521,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -472,7 +530,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -480,7 +539,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -488,7 +548,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -496,7 +557,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -504,7 +566,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -512,7 +575,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -520,7 +584,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -528,7 +593,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -536,7 +602,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -544,7 +611,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -552,7 +620,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -560,7 +629,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -568,7 +638,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -576,7 +647,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -584,7 +656,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -592,7 +665,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -600,7 +674,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -608,7 +683,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -616,7 +692,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -624,7 +701,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -632,7 +710,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -640,7 +719,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -648,7 +728,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -656,7 +737,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -664,7 +746,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -672,7 +755,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -680,7 +764,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -688,7 +773,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -696,15 +782,17 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 7,
       "y": 5,
       "data_type": "ship_part",
-      "kind": "engine",
+      "kind": "chemical_thruster",
       "base_material": null,
-      "rotation": "north", "health": 0.0
+      "rotation": "north",
+      "health": 0e0
     },
     {
       "x": 8,
@@ -712,7 +800,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 9,
@@ -720,7 +809,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -728,7 +818,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -736,7 +827,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -744,7 +836,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -752,7 +845,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -760,7 +854,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -768,7 +863,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -776,7 +872,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -784,7 +881,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -792,7 +890,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -800,7 +899,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -808,7 +908,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -816,15 +917,17 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
       "y": 6,
       "data_type": "ship_part",
-      "kind": "engine",
+      "kind": "chemical_thruster",
       "base_material": null,
-      "rotation": "west"
+      "rotation": "west",
+      "health": 1e2
     },
     {
       "x": 7,
@@ -832,15 +935,17 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 8,
       "y": 6,
       "data_type": "ship_part",
-      "kind": "engine",
+      "kind": "chemical_thruster",
       "base_material": null,
-      "rotation": "east"
+      "rotation": "east",
+      "health": 1e2
     },
     {
       "x": 9,
@@ -848,7 +953,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -856,7 +962,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -864,7 +971,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -872,7 +980,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -880,7 +989,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -888,7 +998,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -896,7 +1007,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -904,7 +1016,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -912,7 +1025,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -920,7 +1034,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -928,7 +1043,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -936,7 +1052,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -944,7 +1061,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -952,7 +1070,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 7,
@@ -960,7 +1079,8 @@
       "data_type": "ship_part",
       "kind": "laser",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 8,
@@ -968,7 +1088,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 9,
@@ -976,7 +1097,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -984,7 +1106,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -992,7 +1115,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -1000,7 +1124,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -1008,7 +1133,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -1016,7 +1142,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -1024,7 +1151,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -1032,7 +1160,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -1040,7 +1169,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -1048,7 +1178,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -1056,7 +1187,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -1064,15 +1196,17 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
       "y": 8,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "hull",
       "base_material": null,
-      "rotation": null
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 6,
@@ -1080,7 +1214,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 7,
@@ -1088,7 +1223,8 @@
       "data_type": "ship_part",
       "kind": "reactor",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 8,
@@ -1096,15 +1232,17 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 9,
       "y": 8,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "hull",
       "base_material": null,
-      "rotation": null
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 10,
@@ -1112,7 +1250,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -1120,7 +1259,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -1128,7 +1268,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -1136,7 +1277,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -1144,7 +1286,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -1152,7 +1295,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -1160,7 +1304,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -1168,7 +1313,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -1176,7 +1322,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -1184,15 +1331,17 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
       "y": 9,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "hull",
       "base_material": null,
-      "rotation": null
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 5,
@@ -1200,7 +1349,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 6,
@@ -1208,7 +1358,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 7,
@@ -1216,7 +1367,8 @@
       "data_type": "ship_part",
       "kind": "storage",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 8,
@@ -1224,7 +1376,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 9,
@@ -1232,15 +1385,17 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 10,
       "y": 9,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "hull",
       "base_material": null,
-      "rotation": null
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 11,
@@ -1248,7 +1403,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -1256,7 +1412,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -1264,7 +1421,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -1272,7 +1430,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -1280,7 +1439,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -1288,7 +1448,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -1296,7 +1457,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -1304,7 +1466,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -1312,7 +1475,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -1320,15 +1484,17 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 5,
       "y": 10,
       "data_type": "ship_part",
-      "kind": "engine",
+      "kind": "chemical_thruster",
       "base_material": null,
-      "rotation": "south"
+      "rotation": "south",
+      "health": 1e2
     },
     {
       "x": 6,
@@ -1336,15 +1502,17 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 7,
       "y": 10,
       "data_type": "ship_part",
-      "kind": "engine",
+      "kind": "chemical_thruster",
       "base_material": null,
-      "rotation": "south", "health": 0.0
+      "rotation": "south",
+      "health": 0e0
     },
     {
       "x": 8,
@@ -1352,15 +1520,17 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 9,
       "y": 10,
-      "data_type": "ship_part",
-      "kind": "engine",
+      "data_type": "empty",
+      "kind": null,
       "base_material": null,
-      "rotation": "south", "health": 0.0
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -1368,7 +1538,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 11,
@@ -1376,7 +1547,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -1384,7 +1556,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -1392,7 +1565,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -1400,7 +1574,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -1408,7 +1583,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -1416,7 +1592,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -1424,7 +1601,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -1432,7 +1610,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -1440,7 +1619,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -1448,7 +1628,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -1456,7 +1637,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -1464,7 +1646,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 7,
@@ -1472,7 +1655,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -1480,7 +1664,8 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north"
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 9,
@@ -1488,7 +1673,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -1496,7 +1682,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -1504,7 +1691,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -1512,7 +1700,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -1520,7 +1709,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -1528,7 +1718,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -1536,7 +1727,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -1544,7 +1736,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -1552,7 +1745,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -1560,7 +1754,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -1568,7 +1763,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -1576,7 +1772,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -1584,7 +1781,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -1592,7 +1790,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -1600,7 +1799,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -1608,7 +1808,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -1616,7 +1817,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -1624,7 +1826,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -1632,7 +1835,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -1640,7 +1844,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -1648,7 +1853,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -1656,7 +1862,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -1664,7 +1871,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -1672,7 +1880,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -1680,7 +1889,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -1688,7 +1898,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -1696,7 +1907,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -1704,7 +1916,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -1712,7 +1925,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -1720,7 +1934,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -1728,7 +1943,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -1736,7 +1952,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -1744,7 +1961,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -1752,7 +1970,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -1760,7 +1979,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -1768,7 +1988,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -1776,7 +1997,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -1784,7 +2006,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -1792,7 +2015,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -1800,7 +2024,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -1808,7 +2033,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -1816,7 +2042,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -1824,7 +2051,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -1832,7 +2060,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -1840,7 +2069,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -1848,7 +2078,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -1856,7 +2087,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -1864,7 +2096,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -1872,7 +2105,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -1880,7 +2114,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -1888,7 +2123,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -1896,7 +2132,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -1904,7 +2141,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -1912,7 +2150,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -1920,7 +2159,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 0,
@@ -1928,7 +2168,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 1,
@@ -1936,7 +2177,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 2,
@@ -1944,7 +2186,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 3,
@@ -1952,7 +2195,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 4,
@@ -1960,7 +2204,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -1968,7 +2213,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -1976,7 +2222,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 7,
@@ -1984,7 +2231,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 8,
@@ -1992,7 +2240,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 9,
@@ -2000,7 +2249,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -2008,7 +2258,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -2016,7 +2267,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 12,
@@ -2024,7 +2276,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 13,
@@ -2032,7 +2285,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 14,
@@ -2040,7 +2294,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     },
     {
       "x": 15,
@@ -2048,7 +2303,8 @@
       "data_type": "empty",
       "kind": null,
       "base_material": null,
-      "rotation": null
+      "rotation": null,
+      "health": null
     }
   ]
 }

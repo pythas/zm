@@ -2,21 +2,30 @@ const std = @import("std");
 
 const Resource = @import("resource.zig").Resource;
 const ResourceStats = @import("resource.zig").ResourceStats;
+const PartKind = @import("tile.zig").PartKind;
 
 pub const Tool = enum {
     welding,
+};
+
+pub const Recipe = enum {
+    chemical_thruster,
 };
 
 pub const Item = union(enum) {
     none,
     resource: Resource,
     tool: Tool,
+    recipe: Recipe,
+    component: PartKind,
 
     pub fn eql(self: Item, other: Item) bool {
         return switch (self) {
             .none => other == .none,
             .resource => |r| if (other == .resource) r == other.resource else false,
             .tool => |t| if (other == .tool) t == other.tool else false,
+            .recipe => |r| if (other == .recipe) r == other.recipe else false,
+            .component => |c| if (other == .component) c == other.component else false,
         };
     }
 
@@ -25,6 +34,8 @@ pub const Item = union(enum) {
             .none => 0,
             .resource => |r| ResourceStats.getMaxStack(r),
             .tool => 1,
+            .recipe => 1,
+            .component => 4, // TODO: load from elsewhere
         };
     }
 
@@ -34,6 +45,13 @@ pub const Item = union(enum) {
             .resource => |r| ResourceStats.getName(r),
             .tool => |t| switch (t) {
                 .welding => "Basic Welding",
+            },
+            .recipe => |r| switch (r) {
+                .chemical_thruster => "Chemical Thruster Blueprint",
+            },
+            .component => |c| switch (c) {
+                .chemical_thruster => "Chemical Thruster",
+                else => "N/A",
             },
         };
     }
