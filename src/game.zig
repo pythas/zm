@@ -109,6 +109,8 @@ pub const Game = struct {
                 const global = &self.renderer.global;
                 const world = &self.world;
 
+                self.renderer.background.draw(pass, global);
+
                 var instances = std.ArrayList(SpriteRenderData).init(self.allocator);
                 defer instances.deinit();
 
@@ -122,8 +124,6 @@ pub const Game = struct {
 
                 const beam_instance_count = try self.renderer.beam.writeBuffers(world);
                 self.renderer.beam.draw(pass, global, beam_instance_count);
-
-                // self.renderer.effect.draw(pass, global);
 
                 self.renderer.ui.beginFrame();
                 const fb_size = self.window.getFramebufferSize();

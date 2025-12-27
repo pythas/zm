@@ -6,7 +6,7 @@ const Atlas = @import("renderer/common.zig").Atlas;
 const AtlasLayer = @import("renderer/common.zig").AtlasLayer;
 const GlobalRenderState = @import("renderer/common.zig").GlobalRenderState;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
-const EffectRenderer = @import("renderer/effect_renderer.zig").EffectRenderer;
+const BackgroundRenderer = @import("renderer/background_renderer.zig").BackgroundRenderer;
 const BeamRenderer = @import("renderer/beam_renderer.zig").BeamRenderer;
 const UiRenderer = @import("renderer/ui_renderer.zig").UiRenderer;
 const World = @import("world.zig").World;
@@ -19,7 +19,7 @@ pub const Renderer = struct {
     atlas: Atlas,
     global: GlobalRenderState,
     sprite: SpriteRenderer,
-    effect: EffectRenderer,
+    background: BackgroundRenderer,
     beam: BeamRenderer,
     ui: UiRenderer,
     font: *Font,
@@ -43,7 +43,7 @@ pub const Renderer = struct {
 
         var global = try GlobalRenderState.init(gctx, atlas.view);
         const sprite = try SpriteRenderer.init(allocator, gctx, &global);
-        const effect = try EffectRenderer.init(allocator, gctx, &global);
+        const background = try BackgroundRenderer.init(allocator, gctx, &global);
         const beam = try BeamRenderer.init(allocator, gctx, &global);
         const ui = try UiRenderer.init(allocator, gctx, window, &global);
 
@@ -52,7 +52,7 @@ pub const Renderer = struct {
             .atlas = atlas,
             .global = global,
             .sprite = sprite,
-            .effect = effect,
+            .background = background,
             .beam = beam,
             .ui = ui,
             .font = font,
@@ -63,7 +63,7 @@ pub const Renderer = struct {
         self.atlas.deinit();
         self.global.deinit();
         self.sprite.deinit();
-        self.effect.deinit();
+        self.background.deinit();
         self.beam.deinit();
         self.ui.deinit();
         self.font.deinit();

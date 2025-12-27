@@ -2,13 +2,14 @@ const std = @import("std");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zglfw = @import("zglfw");
+const shader_utils = @import("../shader_utils.zig");
 
 const World = @import("../world.zig").World;
 const Tile = @import("../tile.zig").Tile;
 const Texture = @import("../texture.zig").Texture;
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 
-pub const EffectRenderer = struct {
+pub const BackgroundRenderer = struct {
     const Self = @This();
 
     allocator: std.mem.Allocator,
@@ -55,7 +56,7 @@ pub const EffectRenderer = struct {
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, global_bind_group, null);
 
-        pass.draw(6, 1, 0, 0);
+        pass.draw(3, 1, 0, 0);
     }
 };
 
@@ -63,16 +64,16 @@ fn createPipeline(
     gctx: *zgpu.GraphicsContext,
     pipeline_layout: zgpu.PipelineLayoutHandle,
 ) !zgpu.RenderPipelineHandle {
-    const vs_module = zgpu.createWgslShaderModule(
+    const vs_module = shader_utils.createShaderModuleWithCommon(
         gctx.device,
-        @embedFile("../shaders/effect_vertex.wgsl"),
+        @embedFile("../shaders/background_vertex.wgsl"),
         "vs_main",
     );
     defer vs_module.release();
 
-    const fs_module = zgpu.createWgslShaderModule(
+    const fs_module = shader_utils.createShaderModuleWithCommon(
         gctx.device,
-        @embedFile("../shaders/effect_fragment.wgsl"),
+        @embedFile("../shaders/background_fragment.wgsl"),
         "fs_main",
     );
     defer fs_module.release();
