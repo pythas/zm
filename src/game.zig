@@ -79,8 +79,12 @@ pub const Game = struct {
         if (self.keyboard_state.isPressed(.f1)) {
             self.world.research_manager.unlockAll();
             if (self.world.objects.items.len > 0) {
-                self.world.objects.items[0].repairAll();
+                const ship = &self.world.objects.items[0];
+
+                ship.repairAll();
                 std.log.info("Game: CHEAT - Ship Repaired", .{});
+
+                _ = try ship.addItemToInventory(.{ .resource = .iron }, 50, ship.position);
             }
         }
 

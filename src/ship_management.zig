@@ -239,6 +239,11 @@ pub const ShipManagement = struct {
         var ui = &renderer.ui;
         try ui.panel(layout.inventory_rect);
 
+        if (self.mouse.is_left_clicked and layout.inventory_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+            self.current_tool = null;
+            self.current_recipe = null;
+        }
+
         const slot_size: f32 = 20.0;
         const slot_padding: f32 = 2.0;
 
@@ -277,6 +282,10 @@ pub const ShipManagement = struct {
         var ui = &renderer.ui;
         try ui.panel(layout.tools_rect);
 
+        if (self.mouse.is_left_clicked and layout.tools_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+            self.current_recipe = null;
+        }
+
         const slot_size: f32 = 20.0;
         const slot_padding: f32 = 2.0;
 
@@ -308,6 +317,10 @@ pub const ShipManagement = struct {
     fn drawRecipesPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World) !void {
         var ui = &renderer.ui;
         try ui.panel(layout.recipe_rect);
+
+        if (self.mouse.is_left_clicked and layout.recipe_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+            self.current_tool = null;
+        }
 
         const slot_size: f32 = 20.0;
         const slot_padding: f32 = 2.0;
@@ -353,6 +366,8 @@ pub const ShipManagement = struct {
 
             if (count_iron >= 20) {
                 // TODO: add crafting delay
+
+                ship.removeNumberOfItemsFromInventory(iron, 20);
 
                 const remaining = try ship.addItemToInventory(
                     .{ .component = .chemical_thruster },
