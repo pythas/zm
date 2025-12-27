@@ -76,7 +76,7 @@ pub const World = struct {
         };
 
         const ship_id = self.generateObjectId();
-        var ship = ship_serialization.loadShip(allocator, ship_id, "ship.json") catch |err| switch (err) {
+        var ship = ship_serialization.loadShip(allocator, ship_id, "assets/ship.json") catch |err| switch (err) {
             error.FileNotFound => try TileObject.init(allocator, ship_id, 16, 16, Vec2.init(0, 0), 0),
             else => return err,
         };

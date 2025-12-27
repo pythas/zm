@@ -97,14 +97,11 @@ pub const ShipManagement = struct {
         );
     }
 
-    fn handleShortcuts(self: *Self, ship: *TileObject) void {
-        if (self.keyboard.isDown(.left_ctrl)) {
-            if (self.keyboard.isPressed(.s)) {
-                ship_serialization.saveShip(self.allocator, ship.*, "ship.json") catch |err| {
-                    std.debug.print("Failed to save ship: {}\n", .{err});
-                };
-            }
-        }
+    pub fn save(self: *ShipManagement) void {
+        const ship = self.ships.getPtr(self.current_ship_id) orelse return;
+        ship_serialization.saveShip(self.allocator, ship.*, "assets/ship.json") catch |err| {
+            std.debug.print("Failed to save ship: {}\n", .{err});
+        };
     }
 
     fn handleTileInteraction(self: *Self, ship: *TileObject, hover_x: i32, hover_y: i32, world: *World) void {
