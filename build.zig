@@ -44,7 +44,6 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    exe.addIncludePath(box2d.path("."));
     exe.linkLibrary(box2d.artifact("box2d"));
 
     // ---
