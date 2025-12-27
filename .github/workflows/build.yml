@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: 0.14.1
+
+      - name: Build
+        run: zig build -Doptimize=ReleaseSafe
+
+      - name: Prepare Release
+        run: |
+          mkdir -p release/zm-linux
+          cp zig-out/bin/zm release/zm-linux/
+          cp -r assets release/zm-linux/
+          cd release
+          tar -czvf zm-linux.tar.gz zm-linux
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zm-linux
+          path: release/zm-linux.tar.gz

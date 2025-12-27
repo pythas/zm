@@ -17,6 +17,11 @@
             .hash = "N-V-__8AAK7XUQNKNRnv1J6i189jtURJKjp3HTftoyD4Y4CB",
             .lazy = true,
         },
+        .dawn_x86_64_windows_gnu = .{
+            .url = "https://github.com/michal-z/webgpu_dawn-x86_64-windows-gnu/archive/d3a68014e6b6b53fd330a0ccba99e4dcfffddae5.tar.gz",
+            .hash = "N-V-__8AAGsYnAT5RIzeAu881RveLghQ1EidqgVBVx10gVTo",
+            .lazy = true,
+        },
         .zgui = .{
             .url = "https://github.com/zig-gamedev/zgui/archive/b1c775da1f14d9dbeadc22243a11f7342bf59a51.tar.gz",
             .hash = "zgui-0.6.0-dev--L6sZC-1aADzgrip50BHiYDaCwSMC04XWK0epNlQD6Dt",
