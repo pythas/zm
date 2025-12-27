@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -26,7 +27,7 @@ jobs:
       - name: Build
         run: zig build -Doptimize=ReleaseSafe
 
-      - name: Prepare Release
+      - name: Prepare Artifacts
         run: |
           mkdir -p release/zm-linux
           cp zig-out/bin/zm release/zm-linux/
@@ -39,3 +40,59 @@ jobs:
         with:
           name: zm-linux
           path: release/zm-linux.tar.gz
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.1
+
+      - name: Build
+        run: zig build -Doptimize=ReleaseSafe -Dtarget=x86_64-windows
+
+      - name: Prepare Artifacts
+        shell: cmd
+        run: |
+          mkdir release\zm-windows
+          copy zig-out\bin\zm.exe release\zm-windows\
+          xcopy assets release\zm-windows\assets\ /E /I
+          cd release
+          7z a zm-windows.zip zm-windows
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zm-windows
+          path: release/zm-windows.zip
+
+  create-release:
+    needs: [build-linux, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: zm-linux
+          path: .
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: zm-windows
+          path: .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            zm-linux.tar.gz
+            zm-windows.zip
+          draft: true
+          prerelease: false
