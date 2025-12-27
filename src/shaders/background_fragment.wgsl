@@ -38,7 +38,7 @@ fn star_layer(uv: vec2<f32>, scale: f32, density: f32) -> f32 {
 
 @fragment
 fn main(in: VertexOutput) -> @location(0) vec4<f32> {
-  var color = vec3<f32>(0.05, 0.05, 0.08);
+  var color = vec3<f32>(0.02, 0.02, 0.06);
  
   let aspect = globals.screen_wh.x / globals.screen_wh.y;
   let screen_uv = (in.uv - 0.5) * vec2<f32>(aspect, 1.0);
