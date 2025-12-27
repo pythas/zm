@@ -5,17 +5,17 @@ const zglfw = @import("zglfw");
 const World = @import("world.zig").World;
 const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
-const Renderer = @import("renderer/renderer.zig").Renderer;
+const Renderer = @import("renderer.zig").Renderer;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
-const Editor = @import("editor.zig").Editor;
+const ShipManagement = @import("ship_management.zig").ShipManagement;
 
 const scrollCallback = @import("world.zig").scrollCallback;
 
 pub const GameMode = enum {
     in_world,
-    ship_editor,
+    ship_management,
 };
 
 pub const Game = struct {
@@ -24,7 +24,7 @@ pub const Game = struct {
     allocator: std.mem.Allocator,
     window: *zglfw.Window,
     renderer: Renderer,
-    editor: Editor,
+    ship_management: ShipManagement,
 
     keyboard_state: KeyboardState,
     mouse_state: MouseState,
@@ -39,13 +39,13 @@ pub const Game = struct {
     ) !Self {
         const world = try World.init(allocator);
         const renderer = try Renderer.init(allocator, gctx, window);
-        const editor = Editor.init(allocator, window);
+        const ship_management = ShipManagement.init(allocator, window);
 
         return .{
             .allocator = allocator,
             .window = window,
             .renderer = renderer,
-            .editor = editor,
+            .ship_management = ship_management,
             .world = world,
             .keyboard_state = KeyboardState.init(window),
             .mouse_state = MouseState.init(window),
@@ -55,7 +55,7 @@ pub const Game = struct {
     pub fn deinit(self: *Self) void {
         self.world.deinit();
         self.renderer.deinit();
-        self.editor.deinit();
+        self.ship_management.deinit();
     }
 
     pub fn setupCallbacks(self: *Self) void {
@@ -69,7 +69,7 @@ pub const Game = struct {
 
         if (self.keyboard_state.isPressed(.o)) {
             if (self.mode == .in_world) {
-                self.mode = .ship_editor;
+                self.mode = .ship_management;
             } else {
                 try self.world.objects.items[0].recalculatePhysics(&self.world.physics);
                 self.mode = .in_world;
@@ -90,8 +90,8 @@ pub const Game = struct {
 
                 self.renderer.global.write(self.window, &self.world, dt, t, self.mode, 0.0, 0.0);
             },
-            .ship_editor => {
-                self.editor.update(&self.renderer, &self.world, dt, t);
+            .ship_management => {
+                self.ship_management.update(&self.renderer, &self.world, dt, t);
             },
         }
     }
@@ -126,8 +126,8 @@ pub const Game = struct {
                 try world.notifications.draw(&self.renderer.ui, @floatFromInt(fb_size[0]), self.renderer.font);
                 self.renderer.ui.flush(pass, global);
             },
-            .ship_editor => {
-                try self.editor.draw(&self.renderer, &self.world, pass);
+            .ship_management => {
+                try self.ship_management.draw(&self.renderer, &self.world, pass);
             },
         }
     }

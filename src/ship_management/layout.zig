@@ -2,7 +2,9 @@ const UiRect = @import("../renderer/ui_renderer.zig").UiRect;
 const tilemapWidth = @import("../tile.zig").tilemapWidth;
 const tilemapHeight = @import("../tile.zig").tilemapHeight;
 
-pub const EditorLayout = struct {
+pub const ShipManagementLayout = struct {
+    const Self = @This();
+
     const scaling: f32 = 3.0;
     const padding: f32 = 10.0;
     const tile_size_base: f32 = 8.0;
@@ -18,7 +20,7 @@ pub const EditorLayout = struct {
     recipe_rect: UiRect,
     crafting_rect: UiRect,
 
-    pub fn compute(screen_w: f32, screen_h: f32) EditorLayout {
+    pub fn compute(screen_w: f32, screen_h: f32) Self {
         _ = screen_w;
         _ = screen_h;
 
@@ -91,17 +93,19 @@ pub const EditorLayout = struct {
         };
     }
 
-    pub fn getHoveredTile(self: EditorLayout, mouse_x: f32, mouse_y: f32) ?struct { x: i32, y: i32 } {
+    pub fn getHoveredTile(self: Self, mouse_x: f32, mouse_y: f32) ?struct { x: i32, y: i32 } {
         if (mouse_x >= self.grid_rect.x and mouse_x < self.grid_rect.x + self.grid_rect.w and
             mouse_y >= self.grid_rect.y and mouse_y < self.grid_rect.y + self.grid_rect.h)
         {
             const local_x = mouse_x - self.grid_rect.x;
             const local_y = mouse_y - self.grid_rect.y;
+
             return .{
                 .x = @intFromFloat(local_x / self.tile_size),
                 .y = @intFromFloat(local_y / self.tile_size),
             };
         }
+
         return null;
     }
 };

@@ -2,15 +2,15 @@ const std = @import("std");
 const zgpu = @import("zgpu");
 const zglfw = @import("zglfw");
 
-const Atlas = @import("common.zig").Atlas;
-const AtlasLayer = @import("common.zig").AtlasLayer;
-const GlobalRenderState = @import("common.zig").GlobalRenderState;
-const SpriteRenderer = @import("sprite_renderer.zig").SpriteRenderer;
-const EffectRenderer = @import("effect_renderer.zig").EffectRenderer;
-const BeamRenderer = @import("beam_renderer.zig").BeamRenderer;
-const UiRenderer = @import("ui_renderer.zig").UiRenderer;
-const World = @import("../world.zig").World;
-const Font = @import("font.zig").Font;
+const Atlas = @import("renderer/common.zig").Atlas;
+const AtlasLayer = @import("renderer/common.zig").AtlasLayer;
+const GlobalRenderState = @import("renderer/common.zig").GlobalRenderState;
+const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
+const EffectRenderer = @import("renderer/effect_renderer.zig").EffectRenderer;
+const BeamRenderer = @import("renderer/beam_renderer.zig").BeamRenderer;
+const UiRenderer = @import("renderer/ui_renderer.zig").UiRenderer;
+const World = @import("world.zig").World;
+const Font = @import("renderer/font.zig").Font;
 
 pub const Renderer = struct {
     const Self = @This();

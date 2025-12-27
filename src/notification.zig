@@ -4,6 +4,8 @@ const Font = @import("renderer/font.zig").Font;
 const UiVec4 = @import("renderer/ui_renderer.zig").UiVec4;
 
 pub const Notification = struct {
+    const Self = @This();
+
     text: [64]u8,
     len: usize,
     timer: f32,

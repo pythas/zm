@@ -5,7 +5,7 @@ const zglfw = @import("zglfw");
 const MouseState = @import("input.zig").MouseState;
 const KeyboardState = @import("input.zig").KeyboardState;
 const World = @import("world.zig").World;
-const Renderer = @import("renderer/renderer.zig").Renderer;
+const Renderer = @import("renderer.zig").Renderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
 const Tile = @import("tile.zig").Tile;
@@ -18,7 +18,7 @@ const Tool = @import("inventory.zig").Tool;
 const Item = @import("inventory.zig").Item;
 const Recipe = @import("inventory.zig").Recipe;
 const PartStats = @import("ship.zig").PartStats;
-const EditorLayout = @import("editor/layout.zig").EditorLayout;
+const ShipManagementLayout = @import("ship_management/layout.zig").ShipManagementLayout;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
@@ -26,7 +26,7 @@ const tilemapHeight = @import("tile.zig").tilemapHeight;
 const hover_offset_x = 10;
 const hover_offset_y = 10;
 
-pub const Editor = struct {
+pub const ShipManagement = struct {
     const Self = @This();
 
     allocator: std.mem.Allocator,
@@ -68,7 +68,7 @@ pub const Editor = struct {
         self.keyboard.update();
 
         const ship = &world.objects.items[0];
-        const layout = EditorLayout.compute(screen_w, screen_h);
+        const layout = ShipManagementLayout.compute(screen_w, screen_h);
 
         self.handleShortcuts(ship);
 
@@ -87,7 +87,7 @@ pub const Editor = struct {
             world,
             dt,
             t,
-            .ship_editor,
+            .ship_management,
             hover_x,
             hover_y,
         );
@@ -161,7 +161,7 @@ pub const Editor = struct {
         const screen_w: f32 = @floatFromInt(wh[0]);
         const screen_h: f32 = @floatFromInt(wh[1]);
 
-        const layout = EditorLayout.compute(screen_w, screen_h);
+        const layout = ShipManagementLayout.compute(screen_w, screen_h);
         const ship = &world.objects.items[0];
 
         // reset hover state
@@ -189,7 +189,7 @@ pub const Editor = struct {
         }
     }
 
-    fn drawShipPanel(self: *Self, renderer: *Renderer, layout: EditorLayout, ship: *TileObject) !void {
+    fn drawShipPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
         try ui.panel(layout.ship_panel_rect);
 
@@ -235,7 +235,7 @@ pub const Editor = struct {
         }
     }
 
-    fn drawInventoryPanel(self: *Self, renderer: *Renderer, layout: EditorLayout, ship: *TileObject) !void {
+    fn drawInventoryPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
         try ui.panel(layout.inventory_rect);
 
@@ -273,7 +273,7 @@ pub const Editor = struct {
         }
     }
 
-    fn drawToolsPanel(self: *Self, renderer: *Renderer, layout: EditorLayout, world: *World) !void {
+    fn drawToolsPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World) !void {
         var ui = &renderer.ui;
         try ui.panel(layout.tools_rect);
 
@@ -305,7 +305,7 @@ pub const Editor = struct {
         }
     }
 
-    fn drawRecipesPanel(self: *Self, renderer: *Renderer, layout: EditorLayout, world: *World) !void {
+    fn drawRecipesPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World) !void {
         var ui = &renderer.ui;
         try ui.panel(layout.recipe_rect);
 
@@ -338,7 +338,7 @@ pub const Editor = struct {
         }
     }
 
-    fn drawCraftingPanel(self: *Self, renderer: *Renderer, layout: EditorLayout, ship: *TileObject) !void {
+    fn drawCraftingPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
         if (try ui.button(
             layout.crafting_rect,
@@ -360,9 +360,9 @@ pub const Editor = struct {
                 );
 
                 if (remaining == 0) {
-                    std.log.info("Editor: Constructed chemical_thruster", .{});
+                    std.log.info("ShipManagement: Constructed chemical_thruster", .{});
                 } else {
-                    std.log.warn("Editor: Failed to add chemical_thruster to inventory (no space?)", .{});
+                    std.log.warn("ShipManagement: Failed to add chemical_thruster to inventory (no space?)", .{});
                 }
 
                 // TODO: report construction
@@ -371,4 +371,3 @@ pub const Editor = struct {
         }
     }
 };
-
