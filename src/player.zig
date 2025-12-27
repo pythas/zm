@@ -55,12 +55,20 @@ pub const PlayerController = struct {
                 ship.applyInputThrust(&world.physics, .backward);
             }
 
-            if (keyboard_state.isDown(.a)) {
+            if (keyboard_state.isDown(.q)) {
                 ship.applyInputThrust(&world.physics, .left);
             }
 
-            if (keyboard_state.isDown(.d)) {
+            if (keyboard_state.isDown(.e)) {
                 ship.applyInputThrust(&world.physics, .right);
+            }
+
+            if (keyboard_state.isDown(.a)) {
+                ship.applyInputTorque(&world.physics, .rotate_ccw);
+            }
+
+            if (keyboard_state.isDown(.d)) {
+                ship.applyInputTorque(&world.physics, .rotate_cw);
             }
         } else {
             if (keyboard_state.isDown(.w)) {
@@ -71,12 +79,20 @@ pub const PlayerController = struct {
                 ship.applyInputThrust(&world.physics, .secondary_backward);
             }
 
-            if (keyboard_state.isDown(.a)) {
+            if (keyboard_state.isDown(.q)) {
                 ship.applyInputThrust(&world.physics, .secondary_left);
             }
 
-            if (keyboard_state.isDown(.d)) {
+            if (keyboard_state.isDown(.e)) {
                 ship.applyInputThrust(&world.physics, .secondary_right);
+            }
+
+            if (keyboard_state.isDown(.a)) {
+                ship.applyInputTorque(&world.physics, .rotate_ccw);
+            }
+
+            if (keyboard_state.isDown(.d)) {
+                ship.applyInputTorque(&world.physics, .rotate_cw);
             }
         }
 

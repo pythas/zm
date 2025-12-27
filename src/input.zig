@@ -11,6 +11,8 @@ pub const InputState = enum {
     secondary_backward,
     secondary_left,
     secondary_right,
+    rotate_cw,
+    rotate_ccw,
 };
 
 pub const KeyboardState = struct {

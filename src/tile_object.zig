@@ -436,6 +436,24 @@ pub const TileObject = struct {
     }
 
     // physics
+    pub fn applyInputTorque(self: *Self, physics: *Physics, input: InputState) void {
+        if (!self.body_id.isValid()) {
+            return;
+        }
+
+        const torque_power: f32 = 1_000_000.0;
+
+        switch (input) {
+            .rotate_cw => {
+                physics.addTorque(self.body_id, torque_power, true);
+            },
+            .rotate_ccw => {
+                physics.addTorque(self.body_id, -torque_power, true);
+            },
+            else => {},
+        }
+    }
+
     pub fn applyInputThrust(self: *Self, physics: *Physics, input: InputState) void {
         if (!self.body_id.isValid()) {
             return;
