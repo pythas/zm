@@ -37,6 +37,7 @@ pub const ShipManagement = struct {
     current_recipe: ?Recipe = null,
 
     hovered_item_name: ?[]const u8 = null,
+    hover_text_buf: [255]u8 = undefined,
     hover_pos_x: f32 = 0,
     hover_pos_y: f32 = 0,
 
@@ -224,8 +225,7 @@ pub const ShipManagement = struct {
                         }
                     }
 
-                    var buf: [255]u8 = undefined;
-                    const text = std.fmt.bufPrint(&buf, "{s}{s}{s}", .{ prefix, name, extra }) catch "!";
+                    const text = std.fmt.bufPrint(&self.hover_text_buf, "{s}{s}{s}", .{ prefix, name, extra }) catch "!";
 
                     self.hovered_item_name = text;
                     self.hover_pos_x = self.mouse.x + hover_offset_x;
@@ -298,7 +298,7 @@ pub const ShipManagement = struct {
                 self.hover_pos_y = self.mouse.y + hover_offset_y;
             }
 
-            if (try ui.toolSlot(tool_rect, item, is_selected)) {
+            if ((try ui.toolSlot(tool_rect, item, is_selected)).is_clicked) {
                 self.current_tool = if (is_selected) null else .welding;
             }
             tool_x += slot_size + slot_padding;
@@ -330,7 +330,7 @@ pub const ShipManagement = struct {
                 self.hover_pos_y = self.mouse.y + hover_offset_y;
             }
 
-            if (try ui.recipeSlot(recipe_rect, item, is_selected)) {
+            if ((try ui.recipeSlot(recipe_rect, item, is_selected)).is_clicked) {
                 self.current_recipe = if (is_selected) null else .chemical_thruster;
             }
 
@@ -340,13 +340,14 @@ pub const ShipManagement = struct {
 
     fn drawCraftingPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
-        if (try ui.button(
+        const button_state = try ui.button(
             layout.crafting_rect,
             false,
             self.current_recipe == null,
             "Construct",
             renderer.font,
-        )) {
+        );
+        if (button_state.is_clicked) {
             const iron = Item{ .resource = .iron };
             const count_iron = ship.getInventoryCountByItem(iron);
 

@@ -50,6 +50,12 @@ pub const UiRect = struct {
     }
 };
 
+pub const UiState = struct {
+    is_hovered: bool,
+    is_clicked: bool,
+    is_down: bool,
+};
+
 pub const UiRenderer = struct {
     const Self = @This();
 
@@ -154,7 +160,7 @@ pub const UiRenderer = struct {
         try self.pushQuad(rect, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 }, data, 1);
     }
 
-    pub fn inventorySlot(self: *Self, rect: UiRect, item: Item, amount: u32, is_selected: bool, font: *const Font) !bool {
+    pub fn inventorySlot(self: *Self, rect: UiRect, item: Item, amount: u32, is_selected: bool, font: *const Font) !UiState {
         const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)
@@ -193,7 +199,11 @@ pub const UiRenderer = struct {
                 };
                 try self.sprite(sprite_rect, s);
             },
-            else => return false,
+            else => return UiState{
+                .is_hovered = is_hovered,
+                .is_clicked = is_hovered and self.mouse.is_left_clicked,
+                .is_down = is_hovered and self.mouse.is_left_down,
+            },
         }
 
         if (amount > 0) {
@@ -213,10 +223,14 @@ pub const UiRenderer = struct {
             try self.label(.{ .x = tx, .y = ty }, text, font);
         }
 
-        return is_hovered and self.mouse.is_left_clicked;
+        return UiState{
+            .is_hovered = is_hovered,
+            .is_clicked = is_hovered and self.mouse.is_left_clicked,
+            .is_down = is_hovered and self.mouse.is_left_down,
+        };
     }
 
-    pub fn toolSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !bool {
+    pub fn toolSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !UiState {
         const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)
@@ -249,10 +263,14 @@ pub const UiRenderer = struct {
             .component => {},
         }
 
-        return is_hovered and self.mouse.is_left_clicked;
+        return UiState{
+            .is_hovered = is_hovered,
+            .is_clicked = is_hovered and self.mouse.is_left_clicked,
+            .is_down = is_hovered and self.mouse.is_left_down,
+        };
     }
 
-    pub fn recipeSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !bool {
+    pub fn recipeSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !UiState {
         const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)
@@ -285,7 +303,11 @@ pub const UiRenderer = struct {
             .component => {},
         }
 
-        return is_hovered and self.mouse.is_left_clicked;
+        return UiState{
+            .is_hovered = is_hovered,
+            .is_clicked = is_hovered and self.mouse.is_left_clicked,
+            .is_down = is_hovered and self.mouse.is_left_down,
+        };
     }
 
     pub fn button(
@@ -295,7 +317,7 @@ pub const UiRenderer = struct {
         is_disabled: bool,
         text: []const u8,
         font: *const Font,
-    ) !bool {
+    ) !UiState {
         const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
         var color = if (is_active)
             UiVec4{ .r = 0.25, .g = 0.25, .b = 0.35, .a = 1.0 }
@@ -327,7 +349,11 @@ pub const UiRenderer = struct {
             font,
         );
 
-        return !is_disabled and is_hovered and self.mouse.is_left_clicked;
+        return UiState{
+            .is_hovered = !is_disabled and is_hovered,
+            .is_clicked = !is_disabled and is_hovered and self.mouse.is_left_clicked,
+            .is_down = !is_disabled and is_hovered and self.mouse.is_left_down,
+        };
     }
 
     pub fn label(self: *Self, pos: UiVec2, text: []const u8, font: *const Font) !void {
