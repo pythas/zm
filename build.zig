@@ -23,12 +23,21 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("zglfw", zglfw.module("root"));
     exe.linkLibrary(zglfw.artifact("glfw"));
 
-    @import("zgpu").addLibraryPathsTo(exe);
     const zgpu = b.dependency("zgpu", .{
         .target = target,
     });
     exe.root_module.addImport("zgpu", zgpu.module("root"));
     exe.linkLibrary(zgpu.artifact("zdawn"));
+
+    if (target.result.os.tag == .linux and target.result.cpu.arch.isX86()) {
+        if (b.lazyDependency("dawn_x86_64_linux_gnu", .{})) |dawn_prebuilt| {
+            exe.addLibraryPath(dawn_prebuilt.path(""));
+        }
+    } else if (target.result.os.tag == .windows) {
+        if (b.lazyDependency("dawn_x86_64_windows_gnu", .{})) |dawn_prebuilt| {
+            exe.addLibraryPath(dawn_prebuilt.path(""));
+        }
+    }
 
     const zstbi = b.dependency("zstbi", .{});
     exe.root_module.addImport("zstbi", zstbi.module("root"));
