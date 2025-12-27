@@ -426,6 +426,10 @@ pub const TileObject = struct {
 
                     stack.amount -= take;
                     remaining -= take;
+
+                    if (stack.amount == 0) {
+                        stack.item = .none;
+                    }
                 }
             }
         }

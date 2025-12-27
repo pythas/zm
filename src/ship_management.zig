@@ -16,6 +16,7 @@ const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
 const Tool = @import("inventory.zig").Tool;
 const Item = @import("inventory.zig").Item;
+const Stack = @import("inventory.zig").Stack;
 const Recipe = @import("inventory.zig").Recipe;
 const PartStats = @import("ship.zig").PartStats;
 const ShipManagementLayout = @import("ship_management/layout.zig").ShipManagementLayout;
@@ -35,6 +36,8 @@ pub const ShipManagement = struct {
     keyboard: KeyboardState,
     current_tool: ?Tool = null,
     current_recipe: ?Recipe = null,
+
+    cursor_item: Stack = .{},
 
     hovered_item_name: ?[]const u8 = null,
     hover_text_buf: [255]u8 = undefined,
@@ -144,6 +147,33 @@ pub const ShipManagement = struct {
                         }
                     },
                 }
+            } else {
+                switch (self.cursor_item.item) {
+                    .component => |part_kind| {
+                        if (ship.getTile(tile_x, tile_y)) |tile| {
+                            if (tile.data == .empty) {
+                                const tier = 1; // Default tier
+                                const health = PartStats.getMaxHealth(part_kind, tier);
+                                const new_tile = Tile.init(.{
+                                    .ship_part = .{
+                                        .kind = part_kind,
+                                        .tier = tier,
+                                        .health = health,
+                                        .rotation = .north,
+                                    },
+                                }) catch unreachable;
+
+                                ship.setTile(tile_x, tile_y, new_tile);
+
+                                self.cursor_item.amount -= 1;
+                                if (self.cursor_item.amount == 0) {
+                                    self.cursor_item = .{};
+                                }
+                            }
+                        }
+                    },
+                    else => {},
+                }
             }
         }
 
@@ -186,6 +216,18 @@ pub const ShipManagement = struct {
         // tooltips
         if (self.hovered_item_name) |name| {
             try ui.tooltip(self.hover_pos_x, self.hover_pos_y, name, renderer.font);
+            ui.flush(pass, &renderer.global);
+        }
+
+        if (self.cursor_item.item != .none) {
+            const slot_size: f32 = 20.0;
+            const cursor_rect = UiRect{
+                .x = self.mouse.x - slot_size / 2,
+                .y = self.mouse.y - slot_size / 2,
+                .w = slot_size,
+                .h = slot_size,
+            };
+            _ = try ui.inventorySlot(cursor_rect, self.cursor_item.item, self.cursor_item.amount, true, renderer.font);
             ui.flush(pass, &renderer.global);
         }
     }
@@ -239,11 +281,6 @@ pub const ShipManagement = struct {
         var ui = &renderer.ui;
         try ui.panel(layout.inventory_rect);
 
-        if (self.mouse.is_left_clicked and layout.inventory_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
-            self.current_tool = null;
-            self.current_recipe = null;
-        }
-
         const slot_size: f32 = 20.0;
         const slot_padding: f32 = 2.0;
 
@@ -252,7 +289,7 @@ pub const ShipManagement = struct {
 
         var inv_it = ship.inventories.valueIterator();
         while (inv_it.next()) |inv| {
-            for (inv.stacks.items) |stack| {
+            for (inv.stacks.items) |*stack| {
                 const slot_rect = UiRect{ .x = inv_x, .y = inv_y, .w = slot_size, .h = slot_size };
 
                 if (slot_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
@@ -263,7 +300,64 @@ pub const ShipManagement = struct {
                     }
                 }
 
-                _ = try ui.inventorySlot(slot_rect, stack.item, stack.amount, false, renderer.font);
+                const state = try ui.inventorySlot(slot_rect, stack.item, stack.amount, false, renderer.font);
+
+                if (state.is_clicked) {
+                    if (self.cursor_item.item == .none) {
+                        if (stack.item != .none) {
+                            self.cursor_item = stack.*;
+                            stack.* = .{};
+                        }
+                    } else {
+                        if (stack.item == .none) {
+                            stack.* = self.cursor_item;
+                            self.cursor_item = .{};
+                        } else if (stack.item.eql(self.cursor_item.item)) {
+                            const max = stack.item.getMaxStack();
+                            const available = max - stack.amount;
+                            const take = @min(available, self.cursor_item.amount);
+                            stack.amount += take;
+                            self.cursor_item.amount -= take;
+                            if (self.cursor_item.amount == 0) self.cursor_item = .{};
+                        } else {
+                            const temp = stack.*;
+                            stack.* = self.cursor_item;
+                            self.cursor_item = temp;
+                        }
+                    }
+                } else if (state.is_right_clicked) {
+                    if (self.cursor_item.item == .none) {
+                        if (stack.item != .none and stack.amount > 0) {
+                            // Take 1
+                            if (self.cursor_item.item == .none) {
+                                self.cursor_item = .{ .item = stack.item, .amount = 0 };
+                            }
+                            // Assuming we only support taking into empty cursor for now or matching
+
+                            self.cursor_item.amount += 1;
+                            stack.amount -= 1;
+                            if (stack.amount == 0) stack.item = .none;
+                        }
+                    } else {
+                        // Place 1
+                        if (stack.item == .none) {
+                            stack.item = self.cursor_item.item;
+                            stack.amount = 1;
+                            self.cursor_item.amount -= 1;
+                            if (self.cursor_item.amount == 0) self.cursor_item = .{};
+                        } else if (stack.item.eql(self.cursor_item.item)) {
+                            if (stack.amount < stack.item.getMaxStack()) {
+                                stack.amount += 1;
+                                self.cursor_item.amount -= 1;
+                                if (self.cursor_item.amount == 0) self.cursor_item = .{};
+                            }
+                        } else {
+                            const temp = stack.*;
+                            stack.* = self.cursor_item;
+                            self.cursor_item = temp;
+                        }
+                    }
+                }
 
                 inv_x += slot_size + slot_padding;
                 if (inv_x + slot_size > layout.inventory_rect.x + layout.inventory_rect.w) {

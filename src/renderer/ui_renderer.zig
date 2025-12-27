@@ -54,6 +54,8 @@ pub const UiState = struct {
     is_hovered: bool,
     is_clicked: bool,
     is_down: bool,
+    is_right_clicked: bool,
+    is_right_down: bool,
 };
 
 pub const UiRenderer = struct {
@@ -203,6 +205,8 @@ pub const UiRenderer = struct {
                 .is_hovered = is_hovered,
                 .is_clicked = is_hovered and self.mouse.is_left_clicked,
                 .is_down = is_hovered and self.mouse.is_left_down,
+                .is_right_clicked = is_hovered and self.mouse.is_right_clicked,
+                .is_right_down = is_hovered and self.mouse.is_right_down,
             },
         }
 
@@ -227,6 +231,8 @@ pub const UiRenderer = struct {
             .is_hovered = is_hovered,
             .is_clicked = is_hovered and self.mouse.is_left_clicked,
             .is_down = is_hovered and self.mouse.is_left_down,
+            .is_right_clicked = is_hovered and self.mouse.is_right_clicked,
+            .is_right_down = is_hovered and self.mouse.is_right_down,
         };
     }
 
@@ -267,6 +273,8 @@ pub const UiRenderer = struct {
             .is_hovered = is_hovered,
             .is_clicked = is_hovered and self.mouse.is_left_clicked,
             .is_down = is_hovered and self.mouse.is_left_down,
+            .is_right_clicked = is_hovered and self.mouse.is_right_clicked,
+            .is_right_down = is_hovered and self.mouse.is_right_down,
         };
     }
 
@@ -307,6 +315,8 @@ pub const UiRenderer = struct {
             .is_hovered = is_hovered,
             .is_clicked = is_hovered and self.mouse.is_left_clicked,
             .is_down = is_hovered and self.mouse.is_left_down,
+            .is_right_clicked = is_hovered and self.mouse.is_right_clicked,
+            .is_right_down = is_hovered and self.mouse.is_right_down,
         };
     }
 
@@ -353,6 +363,8 @@ pub const UiRenderer = struct {
             .is_hovered = !is_disabled and is_hovered,
             .is_clicked = !is_disabled and is_hovered and self.mouse.is_left_clicked,
             .is_down = !is_disabled and is_hovered and self.mouse.is_left_down,
+            .is_right_clicked = !is_disabled and is_hovered and self.mouse.is_right_clicked,
+            .is_right_down = !is_disabled and is_hovered and self.mouse.is_right_down,
         };
     }
 
