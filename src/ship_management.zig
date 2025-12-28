@@ -425,48 +425,28 @@ pub const ShipManagement = struct {
         var recipe_x = layout.recipe_rect.x + 10;
         const recipe_y = layout.recipe_rect.y + 10;
 
-        if (world.research_manager.isUnlocked(.chemical_thruster)) {
-            const recipe_rect = UiRect{ .x = recipe_x, .y = recipe_y, .w = slot_size, .h = slot_size };
-            const item = Item{ .recipe = .chemical_thruster };
+        for (std.enums.values(Recipe)) |recipe| {
+            if (world.research_manager.isUnlocked(RecipeStats.getResearchId(recipe))) {
+                const recipe_rect = UiRect{ .x = recipe_x, .y = recipe_y, .w = slot_size, .h = slot_size };
+                const item = Item{ .recipe = recipe };
 
-            var is_selected = false;
-            if (self.current_recipe) |r| {
-                if (r == .chemical_thruster) is_selected = true;
+                var is_selected = false;
+                if (self.current_recipe) |r| {
+                    if (r == recipe) is_selected = true;
+                }
+
+                if (recipe_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+                    self.hovered_item_name = item.getName();
+                    self.hover_pos_x = self.mouse.x + hover_offset_x;
+                    self.hover_pos_y = self.mouse.y + hover_offset_y;
+                }
+
+                if ((try ui.recipeSlot(recipe_rect, item, is_selected)).is_clicked) {
+                    self.current_recipe = if (is_selected) null else recipe;
+                }
+
+                recipe_x += slot_size + slot_padding;
             }
-
-            if (recipe_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
-                self.hovered_item_name = item.getName();
-                self.hover_pos_x = self.mouse.x + hover_offset_x;
-                self.hover_pos_y = self.mouse.y + hover_offset_y;
-            }
-
-            if ((try ui.recipeSlot(recipe_rect, item, is_selected)).is_clicked) {
-                self.current_recipe = if (is_selected) null else .chemical_thruster;
-            }
-
-            recipe_x += slot_size + slot_padding;
-        }
-
-        if (world.research_manager.isUnlocked(.laser)) {
-            const recipe_rect = UiRect{ .x = recipe_x, .y = recipe_y, .w = slot_size, .h = slot_size };
-            const item = Item{ .recipe = .laser };
-
-            var is_selected = false;
-            if (self.current_recipe) |r| {
-                if (r == .laser) is_selected = true;
-            }
-
-            if (recipe_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
-                self.hovered_item_name = item.getName();
-                self.hover_pos_x = self.mouse.x + hover_offset_x;
-                self.hover_pos_y = self.mouse.y + hover_offset_y;
-            }
-
-            if ((try ui.recipeSlot(recipe_rect, item, is_selected)).is_clicked) {
-                self.current_recipe = if (is_selected) null else .laser;
-            }
-
-            recipe_x += slot_size + slot_padding;
         }
     }
 

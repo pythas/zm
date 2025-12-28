@@ -3,6 +3,7 @@ const std = @import("std");
 const Resource = @import("resource.zig").Resource;
 const ResourceStats = @import("resource.zig").ResourceStats;
 const PartKind = @import("tile.zig").PartKind;
+const ResearchId = @import("research.zig").ResearchId;
 
 pub const Tool = enum(u8) {
     welding = 0,
@@ -48,6 +49,13 @@ pub const RecipeStats = struct {
         return switch (recipe) {
             .chemical_thruster => "Chemical Thruster\nCost: 20 iron",
             .laser => "Laser\nCost: 40 iron",
+        };
+    }
+
+    pub fn getResearchId(recipe: Recipe) ResearchId {
+        return switch (recipe) {
+            .chemical_thruster => .chemical_thruster,
+            .laser => .laser,
         };
     }
 };
