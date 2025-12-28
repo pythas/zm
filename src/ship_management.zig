@@ -330,18 +330,18 @@ pub const ShipManagement = struct {
                 } else if (state.is_right_clicked) {
                     if (self.cursor_item.item == .none) {
                         if (stack.item != .none and stack.amount > 0) {
-                            // Take 1
+                            // take 1
                             if (self.cursor_item.item == .none) {
                                 self.cursor_item = .{ .item = stack.item, .amount = 0 };
                             }
-                            // Assuming we only support taking into empty cursor for now or matching
+                            // assuming we only support taking into empty cursor for now or matching
 
                             self.cursor_item.amount += 1;
                             stack.amount -= 1;
                             if (stack.amount == 0) stack.item = .none;
                         }
                     } else {
-                        // Place 1
+                        // place 1
                         if (stack.item == .none) {
                             stack.item = self.cursor_item.item;
                             stack.amount = 1;
@@ -445,6 +445,28 @@ pub const ShipManagement = struct {
 
             recipe_x += slot_size + slot_padding;
         }
+
+        if (world.research_manager.isUnlocked(.laser)) {
+            const recipe_rect = UiRect{ .x = recipe_x, .y = recipe_y, .w = slot_size, .h = slot_size };
+            const item = Item{ .recipe = .laser };
+
+            var is_selected = false;
+            if (self.current_recipe) |r| {
+                if (r == .laser) is_selected = true;
+            }
+
+            if (recipe_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+                self.hovered_item_name = item.getName();
+                self.hover_pos_x = self.mouse.x + hover_offset_x;
+                self.hover_pos_y = self.mouse.y + hover_offset_y;
+            }
+
+            if ((try ui.recipeSlot(recipe_rect, item, is_selected)).is_clicked) {
+                self.current_recipe = if (is_selected) null else .laser;
+            }
+
+            recipe_x += slot_size + slot_padding;
+        }
     }
 
     fn drawCraftingPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
@@ -457,28 +479,57 @@ pub const ShipManagement = struct {
             renderer.font,
         );
         if (button_state.is_clicked) {
-            const iron = Item{ .resource = .iron };
-            const count_iron = ship.getInventoryCountByItem(iron);
+            switch (self.current_recipe.?) {
+                .chemical_thruster => {
+                    const iron = Item{ .resource = .iron };
+                    const count_iron = ship.getInventoryCountByItem(iron);
 
-            if (count_iron >= 20) {
-                // TODO: add crafting delay
+                    if (count_iron >= 20) {
+                        // TODO: add crafting delay
 
-                ship.removeNumberOfItemsFromInventory(iron, 20);
+                        ship.removeNumberOfItemsFromInventory(iron, 20);
 
-                const remaining = try ship.addItemToInventory(
-                    .{ .component = .chemical_thruster },
-                    1,
-                    ship.position,
-                );
+                        const remaining = try ship.addItemToInventory(
+                            .{ .component = .chemical_thruster },
+                            1,
+                            ship.position,
+                        );
 
-                if (remaining == 0) {
-                    std.log.info("ShipManagement: Constructed chemical_thruster", .{});
-                } else {
-                    std.log.warn("ShipManagement: Failed to add chemical_thruster to inventory (no space?)", .{});
-                }
+                        if (remaining == 0) {
+                            std.log.info("ShipManagement: Constructed chemical_thruster", .{});
+                        } else {
+                            std.log.warn("ShipManagement: Failed to add chemical_thruster to inventory (no space?)", .{});
+                        }
 
-                // TODO: report construction
+                        // TODO: report construction
 
+                    }
+                },
+                .laser => {
+                    const iron = Item{ .resource = .iron };
+                    const count_iron = ship.getInventoryCountByItem(iron);
+
+                    if (count_iron >= 40) {
+                        // TODO: add crafting delay
+
+                        ship.removeNumberOfItemsFromInventory(iron, 40);
+
+                        const remaining = try ship.addItemToInventory(
+                            .{ .component = .laser },
+                            1,
+                            ship.position,
+                        );
+
+                        if (remaining == 0) {
+                            std.log.info("ShipManagement: Constructed laser", .{});
+                        } else {
+                            std.log.warn("ShipManagement: Failed to add laser to inventory (no space?)", .{});
+                        }
+
+                        // TODO: report construction
+
+                    }
+                },
             }
         }
     }

@@ -4,12 +4,13 @@ const Resource = @import("resource.zig").Resource;
 const ResourceStats = @import("resource.zig").ResourceStats;
 const PartKind = @import("tile.zig").PartKind;
 
-pub const Tool = enum {
-    welding,
+pub const Tool = enum(u8) {
+    welding = 0,
 };
 
-pub const Recipe = enum {
-    chemical_thruster,
+pub const Recipe = enum(u8) {
+    chemical_thruster = 0,
+    laser,
 };
 
 pub const Item = union(enum) {
@@ -48,9 +49,11 @@ pub const Item = union(enum) {
             },
             .recipe => |r| switch (r) {
                 .chemical_thruster => "Chemical Thruster\nCost: 20 iron",
+                .laser => "Laser\nCost: 40 iron",
             },
             .component => |c| switch (c) {
                 .chemical_thruster => "Chemical Thruster",
+                .laser => "Laser",
                 else => "N/A",
             },
         };

@@ -48,13 +48,17 @@ pub const PartStats = struct {
         };
     }
 
-    pub fn getLaserRangeSq(tier: u8) f32 {
-        const range: f32 = switch (tier) {
+    pub fn getLaserRangeSq(tier: u8, is_broken: bool) f32 {
+        var range: f32 = switch (tier) {
             1 => 100.0,
             2 => 160.0,
             3 => 320.0,
             else => 0.0,
         };
+
+        if (is_broken) {
+            range *= 0.5;
+        }
 
         return range * range;
     }

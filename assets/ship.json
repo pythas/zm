@@ -1080,7 +1080,7 @@
       "kind": "laser",
       "base_material": null,
       "rotation": "north",
-      "health": 1e2
+      "health": 0e0
     },
     {
       "x": 8,

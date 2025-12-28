@@ -156,6 +156,20 @@ pub const Tile = struct {
         };
     }
 
+    pub fn isTerrain(self: Self) bool {
+        return switch (self.data) {
+            .terrain => true,
+            else => false,
+        };
+    }
+
+    pub fn isShipPart(self: Self) bool {
+        return switch (self.data) {
+            .ship_part => true,
+            else => false,
+        };
+    }
+
     pub fn getShipPart(self: Self) ?ShipPartTileType {
         return switch (self.data) {
             .ship_part => |ship| ship,
@@ -177,17 +191,10 @@ pub const Tile = struct {
         };
     }
 
-    pub fn isTerrain(self: Self) bool {
+    pub fn getHealth(self: Self) ?u8 {
         return switch (self.data) {
-            .terrain => true,
-            else => false,
-        };
-    }
-
-    pub fn isShipPart(self: Self) bool {
-        return switch (self.data) {
-            .ship_part => true,
-            else => false,
+            .ship_part => |ship| ship.health,
+            else => null,
         };
     }
 };

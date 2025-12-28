@@ -137,9 +137,10 @@ pub const PlayerController = struct {
                     if (!is_used) {
                         // check if in range
                         const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;
-                        const tier = ti.getTier() orelse continue;
+                        const ship_part = ti.getShipPart() orelse continue;
+                        const is_broken = PartStats.isBroken(ship_part);
 
-                        const range = PartStats.getLaserRangeSq(tier);
+                        const range = PartStats.getLaserRangeSq(ship_part.tier, is_broken);
                         const dist = ship.getDistanceToTileSq(
                             tile_ref.tile_x,
                             tile_ref.tile_y,
@@ -156,7 +157,7 @@ pub const PlayerController = struct {
                                 .y = tile_ref.tile_y,
                             },
                             .dist = dist,
-                            .tier = tier,
+                            .tier = ship_part.tier,
                         });
                     }
                 }

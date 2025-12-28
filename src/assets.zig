@@ -51,17 +51,13 @@ pub const Assets = struct {
     }
 
     pub fn getToolSprite(tool: Tool) Sprite {
-        const index = switch (tool) {
-            .welding => 0,
-        };
+        const index = @intFromEnum(tool);
 
         return Sprite.init(tool_sheet, @intCast(index));
     }
 
     pub fn getRecipeSprite(recipe: Recipe) Sprite {
-        const index = switch (recipe) {
-            .chemical_thruster => 0,
-        };
+        const index = @intFromEnum(recipe);
 
         return Sprite.init(recipe_sheet, @intCast(index));
     }

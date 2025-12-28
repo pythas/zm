@@ -5,6 +5,7 @@ const Resource = @import("resource.zig").Resource;
 pub const ResearchId = enum {
     welding,
     chemical_thruster,
+    laser,
 };
 
 pub const ResearchManager = struct {
@@ -47,9 +48,9 @@ pub const ResearchManager = struct {
             return self.unlock(.chemical_thruster);
         }
 
-        // if (std.mem.eql(u8, component_name, "broken_mining_laser")) {
-        //     return self.unlock(.mining_beam);
-        // }
+        if (std.mem.eql(u8, component_name, "broken_laser")) {
+            return self.unlock(.laser);
+        }
 
         return false;
     }
