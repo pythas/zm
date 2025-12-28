@@ -108,9 +108,17 @@ pub const Game = struct {
         const ship = &self.world.objects.items[0];
 
         for (self.world.objects.items) |*obj| {
-            if (obj.id == ship.id) continue;
+            if (obj.id == ship.id or obj.object_type == .debris) {
+                continue;
+            }
+
             if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
                 const target_pos = obj.getTileWorldPos(coords.x, coords.y);
+                const tile = obj.getTile(coords.x, coords.y) orelse continue;
+
+                if (tile.data == .empty) {
+                    continue;
+                }
 
                 const tile_refs = try ship.getTilesByPartKind(.laser);
                 defer self.allocator.free(tile_refs);
@@ -193,7 +201,7 @@ pub const Game = struct {
                     var hover_y: i32 = -1;
 
                     if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
-                        if (obj.id != ship.id) {
+                        if (obj.id != ship.id and obj.object_type != .debris) {
                             const target_pos = obj.getTileWorldPos(coords.x, coords.y);
                             if (try world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
                                 if (obj.getTile(coords.x, coords.y)) |tile| {
