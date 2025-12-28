@@ -10,6 +10,7 @@ const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
 const ShipManagement = @import("ship_management.zig").ShipManagement;
+const LineRenderData = @import("renderer/line_renderer.zig").LineRenderData;
 
 const scrollCallback = @import("world.zig").scrollCallback;
 
@@ -100,6 +101,75 @@ pub const Game = struct {
         }
     }
 
+    fn drawLaserLines(self: *Self, pass: zgpu.wgpu.RenderPassEncoder, world_pos: @import("vec2.zig").Vec2) !void {
+        var lines = std.ArrayList(LineRenderData).init(self.allocator);
+        defer lines.deinit();
+
+        const ship = &self.world.objects.items[0];
+
+        for (self.world.objects.items) |*obj| {
+            if (obj.id == ship.id) continue;
+            if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
+                const target_pos = obj.getTileWorldPos(coords.x, coords.y);
+
+                const tile_refs = try ship.getTilesByPartKind(.laser);
+                defer self.allocator.free(tile_refs);
+
+                for (tile_refs) |tile_ref| {
+                    // check if busy
+                    var is_used = false;
+                    for (self.world.player_controller.tile_actions.items) |tile_action| {
+                        if (tile_action.source.x == tile_ref.tile_x and
+                            tile_action.source.y == tile_ref.tile_y)
+                        {
+                            is_used = true;
+                            break;
+                        }
+                    }
+
+                    if (is_used) continue;
+
+                    const laser_world_pos = ship.getTileWorldPos(tile_ref.tile_x, tile_ref.tile_y);
+                    const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y).?;
+                    const sp = ti.getShipPart().?;
+                    const is_broken = @import("ship.zig").PartStats.isBroken(sp);
+                    const range_sq = @import("ship.zig").PartStats.getLaserRangeSq(sp.tier, is_broken);
+                    const range = std.math.sqrt(range_sq);
+
+                    const diff = target_pos.sub(laser_world_pos);
+                    const dist = diff.length();
+                    if (dist < 0.001) continue;
+                    const dir = diff.normalize();
+
+                    const limit_point = laser_world_pos.add(dir.mulScalar(range));
+
+                    const seg1_end = if (dist < range) target_pos else limit_point;
+
+                    try lines.append(.{
+                        .start = .{ laser_world_pos.x, laser_world_pos.y },
+                        .end = .{ seg1_end.x, seg1_end.y },
+                        .color = .{ 1.0, 1.0, 1.0, 0.1 },
+                        .thickness = 2.0,
+                        .dash_scale = 0.0,
+                    });
+
+                    if (dist > range) {
+                        try lines.append(.{
+                            .start = .{ seg1_end.x, seg1_end.y },
+                            .end = .{ target_pos.x, target_pos.y },
+                            .color = .{ 1.0, 1.0, 1.0, 0.05 },
+                            .thickness = 2.0,
+                            .dash_scale = 0.0,
+                        });
+                    }
+                }
+                break;
+            }
+        }
+
+        self.renderer.line.draw(pass, &self.renderer.global, lines.items);
+    }
+
     pub fn render(
         self: *Self,
         pass: zgpu.wgpu.RenderPassEncoder,
@@ -125,7 +195,6 @@ pub const Game = struct {
                     if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
                         if (obj.id != ship.id) {
                             const target_pos = obj.getTileWorldPos(coords.x, coords.y);
-
                             if (try world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
                                 if (obj.getTile(coords.x, coords.y)) |tile| {
                                     if (tile.data != .empty) {
@@ -143,6 +212,11 @@ pub const Game = struct {
 
                 try self.renderer.sprite.writeInstances(instances.items);
                 self.renderer.sprite.draw(pass, global, self.world.objects.items);
+
+                // lines
+                if (self.mode == .in_world) {
+                    try self.drawLaserLines(pass, world_pos);
+                }
 
                 const beam_instance_count = try self.renderer.beam.writeBuffers(world);
                 self.renderer.beam.draw(pass, global, beam_instance_count);

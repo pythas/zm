@@ -8,6 +8,7 @@ const GlobalRenderState = @import("renderer/common.zig").GlobalRenderState;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const BackgroundRenderer = @import("renderer/background_renderer.zig").BackgroundRenderer;
 const BeamRenderer = @import("renderer/beam_renderer.zig").BeamRenderer;
+const LineRenderer = @import("renderer/line_renderer.zig").LineRenderer;
 const UiRenderer = @import("renderer/ui_renderer.zig").UiRenderer;
 const World = @import("world.zig").World;
 const Font = @import("renderer/font.zig").Font;
@@ -21,6 +22,7 @@ pub const Renderer = struct {
     sprite: SpriteRenderer,
     background: BackgroundRenderer,
     beam: BeamRenderer,
+    line: LineRenderer,
     ui: UiRenderer,
     font: *Font,
 
@@ -45,6 +47,7 @@ pub const Renderer = struct {
         const sprite = try SpriteRenderer.init(allocator, gctx, &global);
         const background = try BackgroundRenderer.init(allocator, gctx, &global);
         const beam = try BeamRenderer.init(allocator, gctx, &global);
+        const line = try LineRenderer.init(allocator, gctx, &global);
         const ui = try UiRenderer.init(allocator, gctx, window, &global);
 
         return .{
@@ -54,6 +57,7 @@ pub const Renderer = struct {
             .sprite = sprite,
             .background = background,
             .beam = beam,
+            .line = line,
             .ui = ui,
             .font = font,
         };
@@ -65,6 +69,7 @@ pub const Renderer = struct {
         self.sprite.deinit();
         self.background.deinit();
         self.beam.deinit();
+        self.line.deinit();
         self.ui.deinit();
         self.font.deinit();
         self.allocator.destroy(self.font);
