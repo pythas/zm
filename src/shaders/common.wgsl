@@ -9,7 +9,6 @@ struct GlobalUniforms {
   _pad_removed_tile_size: f32,
   _pad1: f32,
   _pad2: f32,
-  hover_xy: vec4<f32>,
 };
 
 struct ChunkUniforms {

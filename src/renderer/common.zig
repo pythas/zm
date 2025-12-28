@@ -22,7 +22,6 @@ pub const GlobalUniforms = extern struct {
     _pad_removed_tile_size: f32,
     _pad1: f32,
     _pad2: f32,
-    hover_xy: [4]f32,
 };
 
 pub const GlobalRenderState = struct {
@@ -74,8 +73,6 @@ pub const GlobalRenderState = struct {
         dt: f32,
         t: f32,
         mode: GameMode,
-        hover_x: i32,
-        hover_y: i32,
     ) void {
         const wh = window.getFramebufferSize();
 
@@ -90,12 +87,6 @@ pub const GlobalRenderState = struct {
             ._pad_removed_tile_size = 1.0,
             ._pad1 = 0.0,
             ._pad2 = 0.0,
-            .hover_xy = .{
-                @floatFromInt(hover_x),
-                @floatFromInt(hover_y),
-                if (hover_x >= 0) 1.0 else 0.0,
-                0,
-            },
         };
 
         self.gctx.queue.writeBuffer(

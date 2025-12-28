@@ -2,13 +2,15 @@ struct VertexInput {
   @location(0) size: vec4<f32>,
   @location(1) position: vec4<f32>,
   @location(2) rotation: vec4<f32>,
-  @location(3) scale: f32,
+  @location(3) hover: vec4<f32>,
+  @location(4) scale: f32,
 };
 
 struct VertexOutput {
   @builtin(position) position: vec4<f32>,
   @location(0) uv: vec2<f32>,
   @location(1) size: vec2<f32>,
+  @location(2) hover: vec4<f32>,
 };
 
 @vertex
@@ -56,5 +58,6 @@ fn main(
 
   output.position = vec4<f32>(ndc_pos, 0.0, 1.0);
   output.size = input.size.xy;
+  output.hover = input.hover;
   return output;
 }

@@ -15,6 +15,7 @@ struct FragmentInput {
   @builtin(position) position: vec4<f32>,
   @location(0) uv: vec2<f32>,
   @location(1) size: vec2<f32>,
+  @location(2) hover: vec4<f32>,
 };
 
 fn grid(tile_uv: vec2<f32>) -> vec4<f32> {
@@ -48,8 +49,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     let overlay_tile = Tile(0u, tile.overlay_sheet, tile.overlay_sprite, 0u, 0u, 0u);
     let overlay_uv = get_sprite_uv(overlay_tile, tile_uv);
     let overlay_color = textureSampleLevel(atlas_texture, atlas_sampler, overlay_uv, tile.overlay_sheet, 0.0);
-    
-    // Blend overlay on top, masked by base alpha to keep shape
+
     color = mix(color, overlay_color, overlay_color.a * color.a);
   }
 
@@ -57,14 +57,34 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
       color = vec4<f32>(0.0);
   }
 
-  if globals.mode == 1u {
+  if globals.mode == 0u {
+    let hover_active = input.hover.z > 0.5;
+    let hover_tx = i32(input.hover.x);
+    let hover_ty = i32(input.hover.y);
+
+    if (hover_active && tile_x == hover_tx && tile_y == hover_ty) {
+      let grid_color = grid(tile_uv);
+      var a = color.a;
+      color = mix(grid_color, color, a);
+
+      let highlight = vec4<f32>(1.0, 1.0, 1.0, 1.0);
+      let edge = min(
+          min(tile_uv.x, 1.0 - tile_uv.x),
+          min(tile_uv.y, 1.0 - tile_uv.y),
+      );
+      let highlight_thickness = 0.06;
+      let highlight_mask = step(edge, highlight_thickness);
+
+      color = mix(color, highlight, highlight_mask);
+    }
+  } else if globals.mode == 1u {
     let grid_color = grid(tile_uv);
     var a = color.a;
     color = mix(grid_color, color, a);
 
-    let hover_active = globals.hover_xy.z > 0.5;
-    let hover_tx = i32(globals.hover_xy.x);
-    let hover_ty = i32(globals.hover_xy.y);
+    let hover_active = input.hover.z > 0.5;
+    let hover_tx = i32(input.hover.x);
+    let hover_ty = i32(input.hover.y);
 
     if (hover_active && tile_x == hover_tx && tile_y == hover_ty) {
       let highlight = vec4<f32>(1.0, 1.0, 1.0, 1.0);

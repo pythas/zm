@@ -23,6 +23,7 @@ pub const SpriteRenderData = struct {
     wh: [4]f32,
     position: [4]f32,
     rotation: [4]f32,
+    hover: [4]f32,
     scale: f32,
 };
 
@@ -132,11 +133,17 @@ pub const SpriteRenderer = struct {
         }
     }
 
-    pub fn buildInstance(object: *const TileObject) SpriteRenderData {
+    pub fn buildInstance(object: *const TileObject, hover_x: i32, hover_y: i32) SpriteRenderData {
         return .{
             .wh = .{ @floatFromInt(object.width * 8), @floatFromInt(object.height * 8), 0, 0 },
             .position = .{ object.position.x, object.position.y, 0, 0 },
             .rotation = .{ object.rotation, 0, 0, 0 },
+            .hover = .{
+                @floatFromInt(hover_x),
+                @floatFromInt(hover_y),
+                if (hover_x >= 0) 1.0 else 0.0,
+                0,
+            },
             .scale = 1.0,
         };
     }
@@ -235,9 +242,14 @@ fn createPipeline(
             .shader_location = 2,
         },
         .{
+            .format = .float32x4,
+            .offset = @offsetOf(SpriteRenderData, "hover"),
+            .shader_location = 3,
+        },
+        .{
             .format = .float32,
             .offset = @offsetOf(SpriteRenderData, "scale"),
-            .shader_location = 3,
+            .shader_location = 4,
         },
     };
 

@@ -93,8 +93,6 @@ pub const ShipManagement = struct {
             dt,
             t,
             .ship_management,
-            hover_x,
-            hover_y,
         );
     }
 
@@ -239,20 +237,31 @@ pub const ShipManagement = struct {
         var ui = &renderer.ui;
         try ui.panel(layout.ship_panel_rect);
 
+        var hover_x: i32 = -1;
+        var hover_y: i32 = -1;
+        var hover_active: f32 = 0.0;
+
+        if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
+            hover_x = tile_pos.x;
+            hover_y = tile_pos.y;
+            hover_active = 1.0;
+        }
+
         try renderer.sprite.prepareObject(ship);
         const instances = [_]SpriteRenderData{
             .{
                 .wh = .{ @floatFromInt(ship.width * 8), @floatFromInt(ship.height * 8), 0, 0 },
                 .position = .{ layout.grid_rect.x + layout.grid_rect.w / 2, layout.grid_rect.y + layout.grid_rect.h / 2, 0, 0 },
                 .rotation = .{ 0, 0, 0, 0 },
+                .hover = .{ @floatFromInt(hover_x), @floatFromInt(hover_y), hover_active, 0 },
                 .scale = layout.scale,
             },
         };
         try renderer.sprite.writeInstances(&instances);
 
-        if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
-            const tile_x: usize = @intCast(tile_pos.x);
-            const tile_y: usize = @intCast(tile_pos.y);
+        if (hover_active > 0.5) {
+            const tile_x: usize = @intCast(hover_x);
+            const tile_y: usize = @intCast(hover_y);
 
             if (ship.getTile(tile_x, tile_y)) |tile| {
                 if (tile.getShipPart()) |ship_part| {

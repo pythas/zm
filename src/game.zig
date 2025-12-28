@@ -92,7 +92,7 @@ pub const Game = struct {
             .in_world => {
                 try self.world.update(dt, &self.keyboard_state, &self.mouse_state);
 
-                self.renderer.global.write(self.window, &self.world, dt, t, self.mode, 0.0, 0.0);
+                self.renderer.global.write(self.window, &self.world, dt, t, self.mode);
             },
             .ship_management => {
                 self.ship_management.update(&self.renderer, &self.world, dt, t);
@@ -114,9 +114,24 @@ pub const Game = struct {
                 var instances = std.ArrayList(SpriteRenderData).init(self.allocator);
                 defer instances.deinit();
 
+                const mouse_pos = self.mouse_state.getRelativePosition();
+                const world_pos = world.camera.screenToWorld(mouse_pos);
+
                 for (self.world.objects.items) |*obj| {
+                    var hover_x: i32 = -1;
+                    var hover_y: i32 = -1;
+
+                    if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
+                        if (obj.getTile(coords.x, coords.y)) |tile| {
+                            if (tile.isTerrain()) {
+                                hover_x = @intCast(coords.x);
+                                hover_y = @intCast(coords.y);
+                            }
+                        }
+                    }
+
                     try self.renderer.sprite.prepareObject(obj);
-                    try instances.append(SpriteRenderer.buildInstance(obj));
+                    try instances.append(SpriteRenderer.buildInstance(obj, hover_x, hover_y));
                 }
 
                 try self.renderer.sprite.writeInstances(instances.items);
