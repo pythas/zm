@@ -116,16 +116,23 @@ pub const Game = struct {
 
                 const mouse_pos = self.mouse_state.getRelativePosition();
                 const world_pos = world.camera.screenToWorld(mouse_pos);
+                const ship = &self.world.objects.items[0];
 
                 for (self.world.objects.items) |*obj| {
                     var hover_x: i32 = -1;
                     var hover_y: i32 = -1;
 
                     if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
-                        if (obj.getTile(coords.x, coords.y)) |tile| {
-                            if (tile.isTerrain()) {
-                                hover_x = @intCast(coords.x);
-                                hover_y = @intCast(coords.y);
+                        if (obj.id != ship.id) {
+                            const target_pos = obj.getTileWorldPos(coords.x, coords.y);
+
+                            if (try world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
+                                if (obj.getTile(coords.x, coords.y)) |tile| {
+                                    if (tile.data != .empty) {
+                                        hover_x = @intCast(coords.x);
+                                        hover_y = @intCast(coords.y);
+                                    }
+                                }
                             }
                         }
                     }

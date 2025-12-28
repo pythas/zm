@@ -37,6 +37,77 @@ pub const PlayerController = struct {
         self.tile_actions.deinit();
     }
 
+    pub const LaserCandidate = struct {
+        coords: TileCoords,
+        dist: f32,
+        tier: u8,
+    };
+
+    pub fn getLaserCandidate(
+        self: *const Self,
+        ship: *TileObject,
+        target_pos: Vec2,
+    ) !?LaserCandidate {
+        const tile_refs = try ship.getTilesByPartKind(.laser);
+        defer self.allocator.free(tile_refs);
+
+        var laser_candidates = std.ArrayList(LaserCandidate).init(self.allocator);
+        defer laser_candidates.deinit();
+
+        for (tile_refs) |tile_ref| {
+            var is_used = false;
+            for (self.tile_actions.items) |tile_action| {
+                if (tile_action.source.x == tile_ref.tile_x and
+                    tile_action.source.y == tile_ref.tile_y)
+                {
+                    is_used = true;
+                    break;
+                }
+            }
+
+            if (!is_used) {
+                // check if in range
+                const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;
+                const ship_part = ti.getShipPart() orelse continue;
+                const is_broken = PartStats.isBroken(ship_part);
+
+                const range = PartStats.getLaserRangeSq(ship_part.tier, is_broken);
+                const dist = ship.getDistanceToTileSq(
+                    tile_ref.tile_x,
+                    tile_ref.tile_y,
+                    target_pos,
+                );
+
+                if (dist > range) {
+                    continue;
+                }
+
+                try laser_candidates.append(.{
+                    .coords = .{
+                        .x = tile_ref.tile_x,
+                        .y = tile_ref.tile_y,
+                    },
+                    .dist = dist,
+                    .tier = ship_part.tier,
+                });
+            }
+        }
+
+        if (laser_candidates.items.len == 0) {
+            return null;
+        }
+
+        // get closest laser
+        var min: ?LaserCandidate = null;
+        for (laser_candidates.items) |candidate| {
+            if (min == null or candidate.dist < min.?.dist) {
+                min = candidate;
+            }
+        }
+
+        return min;
+    }
+
     pub fn update(
         self: *Self,
         dt: f32,
@@ -111,76 +182,10 @@ pub const PlayerController = struct {
 
                 const target_pos = object.getTileWorldPos(coords.x, coords.y);
 
-                const tile_refs = try ship.getTilesByPartKind(.laser);
-                defer self.allocator.free(tile_refs);
-
-                const LaserCandidate = struct {
-                    coords: TileCoords,
-                    dist: f32,
-                    tier: u8,
-                };
-                var laser_candidates = std.ArrayList(LaserCandidate).init(self.allocator);
-                defer laser_candidates.deinit();
-
-                for (tile_refs) |tile_ref| {
-                    var is_used = false;
-                    for (self.tile_actions.items) |tile_action| {
-                        if (tile_action.source.x == tile_ref.tile_x and
-                            tile_action.source.y == tile_ref.tile_y)
-                        {
-                            is_used = true;
-
-                            break;
-                        }
-                    }
-
-                    if (!is_used) {
-                        // check if in range
-                        const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;
-                        const ship_part = ti.getShipPart() orelse continue;
-                        const is_broken = PartStats.isBroken(ship_part);
-
-                        const range = PartStats.getLaserRangeSq(ship_part.tier, is_broken);
-                        const dist = ship.getDistanceToTileSq(
-                            tile_ref.tile_x,
-                            tile_ref.tile_y,
-                            target_pos,
-                        );
-
-                        if (dist > range) {
-                            continue;
-                        }
-
-                        try laser_candidates.append(.{
-                            .coords = .{
-                                .x = tile_ref.tile_x,
-                                .y = tile_ref.tile_y,
-                            },
-                            .dist = dist,
-                            .tier = ship_part.tier,
-                        });
-                    }
-                }
-
-                if (laser_candidates.items.len == 0) {
-                    std.debug.print("No valid laser avaiable for mining\n", .{});
-                    break;
-                }
-
-                // get closest laser
-                const best_candidate = find_min: {
-                    var min: ?LaserCandidate = null;
-
-                    for (laser_candidates.items) |candidate| {
-                        if (min == null or candidate.dist < min.?.dist) {
-                            min = candidate;
-                        }
-                    }
-
-                    break :find_min min;
-                };
+                const best_candidate = try self.getLaserCandidate(ship, target_pos);
 
                 if (best_candidate == null) {
+                    std.debug.print("No valid laser avaiable for mining\n", .{});
                     break;
                 }
 
