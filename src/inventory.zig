@@ -121,16 +121,38 @@ pub const Inventory = struct {
     stacks: std.ArrayList(Stack),
     slot_limit: u32,
 
-    pub fn init(allocator: std.mem.Allocator, slot_limit: u32) Self {
+    pub fn init(allocator: std.mem.Allocator, slot_limit: u32) !Self {
+        var stacks = try std.ArrayList(Stack).initCapacity(allocator, slot_limit);
+        for (0..slot_limit) |_| {
+            stacks.appendAssumeCapacity(.{});
+        }
+
         return .{
             .allocator = allocator,
-            .stacks = std.ArrayList(Stack).init(allocator),
+            .stacks = stacks,
             .slot_limit = slot_limit,
         };
     }
 
     pub fn deinit(self: *Inventory) void {
         self.stacks.deinit();
+    }
+
+    pub fn resize(self: *Inventory, new_limit: u32) !void {
+        if (new_limit > self.stacks.items.len) {
+            const diff = new_limit - self.stacks.items.len;
+
+            try self.stacks.ensureTotalCapacity(new_limit);
+
+            for (0..diff) |_| {
+                self.stacks.appendAssumeCapacity(.{});
+            }
+        } else if (new_limit < self.stacks.items.len) {
+            // TODO: handle shrinking and dropping items?
+            // Now we simply delete items
+            self.stacks.shrinkAndFree(new_limit);
+        }
+        self.slot_limit = new_limit;
     }
 
     pub fn add(self: *Inventory, item: Item, amount: u32) !AddResult {
@@ -143,6 +165,7 @@ pub const Inventory = struct {
         var remaining = amount;
         var added: u32 = 0;
 
+        // try to stack on existing items
         for (self.stacks.items) |*stack| {
             if (stack.item.eql(item)) {
                 const max = item.getMaxStack();
@@ -161,18 +184,25 @@ pub const Inventory = struct {
             }
         }
 
+        // try to fill empty slots
         while (remaining > 0) {
-            if (self.stacks.items.len >= self.slot_limit) break;
+            var found_empty = false;
+            for (self.stacks.items) |*stack| {
+                if (stack.item == .none) {
+                    const max = item.getMaxStack();
+                    const take = @min(remaining, max);
 
-            const max = item.getMaxStack();
-            const take = @min(remaining, max);
+                    stack.item = item;
+                    stack.amount = take;
 
-            try self.stacks.append(Stack{
-                .item = item,
-                .amount = take,
-            });
-            remaining -= take;
-            added += take;
+                    remaining -= take;
+                    added += take;
+                    found_empty = true;
+                    break;
+                }
+            }
+
+            if (!found_empty) break;
         }
 
         return .{ .added = added, .remaining = remaining };

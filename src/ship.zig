@@ -71,4 +71,13 @@ pub const PartStats = struct {
             else => 0,
         };
     }
+
+    pub fn getStorageSlotLimit(tier: u8) u8 {
+        return switch (tier) {
+            1 => 4,
+            2 => 8,
+            3 => 16,
+            else => 0,
+        };
+    }
 };

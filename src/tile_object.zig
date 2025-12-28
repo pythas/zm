@@ -333,6 +333,17 @@ pub const TileObject = struct {
     }
 
     // inventory
+    pub fn initInventories(self: *Self) !void {
+        const tile_refs = try self.getTilesByPartKind(.storage);
+
+        for (tile_refs) |tile_ref| {
+            const tile = self.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;
+            const ship_part = tile.getShipPart() orelse continue;
+
+            _ = try self.addInventory(tile_ref.tile_x, tile_ref.tile_y, PartStats.getStorageSlotLimit(ship_part.tier));
+        }
+    }
+
     pub fn getInventory(self: *Self, x: usize, y: usize) ?*Inventory {
         if (x >= self.width or y >= self.height) {
             return null;
@@ -346,10 +357,11 @@ pub const TileObject = struct {
         const index = y * self.width + x;
 
         if (self.inventories.getPtr(index)) |inventory| {
+            try inventory.resize(slot_limit);
             return inventory;
         }
 
-        const inventory = Inventory.init(self.allocator, slot_limit);
+        const inventory = try Inventory.init(self.allocator, slot_limit);
         try self.inventories.put(index, inventory);
 
         return self.inventories.getPtr(index).?;
@@ -379,11 +391,7 @@ pub const TileObject = struct {
             const inventory = self.getInventory(
                 storage.tile_x,
                 storage.tile_y,
-            ) orelse try self.addInventory(
-                storage.tile_x,
-                storage.tile_y,
-                20,
-            );
+            ) orelse continue;
 
             const result = try inventory.add(item, remaining);
             remaining = @intCast(result.remaining);

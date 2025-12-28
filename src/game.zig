@@ -73,6 +73,7 @@ pub const Game = struct {
                 self.mode = .ship_management;
             } else {
                 try self.world.objects.items[0].recalculatePhysics(&self.world.physics);
+                try self.world.objects.items[0].initInventories();
                 self.mode = .in_world;
             }
         }
