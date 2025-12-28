@@ -4,9 +4,11 @@ const Tile = @import("tile.zig").Tile;
 const Vec2 = @import("vec2.zig").Vec2;
 const GpuTileGrid = @import("renderer/sprite_renderer.zig").GpuTileGrid;
 const Direction = @import("tile.zig").Direction;
+const Directions = @import("tile.zig").Directions;
 const Offset = @import("tile.zig").Offset;
 const PartKind = @import("tile.zig").PartKind;
 const TileReference = @import("tile.zig").TileReference;
+const TileCoords = @import("tile.zig").TileCoords;
 const Physics = @import("box2d_physics.zig").Physics;
 const BodyId = @import("box2d_physics.zig").BodyId;
 const PhysicsTileData = @import("box2d_physics.zig").TileData;
@@ -62,7 +64,6 @@ pub const TileObject = struct {
 
     gpu_grid: ?GpuTileGrid = null,
     dirty: bool = false,
-    physics_dirty: bool = false,
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -517,9 +518,150 @@ pub const TileObject = struct {
         }
     }
 
-    pub fn recalculatePhysics(self: *Self, physics: *Physics) !void {
-        self.physics_dirty = false;
+    pub fn checkSplit(
+        self: *Self,
+        allocator: std.mem.Allocator,
+        id_gen_ctx: anytype,
+        id_gen_fn: fn (@TypeOf(id_gen_ctx)) u64,
+    ) !?std.ArrayList(TileObject) {
+        // Find connected components
+        const Component = struct {
+            tiles: std.ArrayList(TileCoords),
+            min_x: usize,
+            min_y: usize,
+            max_x: usize,
+            max_y: usize,
+        };
 
+        var components = std.ArrayList(Component).init(allocator);
+        defer {
+            for (components.items) |*c| c.tiles.deinit();
+            components.deinit();
+        }
+
+        const visited = try allocator.alloc(bool, self.width * self.height);
+        defer allocator.free(visited);
+        @memset(visited, false);
+
+        for (0..self.height) |y| {
+            for (0..self.width) |x| {
+                if (visited[y * self.width + x]) continue;
+
+                const tile = self.getTile(x, y) orelse continue;
+                if (tile.data == .empty) continue;
+
+                var component = Component{
+                    .tiles = std.ArrayList(TileCoords).init(allocator),
+                    .min_x = x,
+                    .min_y = y,
+                    .max_x = x,
+                    .max_y = y,
+                };
+
+                // flood fill
+                var queue = std.ArrayList(TileCoords).init(allocator);
+                defer queue.deinit();
+
+                try queue.append(.{ .x = x, .y = y });
+                visited[y * self.width + x] = true;
+
+                while (queue.items.len > 0) {
+                    const curr = queue.pop().?;
+                    try component.tiles.append(curr);
+
+                    component.min_x = @min(component.min_x, curr.x);
+                    component.min_y = @min(component.min_y, curr.y);
+                    component.max_x = @max(component.max_x, curr.x);
+                    component.max_y = @max(component.max_y, curr.y);
+
+                    for (Directions) |dir| {
+                        const neighbor_tile = self.getNeighbouringTile(curr.x, curr.y, dir.direction) orelse continue;
+                        if (neighbor_tile.data == .empty) continue;
+
+                        const nx = @as(usize, @intCast(@as(isize, @intCast(curr.x)) + dir.offset.dx));
+                        const ny = @as(usize, @intCast(@as(isize, @intCast(curr.y)) + dir.offset.dy));
+
+                        if (visited[ny * self.width + nx]) continue;
+
+                        visited[ny * self.width + nx] = true;
+                        try queue.append(.{ .x = nx, .y = ny });
+                    }
+                }
+
+                try components.append(component);
+            }
+        }
+
+        if (components.items.len <= 1) {
+            return null;
+        }
+
+        // sort by size
+        const sort_ctx = struct {
+            pub fn lessThan(_: @This(), lhs: Component, rhs: Component) bool {
+                return lhs.tiles.items.len > rhs.tiles.items.len;
+            }
+        };
+        std.mem.sort(Component, components.items, sort_ctx{}, sort_ctx.lessThan);
+
+        var new_objects = std.ArrayList(TileObject).init(allocator);
+
+        // keep the largest component, move others
+        for (components.items[1..]) |*comp| {
+            const w = comp.max_x - comp.min_x + 1;
+            const h = comp.max_y - comp.min_y + 1;
+
+            const id = id_gen_fn(id_gen_ctx);
+            var new_obj = try TileObject.init(allocator, id, w, h, self.position, self.rotation);
+            new_obj.object_type = self.object_type;
+
+            // calculate new position
+            const min_x_f = @as(f32, @floatFromInt(comp.min_x));
+            const min_y_f = @as(f32, @floatFromInt(comp.min_y));
+            const w_new_f = @as(f32, @floatFromInt(w));
+            const h_new_f = @as(f32, @floatFromInt(h));
+            const w_old_f = @as(f32, @floatFromInt(self.width));
+            const h_old_f = @as(f32, @floatFromInt(self.height));
+
+            const offset_local_x = 8.0 * min_x_f + 4.0 * (w_new_f - w_old_f);
+            const offset_local_y = 8.0 * min_y_f + 4.0 * (h_new_f - h_old_f);
+
+            const cos_rot = @cos(self.rotation);
+            const sin_rot = @sin(self.rotation);
+
+            const offset_world_x = offset_local_x * cos_rot - offset_local_y * sin_rot;
+            const offset_world_y = offset_local_x * sin_rot + offset_local_y * cos_rot;
+
+            new_obj.position.x += offset_world_x;
+            new_obj.position.y += offset_world_y;
+
+            // transfer tiles
+            for (comp.tiles.items) |coords| {
+                const src_tile = self.getTile(coords.x, coords.y).?.*;
+                const dst_x = coords.x - comp.min_x;
+                const dst_y = coords.y - comp.min_y;
+
+                new_obj.setTile(dst_x, dst_y, src_tile);
+
+                // transfer inventory
+                const old_idx = coords.y * self.width + coords.x;
+                if (self.inventories.fetchRemove(old_idx)) |kv| {
+                    const new_idx = dst_y * w + dst_x;
+                    try new_obj.inventories.put(new_idx, kv.value);
+                }
+
+                self.setEmptyTile(coords.x, coords.y);
+            }
+
+            new_obj.dirty = true;
+            try new_objects.append(new_obj);
+        }
+
+        self.dirty = true;
+        return new_objects;
+    }
+
+    pub fn recalculatePhysics(self: *Self, physics: *Physics) !void {
         var linear_velocity = Vec2.init(0, 0);
         var angular_velocity: f32 = 0.0;
 

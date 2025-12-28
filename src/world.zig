@@ -152,12 +152,27 @@ pub const World = struct {
             try self.updateWorldGeneration(self.objects.items[0].position);
         }
 
+        var new_objects_list = std.ArrayList(TileObject).init(self.allocator);
+        defer new_objects_list.deinit();
+
         for (self.objects.items) |*obj| {
             if (!obj.body_id.isValid()) {
                 continue;
             }
 
             if (obj.dirty) {
+                const result_opt = try obj.checkSplit(
+                    self.allocator,
+                    self,
+                    struct { fn gen(ctx: *World) u64 { return ctx.generateObjectId(); } }.gen
+                );
+
+                if (result_opt) |result| {
+                    var list = result;
+                    defer list.deinit();
+                    try new_objects_list.appendSlice(list.items);
+                }
+
                 try obj.recalculatePhysics(&self.physics);
             }
 
@@ -166,6 +181,11 @@ pub const World = struct {
 
             obj.position = pos;
             obj.rotation = rot;
+        }
+
+        for (new_objects_list.items) |*new_obj| {
+             try new_obj.recalculatePhysics(&self.physics);
+             try self.objects.append(new_obj.*);
         }
 
         if (self.objects.items.len > 0) {

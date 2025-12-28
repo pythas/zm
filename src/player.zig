@@ -349,7 +349,6 @@ pub const PlayerController = struct {
 
                             if (world.getObjectById(target_id)) |target_obj_refreshed| {
                                 target_obj_refreshed.setEmptyTile(tx, ty);
-                                target_obj_refreshed.physics_dirty = true;
                             }
                         }
                     },
