@@ -51,13 +51,13 @@ fn main(in: VertexOutput) -> @location(0) vec4<f32> {
   let fade2 = smoothstep(0.3, 0.8, zoom);
   let fade3 = smoothstep(0.05, 0.2, zoom);
  
-  let uv1 = screen_uv + cam_pos * 0.001;
+  let uv1 = screen_uv + cam_pos * 0.0005;
   color += vec3<f32>(1.0) * star_layer(uv1, 20.0, 0.2) * fade1;
  
-  let uv2 = screen_uv + cam_pos * 0.003;
+  let uv2 = screen_uv + cam_pos * 0.0008;
   color += vec3<f32>(0.8, 0.8, 1.0) * star_layer(uv2, 40.0, 0.1) * fade2;
  
-  let uv3 = screen_uv + cam_pos * 0.005;
+  let uv3 = screen_uv + cam_pos * 0.0010;
   color += vec3<f32>(0.9, 0.9, 0.7) * star_layer(uv3, 10.0, 0.02) * fade3;
 
   return vec4<f32>(color, 1.0);
