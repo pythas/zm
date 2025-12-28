@@ -13,6 +13,45 @@ pub const Recipe = enum(u8) {
     laser,
 };
 
+pub const RecipeStats = struct {
+    pub const Cost = struct {
+        item: Item,
+        amount: u32,
+    };
+
+    pub fn getCost(recipe: Recipe) []const Cost {
+        return switch (recipe) {
+            .chemical_thruster => &[_]Cost{
+                .{ .item = .{ .resource = .iron }, .amount = 20 },
+            },
+            .laser => &[_]Cost{
+                .{ .item = .{ .resource = .iron }, .amount = 40 },
+            },
+        };
+    }
+
+    pub fn getResult(recipe: Recipe) Item {
+        return switch (recipe) {
+            .chemical_thruster => .{ .component = .chemical_thruster },
+            .laser => .{ .component = .laser },
+        };
+    }
+
+    pub fn getName(recipe: Recipe) []const u8 {
+        return switch (recipe) {
+            .chemical_thruster => "Chemical Thruster",
+            .laser => "Laser",
+        };
+    }
+
+    pub fn getDisplayName(recipe: Recipe) []const u8 {
+        return switch (recipe) {
+            .chemical_thruster => "Chemical Thruster\nCost: 20 iron",
+            .laser => "Laser\nCost: 40 iron",
+        };
+    }
+};
+
 pub const Item = union(enum) {
     none,
     resource: Resource,
@@ -47,10 +86,7 @@ pub const Item = union(enum) {
             .tool => |t| switch (t) {
                 .welding => "Basic Welding",
             },
-            .recipe => |r| switch (r) {
-                .chemical_thruster => "Chemical Thruster\nCost: 20 iron",
-                .laser => "Laser\nCost: 40 iron",
-            },
+            .recipe => |r| RecipeStats.getDisplayName(r),
             .component => |c| switch (c) {
                 .chemical_thruster => "Chemical Thruster",
                 .laser => "Laser",

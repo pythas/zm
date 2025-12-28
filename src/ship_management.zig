@@ -18,6 +18,7 @@ const Tool = @import("inventory.zig").Tool;
 const Item = @import("inventory.zig").Item;
 const Stack = @import("inventory.zig").Stack;
 const Recipe = @import("inventory.zig").Recipe;
+const RecipeStats = @import("inventory.zig").RecipeStats;
 const PartStats = @import("ship.zig").PartStats;
 const ShipManagementLayout = @import("ship_management/layout.zig").ShipManagementLayout;
 
@@ -469,6 +470,36 @@ pub const ShipManagement = struct {
         }
     }
 
+    fn tryCraft(self: *Self, ship: *TileObject, recipe: Recipe) !void {
+        _ = self;
+        const costs = RecipeStats.getCost(recipe);
+
+        for (costs) |cost| {
+            const count = ship.getInventoryCountByItem(cost.item);
+
+            if (count < cost.amount) {
+                return;
+            }
+        }
+
+        for (costs) |cost| {
+            ship.removeNumberOfItemsFromInventory(cost.item, cost.amount);
+        }
+
+        const result = RecipeStats.getResult(recipe);
+        const remaining = try ship.addItemToInventory(
+            result,
+            1,
+            ship.position,
+        );
+
+        if (remaining == 0) {
+            std.log.info("ShipManagement: Constructed {s}", .{RecipeStats.getName(recipe)});
+        } else {
+            std.log.warn("ShipManagement: Failed to add {s} to inventory (no space?)", .{RecipeStats.getName(recipe)});
+        }
+    }
+
     fn drawCraftingPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
         const button_state = try ui.button(
@@ -479,57 +510,8 @@ pub const ShipManagement = struct {
             renderer.font,
         );
         if (button_state.is_clicked) {
-            switch (self.current_recipe.?) {
-                .chemical_thruster => {
-                    const iron = Item{ .resource = .iron };
-                    const count_iron = ship.getInventoryCountByItem(iron);
-
-                    if (count_iron >= 20) {
-                        // TODO: add crafting delay
-
-                        ship.removeNumberOfItemsFromInventory(iron, 20);
-
-                        const remaining = try ship.addItemToInventory(
-                            .{ .component = .chemical_thruster },
-                            1,
-                            ship.position,
-                        );
-
-                        if (remaining == 0) {
-                            std.log.info("ShipManagement: Constructed chemical_thruster", .{});
-                        } else {
-                            std.log.warn("ShipManagement: Failed to add chemical_thruster to inventory (no space?)", .{});
-                        }
-
-                        // TODO: report construction
-
-                    }
-                },
-                .laser => {
-                    const iron = Item{ .resource = .iron };
-                    const count_iron = ship.getInventoryCountByItem(iron);
-
-                    if (count_iron >= 40) {
-                        // TODO: add crafting delay
-
-                        ship.removeNumberOfItemsFromInventory(iron, 40);
-
-                        const remaining = try ship.addItemToInventory(
-                            .{ .component = .laser },
-                            1,
-                            ship.position,
-                        );
-
-                        if (remaining == 0) {
-                            std.log.info("ShipManagement: Constructed laser", .{});
-                        } else {
-                            std.log.warn("ShipManagement: Failed to add laser to inventory (no space?)", .{});
-                        }
-
-                        // TODO: report construction
-
-                    }
-                },
+            if (self.current_recipe) |recipe| {
+                try self.tryCraft(ship, recipe);
             }
         }
     }
