@@ -22,6 +22,7 @@ const RecipeStats = @import("inventory.zig").RecipeStats;
 const PartStats = @import("ship.zig").PartStats;
 const ShipManagementLayout = @import("ship_management/layout.zig").ShipManagementLayout;
 const DropdownItem = @import("renderer/ui_renderer.zig").UiRenderer.DropdownItem;
+const RepairCost = @import("ship.zig").RepairCost;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
@@ -124,26 +125,34 @@ pub const ShipManagement = struct {
         ship.setTile(x, y, Tile.initEmpty() catch unreachable);
     }
 
-    fn repairTile(_: *Self, ship: *TileObject, world: *World, x: usize, y: usize) void {
+    fn repairTile(self: *Self, ship: *TileObject, world: *World, x: usize, y: usize) void {
         const tile = ship.getTile(x, y) orelse return;
         const ship_part = tile.getShipPart() orelse return;
+        const repair_costs = PartStats.getRepairCosts(ship_part.kind);
 
-        switch (ship_part.kind) {
-            .chemical_thruster => {
-                const iron = Item{ .resource = .iron };
-                const count_iron = ship.getInventoryCountByItem(iron);
+        if (self.canRepair(ship, repair_costs)) {
+            var new_tile = tile.*;
+            new_tile.data.ship_part.health = PartStats.getFunctionalThreshold(new_tile.data.ship_part.kind, new_tile.data.ship_part.tier);
+            ship.setTile(x, y, new_tile);
 
-                if (count_iron >= 10) {
-                    var new_tile = tile.*;
-                    new_tile.data.ship_part.health = PartStats.getFunctionalThreshold(new_tile.data.ship_part.kind, new_tile.data.ship_part.tier);
-                    ship.setTile(x, y, new_tile);
+            for (repair_costs) |repair_cost| {
+                ship.removeNumberOfItemsFromInventory(repair_cost.item, repair_cost.amount);
+            }
 
-                    ship.removeNumberOfItemsFromInventory(iron, 10);
-                    _ = world.research_manager.reportRepair("broken_chemical_thruster");
-                }
-            },
-            else => {},
+            _ = world.research_manager.reportRepair("broken_chemical_thruster");
         }
+    }
+
+    fn canRepair(_: *Self, ship: *TileObject, repair_costs: []const RepairCost) bool {
+        for (repair_costs) |repair_cost| {
+            const count = ship.getInventoryCountByItem(repair_cost.item);
+
+            if (count < repair_cost.amount) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     fn handleShortcuts(self: *Self, ship: *TileObject) void {
@@ -524,11 +533,13 @@ pub const ShipManagement = struct {
 
         const tile = ship.getTile(self.tile_menu_tile_x, self.tile_menu_tile_y) orelse return;
         const ship_part = tile.getShipPart() orelse return;
+        const repair_costs = PartStats.getRepairCosts(ship_part.kind);
         const is_broken = PartStats.isBroken(ship_part);
+        const can_repair = is_broken and self.canRepair(ship, repair_costs);
 
         const items = &[_]DropdownItem{
             DropdownItem{ .text = "Rotate [R]", .is_enabled = true },
-            DropdownItem{ .text = "Repair", .is_enabled = is_broken },
+            DropdownItem{ .text = "Repair", .is_enabled = can_repair },
             DropdownItem{ .text = "Dismantle", .is_enabled = true },
         };
         const result = try renderer.ui.dropdown(self.tile_menu_x, self.tile_menu_y, items, renderer.font);

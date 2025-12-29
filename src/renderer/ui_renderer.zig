@@ -63,6 +63,8 @@ pub const UiStyle = struct {
     slot_padding: f32 = 8.0,
     text_padding: f32 = 4.0,
     item_padding: f32 = 4.0,
+    text_color: UiVec4 = .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 },
+    text_color_disabled: UiVec4 = .{ .r = 0.5, .g = 0.5, .b = 0.5, .a = 1.0 },
 };
 
 pub const UiRenderer = struct {
@@ -237,10 +239,9 @@ pub const UiRenderer = struct {
                 }
             }
 
-            // bottom-right with 2px padding
             const tx = rect.x + rect.w - text_w - self.style.text_padding;
             const ty = rect.y + rect.h - self.style.text_padding;
-            try self.label(.{ .x = tx, .y = ty }, text, font);
+            try self.label(.{ .x = tx, .y = ty }, text, font, self.style.text_color);
         }
 
         return UiState{
@@ -370,6 +371,7 @@ pub const UiRenderer = struct {
             UiVec2{ .x = text_x, .y = text_y },
             text,
             font,
+            if (is_disabled) self.style.text_color_disabled else self.style.text_color,
         );
 
         return UiState{
@@ -381,11 +383,10 @@ pub const UiRenderer = struct {
         };
     }
 
-    pub fn label(self: *Self, pos: UiVec2, text: []const u8, font: *const Font) !void {
+    pub fn label(self: *Self, pos: UiVec2, text: []const u8, font: *const Font, color: UiVec4) !void {
         const start_x = pos.x;
         var x = start_x;
         var y = pos.y;
-        const color = UiVec4{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 };
 
         for (text) |char| {
             if (char == '\n') {
@@ -446,7 +447,7 @@ pub const UiRenderer = struct {
         const rect = UiRect{ .x = x, .y = y, .w = w + padding * 2, .h = h + padding * 2 };
         try self.panel(rect);
 
-        try self.label(.{ .x = x + padding, .y = y + padding + font.ascent }, text, font);
+        try self.label(.{ .x = x + padding, .y = y + padding + font.ascent }, text, font, self.style.text_color);
     }
 
     pub const DropdownResult = struct {
@@ -494,7 +495,13 @@ pub const UiRenderer = struct {
             const is_hovered = item.is_enabled and self.interaction_enabled and item_rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
             if (is_hovered) {
-                try self.pushQuad(item_rect, .{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }, 0, 0);
+                try self.pushQuad(
+                    item_rect,
+                    .{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 },
+                    0,
+                    0,
+                );
+
                 if (self.mouse.is_left_clicked) {
                     selected_index = i;
                 }
@@ -503,7 +510,7 @@ pub const UiRenderer = struct {
             try self.label(.{
                 .x = item_rect.x + item_padding,
                 .y = item_rect.y + item_padding + font.ascent,
-            }, item.text, font);
+            }, item.text, font, if (item.is_enabled) self.style.text_color else self.style.text_color_disabled);
         }
 
         return DropdownResult{

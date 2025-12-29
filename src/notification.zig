@@ -73,7 +73,7 @@ pub const NotificationSystem = struct {
             }
 
             const x = (screen_w - text_w) / 2.0;
-            try ui.label(.{ .x = x, .y = y }, text, font);
+            try ui.label(.{ .x = x, .y = y }, text, font, ui.style.text_color);
             y += spacing;
         }
     }

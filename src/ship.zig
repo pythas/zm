@@ -2,6 +2,12 @@ const std = @import("std");
 
 const PartKind = @import("tile.zig").PartKind;
 const ShipPartTileType = @import("tile.zig").ShipPartTileType;
+const Item = @import("inventory.zig").Item;
+
+pub const RepairCost = struct {
+    item: Item,
+    amount: u32,
+};
 
 pub const PartStats = struct {
     pub fn getName(kind: PartKind) []const u8 {
@@ -35,7 +41,24 @@ pub const PartStats = struct {
             .chemical_thruster => 2.0,
             .hull => 1.0,
             .laser => 1.0,
-            else => 1.0,
+            .reactor => 1.5,
+            .storage => 0.5,
+        };
+    }
+
+    pub fn getRepairCosts(kind: PartKind) []const RepairCost {
+        return switch (kind) {
+            .chemical_thruster => &.{
+                .{ .item = .{ .resource = .iron }, .amount = 10 },
+            },
+            .hull => &.{
+                .{ .item = .{ .resource = .iron }, .amount = 5 },
+            },
+            .laser => &.{
+                .{ .item = .{ .resource = .iron }, .amount = 15 },
+                .{ .item = .{ .resource = .copper }, .amount = 5 },
+            },
+            else => &[_]RepairCost{},
         };
     }
 
