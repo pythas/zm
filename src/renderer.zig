@@ -48,7 +48,7 @@ pub const Renderer = struct {
         const background = try BackgroundRenderer.init(allocator, gctx, &global);
         const beam = try BeamRenderer.init(allocator, gctx, &global);
         const line = try LineRenderer.init(allocator, gctx, &global);
-        const ui = try UiRenderer.init(allocator, gctx, window, &global);
+        const ui = try UiRenderer.init(allocator, gctx, window, &global, .{});
 
         return .{
             .allocator = allocator,

@@ -21,6 +21,7 @@ const Recipe = @import("inventory.zig").Recipe;
 const RecipeStats = @import("inventory.zig").RecipeStats;
 const PartStats = @import("ship.zig").PartStats;
 const ShipManagementLayout = @import("ship_management/layout.zig").ShipManagementLayout;
+const DropdownItem = @import("renderer/ui_renderer.zig").UiRenderer.DropdownItem;
 
 const tilemapWidth = @import("tile.zig").tilemapWidth;
 const tilemapHeight = @import("tile.zig").tilemapHeight;
@@ -35,7 +36,6 @@ pub const ShipManagement = struct {
     window: *zglfw.Window,
     mouse: MouseState,
     keyboard: KeyboardState,
-    current_tool: ?Tool = null,
     current_recipe: ?Recipe = null,
 
     cursor_item: Stack = .{},
@@ -44,6 +44,12 @@ pub const ShipManagement = struct {
     hover_text_buf: [255]u8 = undefined,
     hover_pos_x: f32 = 0,
     hover_pos_y: f32 = 0,
+
+    is_tile_menu_open: bool = false,
+    tile_menu_x: f32 = 0,
+    tile_menu_y: f32 = 0,
+    tile_menu_tile_x: usize = 0,
+    tile_menu_tile_y: usize = 0,
 
     pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) Self {
         return .{
@@ -80,11 +86,13 @@ pub const ShipManagement = struct {
         var hover_x: i32 = -1;
         var hover_y: i32 = -1;
 
-        if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
-            hover_x = tile_pos.x;
-            hover_y = tile_pos.y;
+        if (!self.is_tile_menu_open) {
+            if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
+                hover_x = tile_pos.x;
+                hover_y = tile_pos.y;
 
-            self.handleTileInteraction(ship, tile_pos.x, tile_pos.y, world);
+                self.handleTileInteraction(ship, tile_pos.x, tile_pos.y, world);
+            }
         }
 
         renderer.global.write(
@@ -102,6 +110,42 @@ pub const ShipManagement = struct {
         };
     }
 
+    fn rotateTile(_: *Self, ship: *TileObject, x: usize, y: usize) void {
+        if (ship.getTile(x, y)) |tile| {
+            if (tile.data == .ship_part) {
+                var new_tile = tile.*;
+                new_tile.data.ship_part.rotation = @enumFromInt((@intFromEnum(new_tile.data.ship_part.rotation) + 1) % 4);
+                ship.setTile(x, y, new_tile);
+            }
+        }
+    }
+
+    fn removeTile(_: *Self, ship: *TileObject, x: usize, y: usize) void {
+        ship.setTile(x, y, Tile.initEmpty() catch unreachable);
+    }
+
+    fn repairTile(_: *Self, ship: *TileObject, world: *World, x: usize, y: usize) void {
+        const tile = ship.getTile(x, y) orelse return;
+        const ship_part = tile.getShipPart() orelse return;
+
+        switch (ship_part.kind) {
+            .chemical_thruster => {
+                const iron = Item{ .resource = .iron };
+                const count_iron = ship.getInventoryCountByItem(iron);
+
+                if (count_iron >= 10) {
+                    var new_tile = tile.*;
+                    new_tile.data.ship_part.health = PartStats.getFunctionalThreshold(new_tile.data.ship_part.kind, new_tile.data.ship_part.tier);
+                    ship.setTile(x, y, new_tile);
+
+                    ship.removeNumberOfItemsFromInventory(iron, 10);
+                    _ = world.research_manager.reportRepair("broken_chemical_thruster");
+                }
+            },
+            else => {},
+        }
+    }
+
     fn handleShortcuts(self: *Self, ship: *TileObject) void {
         if (self.keyboard.isDown(.left_ctrl) and self.keyboard.isPressed(.s)) {
             self.save(ship);
@@ -109,77 +153,41 @@ pub const ShipManagement = struct {
     }
 
     fn handleTileInteraction(self: *Self, ship: *TileObject, hover_x: i32, hover_y: i32, world: *World) void {
+        _ = world;
         const tile_x: usize = @intCast(hover_x);
         const tile_y: usize = @intCast(hover_y);
 
         if (self.keyboard.isPressed(.r)) {
-            if (ship.getTile(tile_x, tile_y)) |tile| {
-                if (tile.data == .ship_part and tile.data.ship_part.kind == .chemical_thruster) {
-                    var new_tile = tile.*;
-                    new_tile.data.ship_part.rotation = @enumFromInt((@intFromEnum(new_tile.data.ship_part.rotation) + 1) % 4);
-                    ship.setTile(tile_x, tile_y, new_tile);
-                }
-            }
+            self.rotateTile(ship, tile_x, tile_y);
         }
 
         if (self.mouse.is_left_clicked) {
-            if (self.current_tool) |tool| {
-                switch (tool) {
-                    .welding => {
-                        if (ship.getTile(tile_x, tile_y)) |tile| {
-                            if (tile.data == .ship_part) {
-                                switch (tile.data.ship_part.kind) {
-                                    .chemical_thruster => {
-                                        const iron = Item{ .resource = .iron };
-                                        const count_iron = ship.getInventoryCountByItem(iron);
+            switch (self.cursor_item.item) {
+                .component => |part_kind| {
+                    if (ship.getTile(tile_x, tile_y)) |tile| {
+                        if (tile.data == .empty) {
+                            const tier = 1; // Default tier
+                            const health = PartStats.getMaxHealth(part_kind, tier);
+                            const new_tile = Tile.init(.{
+                                .ship_part = .{
+                                    .kind = part_kind,
+                                    .tier = tier,
+                                    .health = health,
+                                    .rotation = .north,
+                                },
+                            }) catch unreachable;
 
-                                        if (count_iron >= 10) {
-                                            var new_tile = tile.*;
-                                            new_tile.data.ship_part.health = PartStats.getFunctionalThreshold(new_tile.data.ship_part.kind, new_tile.data.ship_part.tier);
-                                            ship.setTile(tile_x, tile_y, new_tile);
+                            ship.setTile(tile_x, tile_y, new_tile);
 
-                                            ship.removeNumberOfItemsFromInventory(iron, 10);
-                                            _ = world.research_manager.reportRepair("broken_chemical_thruster");
-                                        }
-                                    },
-                                    else => {},
-                                }
+                            self.cursor_item.amount -= 1;
+                            if (self.cursor_item.amount == 0) {
+                                self.cursor_item = .{};
                             }
                         }
-                    },
-                }
-            } else {
-                switch (self.cursor_item.item) {
-                    .component => |part_kind| {
-                        if (ship.getTile(tile_x, tile_y)) |tile| {
-                            if (tile.data == .empty) {
-                                const tier = 1; // Default tier
-                                const health = PartStats.getMaxHealth(part_kind, tier);
-                                const new_tile = Tile.init(.{
-                                    .ship_part = .{
-                                        .kind = part_kind,
-                                        .tier = tier,
-                                        .health = health,
-                                        .rotation = .north,
-                                    },
-                                }) catch unreachable;
-
-                                ship.setTile(tile_x, tile_y, new_tile);
-
-                                self.cursor_item.amount -= 1;
-                                if (self.cursor_item.amount == 0) {
-                                    self.cursor_item = .{};
-                                }
-                            }
-                        }
-                    },
-                    else => {},
-                }
+                    }
+                },
+                else => {},
             }
-        }
-
-        if (self.mouse.is_right_down) {
-            ship.setTile(tile_x, tile_y, Tile.initEmpty() catch unreachable);
         }
     }
 
@@ -202,6 +210,10 @@ pub const ShipManagement = struct {
         var ui = &renderer.ui;
         ui.beginFrame();
 
+        if (self.is_tile_menu_open) {
+            ui.setInteractionEnabled(false);
+        }
+
         // background
         try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h });
 
@@ -214,11 +226,16 @@ pub const ShipManagement = struct {
         ui.flush(pass, &renderer.global);
         renderer.sprite.draw(pass, &renderer.global, world.objects.items[0..1]);
 
+        ui.setInteractionEnabled(true);
+
         // tooltips
         if (self.hovered_item_name) |name| {
             try ui.tooltip(self.hover_pos_x, self.hover_pos_y, name, renderer.font);
             ui.flush(pass, &renderer.global);
         }
+
+        try self.drawTileMenu(renderer, layout, ship, world);
+        ui.flush(pass, &renderer.global);
 
         if (self.cursor_item.item != .none) {
             const slot_size: f32 = 20.0;
@@ -228,6 +245,7 @@ pub const ShipManagement = struct {
                 .w = slot_size,
                 .h = slot_size,
             };
+
             _ = try ui.inventorySlot(cursor_rect, self.cursor_item.item, self.cursor_item.amount, true, renderer.font);
             ui.flush(pass, &renderer.global);
         }
@@ -267,16 +285,10 @@ pub const ShipManagement = struct {
                 if (tile.getShipPart()) |ship_part| {
                     const name = PartStats.getName(ship_part.kind);
                     var prefix: []const u8 = "";
-                    var extra: []const u8 = "";
+                    const extra: []const u8 = "";
 
                     if (PartStats.isBroken(ship_part)) {
                         prefix = "Broken ";
-
-                        if (self.current_tool) |t| {
-                            if (t == .welding) {
-                                extra = "\nRepair: 10 iron";
-                            }
-                        }
                     }
 
                     const text = std.fmt.bufPrint(&self.hover_text_buf, "{s}{s}{s}", .{ prefix, name, extra }) catch "!";
@@ -402,20 +414,13 @@ pub const ShipManagement = struct {
             const tool_rect = UiRect{ .x = tool_x, .y = tool_y, .w = slot_size, .h = slot_size };
             const item = Item{ .tool = .welding };
 
-            var is_selected = false;
-            if (self.current_tool) |t| {
-                if (t == .welding) is_selected = true;
-            }
-
             if (tool_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
                 self.hovered_item_name = item.getName();
                 self.hover_pos_x = self.mouse.x + hover_offset_x;
                 self.hover_pos_y = self.mouse.y + hover_offset_y;
             }
 
-            if ((try ui.toolSlot(tool_rect, item, is_selected)).is_clicked) {
-                self.current_tool = if (is_selected) null else .welding;
-            }
+            _ = try ui.toolSlot(tool_rect, item);
             tool_x += slot_size + slot_padding;
         }
     }
@@ -423,10 +428,6 @@ pub const ShipManagement = struct {
     fn drawRecipesPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World) !void {
         var ui = &renderer.ui;
         try ui.panel(layout.recipe_rect);
-
-        if (self.mouse.is_left_clicked and layout.recipe_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
-            self.current_tool = null;
-        }
 
         const slot_size: f32 = 20.0;
         const slot_padding: f32 = 2.0;
@@ -501,6 +502,55 @@ pub const ShipManagement = struct {
         if (button_state.is_clicked) {
             if (self.current_recipe) |recipe| {
                 try self.tryCraft(ship, recipe);
+            }
+        }
+    }
+
+    fn drawTileMenu(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject, world: *World) !void {
+        if (self.mouse.is_right_clicked) {
+            self.is_tile_menu_open = true;
+            self.tile_menu_x = self.mouse.x;
+            self.tile_menu_y = self.mouse.y;
+
+            if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
+                self.tile_menu_tile_x = @intCast(tile_pos.x);
+                self.tile_menu_tile_y = @intCast(tile_pos.y);
+            }
+        }
+
+        if (!self.is_tile_menu_open) {
+            return;
+        }
+
+        const tile = ship.getTile(self.tile_menu_tile_x, self.tile_menu_tile_y) orelse return;
+        const ship_part = tile.getShipPart() orelse return;
+        const is_broken = PartStats.isBroken(ship_part);
+
+        const items = &[_]DropdownItem{
+            DropdownItem{ .text = "Rotate [R]", .is_enabled = true },
+            DropdownItem{ .text = "Repair", .is_enabled = is_broken },
+            DropdownItem{ .text = "Dismantle", .is_enabled = true },
+        };
+        const result = try renderer.ui.dropdown(self.tile_menu_x, self.tile_menu_y, items, renderer.font);
+
+        if (result.selected_index) |index| {
+            switch (index) {
+                0 => {
+                    self.rotateTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y);
+                },
+                1 => {
+                    self.repairTile(ship, world, self.tile_menu_tile_x, self.tile_menu_tile_y);
+                },
+                2 => {
+                    self.removeTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y);
+                },
+                else => {},
+            }
+            self.is_tile_menu_open = false;
+        } else if (!result.rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+            if (self.mouse.is_left_clicked) {
+                self.is_tile_menu_open = false;
+                return;
             }
         }
     }

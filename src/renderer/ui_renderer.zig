@@ -58,6 +58,13 @@ pub const UiState = struct {
     is_right_down: bool,
 };
 
+pub const UiStyle = struct {
+    content_padding: f32 = 4.0,
+    slot_padding: f32 = 8.0,
+    text_padding: f32 = 4.0,
+    item_padding: f32 = 4.0,
+};
+
 pub const UiRenderer = struct {
     const Self = @This();
 
@@ -70,12 +77,15 @@ pub const UiRenderer = struct {
     buffer_offset: u64 = 0,
 
     mouse: MouseState,
+    style: UiStyle,
+    interaction_enabled: bool = true,
 
     pub fn init(
         allocator: std.mem.Allocator,
         gctx: *zgpu.GraphicsContext,
         window: *zglfw.Window,
         global: *GlobalRenderState,
+        style: UiStyle,
     ) !Self {
         const buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .vertex = true },
@@ -101,6 +111,7 @@ pub const UiRenderer = struct {
             .buffer = buffer,
             .vertices = vertices,
             .mouse = MouseState.init(window),
+            .style = style,
         };
     }
 
@@ -114,6 +125,11 @@ pub const UiRenderer = struct {
         self.vertices.clearRetainingCapacity();
         self.buffer_offset = 0;
         self.mouse.update();
+        self.interaction_enabled = true;
+    }
+
+    pub fn setInteractionEnabled(self: *Self, enabled: bool) void {
+        self.interaction_enabled = enabled;
     }
 
     fn pushQuad(self: *Self, rect: UiRect, color: UiVec4, data: u32, mode: u32) !void {
@@ -163,7 +179,7 @@ pub const UiRenderer = struct {
     }
 
     pub fn inventorySlot(self: *Self, rect: UiRect, item: Item, amount: u32, is_selected: bool, font: *const Font) !UiState {
-        const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
+        const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)
             UiVec4{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }
@@ -181,7 +197,7 @@ pub const UiRenderer = struct {
             .none => {},
             .resource => |r| {
                 const s = Assets.getResourceSprite(r);
-                const inset: f32 = 4.0;
+                const inset = self.style.slot_padding;
                 const sprite_rect = UiRect{
                     .x = rect.x + inset,
                     .y = rect.y + inset,
@@ -192,7 +208,7 @@ pub const UiRenderer = struct {
             },
             .component => |c| {
                 const s = Assets.getComponentSprite(c);
-                const inset: f32 = 4.0;
+                const inset = self.style.slot_padding;
                 const sprite_rect = UiRect{
                     .x = rect.x + inset,
                     .y = rect.y + inset,
@@ -222,8 +238,8 @@ pub const UiRenderer = struct {
             }
 
             // bottom-right with 2px padding
-            const tx = rect.x + rect.w - text_w - 2.0;
-            const ty = rect.y + rect.h - 2.0;
+            const tx = rect.x + rect.w - text_w - self.style.text_padding;
+            const ty = rect.y + rect.h - self.style.text_padding;
             try self.label(.{ .x = tx, .y = ty }, text, font);
         }
 
@@ -236,13 +252,10 @@ pub const UiRenderer = struct {
         };
     }
 
-    pub fn toolSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !UiState {
-        const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
+    pub fn toolSlot(self: *Self, rect: UiRect, item: Item) !UiState {
+        const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
-        var color = if (is_selected)
-            UiVec4{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }
-        else
-            UiVec4{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 };
+        var color = UiVec4{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 };
 
         color = if (is_hovered)
             UiVec4{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 }
@@ -256,7 +269,7 @@ pub const UiRenderer = struct {
             .resource => {},
             .tool => |t| {
                 const s = Assets.getToolSprite(t);
-                const inset: f32 = 4.0;
+                const inset = self.style.slot_padding;
                 const sprite_rect = UiRect{
                     .x = rect.x + inset,
                     .y = rect.y + inset,
@@ -279,7 +292,7 @@ pub const UiRenderer = struct {
     }
 
     pub fn recipeSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !UiState {
-        const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
+        const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)
             UiVec4{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }
@@ -299,7 +312,7 @@ pub const UiRenderer = struct {
             .tool => {},
             .recipe => |r| {
                 const s = Assets.getRecipeSprite(r);
-                const inset: f32 = 4.0;
+                const inset = self.style.slot_padding;
                 const sprite_rect = UiRect{
                     .x = rect.x + inset,
                     .y = rect.y + inset,
@@ -328,7 +341,7 @@ pub const UiRenderer = struct {
         text: []const u8,
         font: *const Font,
     ) !UiState {
-        const is_hovered = rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
+        const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
         var color = if (is_active)
             UiVec4{ .r = 0.25, .g = 0.25, .b = 0.35, .a = 1.0 }
         else
@@ -426,14 +439,77 @@ pub const UiRenderer = struct {
             max = current_w;
         }
 
+        const padding = self.style.content_padding;
         const w = max;
         const h = font.line_height * (line_breaks + 1);
-        const padding = 4.0;
 
         const rect = UiRect{ .x = x, .y = y, .w = w + padding * 2, .h = h + padding * 2 };
         try self.panel(rect);
 
         try self.label(.{ .x = x + padding, .y = y + padding + font.ascent }, text, font);
+    }
+
+    pub const DropdownResult = struct {
+        rect: UiRect,
+        selected_index: ?usize,
+    };
+
+    pub const DropdownItem = struct {
+        text: []const u8,
+        is_enabled: bool,
+    };
+
+    pub fn dropdown(self: *Self, x: f32, y: f32, items: []const DropdownItem, font: *const Font) !DropdownResult {
+        var max_w: f32 = 0;
+        for (items) |item| {
+            var tw: f32 = 0;
+            for (item.text) |char| {
+                if (font.glyphs.get(char)) |glyph| tw += glyph.dwidth;
+            }
+            if (tw > max_w) max_w = tw;
+        }
+
+        const padding = self.style.content_padding;
+        const item_padding = self.style.item_padding;
+        const item_height = font.line_height + item_padding * 2.0;
+
+        const w = max_w + (padding + item_padding) * 2.0;
+        const h = @as(f32, @floatFromInt(items.len)) * item_height + padding * 2.0;
+
+        const rect = UiRect{ .x = x, .y = y, .w = w, .h = h };
+
+        // background
+        try self.panel(rect);
+
+        var selected_index: ?usize = null;
+
+        for (items, 0..) |item, i| {
+            const item_rect = UiRect{
+                .x = x + padding,
+                .y = y + padding + (@as(f32, @floatFromInt(i)) * item_height),
+                .w = w - padding * 2.0,
+                .h = item_height,
+            };
+
+            const is_hovered = item.is_enabled and self.interaction_enabled and item_rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
+
+            if (is_hovered) {
+                try self.pushQuad(item_rect, .{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }, 0, 0);
+                if (self.mouse.is_left_clicked) {
+                    selected_index = i;
+                }
+            }
+
+            try self.label(.{
+                .x = item_rect.x + item_padding,
+                .y = item_rect.y + item_padding + font.ascent,
+            }, item.text, font);
+        }
+
+        return DropdownResult{
+            .rect = rect,
+            .selected_index = selected_index,
+        };
     }
 
     pub fn flush(
