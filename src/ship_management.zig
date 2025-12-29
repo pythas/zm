@@ -537,25 +537,49 @@ pub const ShipManagement = struct {
         const is_broken = PartStats.isBroken(ship_part);
         const can_repair = is_broken and self.canRepair(ship, repair_costs);
 
-        const items = &[_]DropdownItem{
-            DropdownItem{ .text = "Rotate [R]", .is_enabled = true },
-            DropdownItem{ .text = "Repair", .is_enabled = can_repair },
-            DropdownItem{ .text = "Dismantle", .is_enabled = true },
-        };
-        const result = try renderer.ui.dropdown(self.tile_menu_x, self.tile_menu_y, items, renderer.font);
+        const can_weld = world.research_manager.isUnlocked(.welding);
+
+        var repair_label_buffer: [128]u8 = undefined;
+        var repair_label: []const u8 = "Repair";
+
+        if (repair_costs.len > 0) {
+            var stream = std.io.fixedBufferStream(&repair_label_buffer);
+            const writer = stream.writer();
+            try writer.print("Repair (", .{});
+            for (repair_costs, 0..) |cost, i| {
+                if (i > 0) try writer.print(", ", .{});
+                try writer.print("{d} {s}", .{ cost.amount, cost.item.getName() });
+            }
+            try writer.print(")", .{});
+            repair_label = stream.getWritten();
+        }
+
+        const Action = enum { rotate, repair, dismantle };
+        var actions: [3]Action = undefined;
+        var items_buf: [3]DropdownItem = undefined;
+        var count: usize = 0;
+
+        actions[count] = .rotate;
+        items_buf[count] = DropdownItem{ .text = "Rotate [R]", .is_enabled = true };
+        count += 1;
+
+        if (can_weld) {
+            actions[count] = .repair;
+            items_buf[count] = DropdownItem{ .text = repair_label, .is_enabled = can_repair };
+            count += 1;
+        }
+
+        actions[count] = .dismantle;
+        items_buf[count] = DropdownItem{ .text = "Dismantle", .is_enabled = true };
+        count += 1;
+
+        const result = try renderer.ui.dropdown(self.tile_menu_x, self.tile_menu_y, items_buf[0..count], renderer.font);
 
         if (result.selected_index) |index| {
-            switch (index) {
-                0 => {
-                    self.rotateTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y);
-                },
-                1 => {
-                    self.repairTile(ship, world, self.tile_menu_tile_x, self.tile_menu_tile_y);
-                },
-                2 => {
-                    self.removeTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y);
-                },
-                else => {},
+            switch (actions[index]) {
+                .rotate => self.rotateTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y),
+                .repair => self.repairTile(ship, world, self.tile_menu_tile_x, self.tile_menu_tile_y),
+                .dismantle => self.removeTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y),
             }
             self.is_tile_menu_open = false;
         } else if (!result.rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
