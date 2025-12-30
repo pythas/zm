@@ -221,7 +221,7 @@ pub const ShipManagement = struct {
         }
 
         // background
-        try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h });
+        _ = try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h }, null, null);
 
         try self.drawShipPanel(renderer, layout, ship);
         try self.drawInventoryPanel(renderer, layout, ship);
@@ -259,7 +259,7 @@ pub const ShipManagement = struct {
 
     fn drawShipPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
-        try ui.panel(layout.ship_panel_rect);
+        _ = try ui.panel(layout.ship_panel_rect, null, null);
 
         var hover_x: i32 = -1;
         var hover_y: i32 = -1;
@@ -309,13 +309,13 @@ pub const ShipManagement = struct {
 
     fn drawInventoryPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
-        try ui.panel(layout.inventory_rect);
+        const content_rect = try ui.panel(layout.inventory_rect, "Inventory", renderer.font);
 
         const slot_size: f32 = 20.0;
         const slot_padding: f32 = 2.0;
 
-        var inv_x = layout.inventory_rect.x + 10;
-        var inv_y = layout.inventory_rect.y + 10;
+        var inv_x = content_rect.x;
+        var inv_y = content_rect.y;
 
         var inv_it = ship.inventories.valueIterator();
         while (inv_it.next()) |inv| {
@@ -390,12 +390,12 @@ pub const ShipManagement = struct {
                 }
 
                 inv_x += slot_size + slot_padding;
-                if (inv_x + slot_size > layout.inventory_rect.x + layout.inventory_rect.w) {
-                    inv_x = layout.inventory_rect.x + 10;
+                if (inv_x + slot_size > content_rect.x + content_rect.w) {
+                    inv_x = content_rect.x;
                     inv_y += slot_size + slot_padding;
                 }
 
-                if (inv_y + slot_size > layout.inventory_rect.y + layout.inventory_rect.h) {
+                if (inv_y + slot_size > content_rect.y + content_rect.h) {
                     break;
                 }
             }
@@ -404,7 +404,7 @@ pub const ShipManagement = struct {
 
     fn drawToolsPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World) !void {
         var ui = &renderer.ui;
-        try ui.panel(layout.tools_rect);
+        const content_rect = try ui.panel(layout.tools_rect, "Tools", renderer.font);
 
         if (self.mouse.is_left_clicked and layout.tools_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
             self.current_recipe = null;
@@ -413,8 +413,8 @@ pub const ShipManagement = struct {
         const slot_size: f32 = 20.0;
         const slot_padding: f32 = 2.0;
 
-        var tool_x = layout.tools_rect.x + 10;
-        const tool_y = layout.tools_rect.y + 10;
+        var tool_x = content_rect.x;
+        const tool_y = content_rect.y;
 
         if (world.research_manager.isUnlocked(.welding)) {
             const tool_rect = UiRect{ .x = tool_x, .y = tool_y, .w = slot_size, .h = slot_size };
@@ -433,13 +433,13 @@ pub const ShipManagement = struct {
 
     fn drawRecipesPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World) !void {
         var ui = &renderer.ui;
-        try ui.panel(layout.recipe_rect);
+        const content_rect = try ui.panel(layout.recipe_rect, "Recipes", renderer.font);
 
         const slot_size: f32 = 20.0;
         const slot_padding: f32 = 2.0;
 
-        var recipe_x = layout.recipe_rect.x + 10;
-        const recipe_y = layout.recipe_rect.y + 10;
+        var recipe_x = content_rect.x;
+        const recipe_y = content_rect.y;
 
         for (std.enums.values(Recipe)) |recipe| {
             if (world.research_manager.isUnlocked(RecipeStats.getResearchId(recipe))) {

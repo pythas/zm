@@ -63,6 +63,8 @@ pub const UiStyle = struct {
     slot_padding: f32 = 8.0,
     text_padding: f32 = 4.0,
     item_padding: f32 = 4.0,
+    title_padding: f32 = 4.0,
+    title_margin_bottom: f32 = 4.0,
     text_color: UiVec4 = .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 },
     text_color_disabled: UiVec4 = .{ .r = 0.5, .g = 0.5, .b = 0.5, .a = 1.0 },
 
@@ -174,8 +176,31 @@ pub const UiRenderer = struct {
         try self.vertices.append(.{ .position = .{ .x = x, .y = y + h }, .uv = .{ .x = u, .y = v + dv }, .color = color, .data = data, .mode = mode });
     }
 
-    pub fn panel(self: *Self, rect: UiRect) !void {
+    pub fn panel(self: *Self, rect: UiRect, title: ?[]const u8, font: ?*const Font) !UiRect {
         try self.pushQuad(rect, .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 }, 0, 0);
+
+        var content_rect = UiRect{
+            .x = rect.x + self.style.content_padding,
+            .y = rect.y + self.style.content_padding,
+            .w = rect.w - self.style.content_padding * 2,
+            .h = rect.h - self.style.content_padding * 2,
+        };
+
+        if (title) |t| {
+            if (font) |f| {
+                const title_x = rect.x + self.style.title_padding;
+                const title_y = rect.y + self.style.title_padding;
+
+                try self.label(.{ .x = title_x, .y = title_y + f.ascent }, t, f, self.style.text_color);
+
+                const header_height = self.style.title_padding + f.line_height + self.style.title_margin_bottom;
+
+                content_rect.y = rect.y + header_height;
+                content_rect.h = rect.h - header_height - self.style.content_padding;
+            }
+        }
+
+        return content_rect;
     }
 
     pub fn sprite(self: *Self, rect: UiRect, s: Sprite) !void {
@@ -449,7 +474,7 @@ pub const UiRenderer = struct {
         const h = font.line_height * (line_breaks + 1);
 
         const rect = UiRect{ .x = x, .y = y, .w = w + padding * 2, .h = h + padding * 2 };
-        try self.panel(rect);
+        _ = try self.panel(rect, null, null);
 
         try self.label(.{ .x = x + padding, .y = y + padding + font.ascent }, text, font, self.style.text_color);
     }
@@ -484,7 +509,7 @@ pub const UiRenderer = struct {
         const rect = UiRect{ .x = x, .y = y, .w = w, .h = h };
 
         // background
-        try self.panel(rect);
+        _ = try self.panel(rect, null, null);
 
         var selected_index: ?usize = null;
 
