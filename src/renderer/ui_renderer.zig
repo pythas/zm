@@ -65,6 +65,10 @@ pub const UiStyle = struct {
     item_padding: f32 = 4.0,
     text_color: UiVec4 = .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 },
     text_color_disabled: UiVec4 = .{ .r = 0.5, .g = 0.5, .b = 0.5, .a = 1.0 },
+
+    action_button_width: f32 = 95.0,
+    action_button_height: f32 = 40.0,
+    action_button_spacing: f32 = 10.0,
 };
 
 pub const UiRenderer = struct {

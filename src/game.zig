@@ -83,7 +83,7 @@ pub const Game = struct {
             self.world.player_controller.current_action = .laser;
         }
 
-        if (self.keyboard_state.isPressed(.two)) {
+        if (self.keyboard_state.isPressed(.five)) {
             self.world.player_controller.current_action = .railgun;
         }
 
@@ -236,23 +236,45 @@ pub const Game = struct {
     }
 
     fn renderActionBar(self: *Self, screen_w: f32, screen_h: f32) !void {
-        const bar_w = 200.0;
-        const bar_h = 40.0;
-        const bar_x = (screen_w - bar_w) / 2.0;
+        const style = &self.renderer.ui.style;
+        const bar_h = style.action_button_height;
+        const button_w = style.action_button_width;
+        const spacing = style.action_button_spacing;
+
+        const ship = &self.world.objects.items[0];
+        const laser_tiles = try ship.getTilesByPartKind(.laser);
+        defer self.allocator.free(laser_tiles);
+        const railgun_tiles = try ship.getTilesByPartKind(.railgun);
+        defer self.allocator.free(railgun_tiles);
+
+        var count: usize = 0;
+        if (laser_tiles.len > 0) count += 1;
+        if (railgun_tiles.len > 0) count += 1;
+
+        if (count == 0) return;
+
+        const total_w = @as(f32, @floatFromInt(count)) * button_w + @as(f32, @floatFromInt(count - 1)) * spacing;
+        var current_x = (screen_w - total_w) / 2.0;
         const bar_y = screen_h - bar_h - 20.0;
 
-        const laser_rect = UiRect{ .x = bar_x, .y = bar_y, .w = 95.0, .h = bar_h };
-        const is_laser = self.world.player_controller.current_action == .laser;
-        const laser_state = try self.renderer.ui.button(laser_rect, is_laser, false, "1. Laser", self.renderer.font);
-        if (laser_state.is_clicked) {
-            self.world.player_controller.current_action = .laser;
+        if (laser_tiles.len > 0) {
+            const rect = UiRect{ .x = current_x, .y = bar_y, .w = button_w, .h = bar_h };
+            const is_active = self.world.player_controller.current_action == .laser;
+            const state = try self.renderer.ui.button(rect, is_active, false, "1. Laser", self.renderer.font);
+            if (state.is_clicked) {
+                self.world.player_controller.current_action = .laser;
+            }
+            current_x += button_w + spacing;
         }
 
-        const railgun_rect = UiRect{ .x = bar_x + 105.0, .y = bar_y, .w = 95.0, .h = bar_h };
-        const is_railgun = self.world.player_controller.current_action == .railgun;
-        const railgun_state = try self.renderer.ui.button(railgun_rect, is_railgun, false, "2. Railgun", self.renderer.font);
-        if (railgun_state.is_clicked) {
-            self.world.player_controller.current_action = .railgun;
+        if (railgun_tiles.len > 0) {
+            const rect = UiRect{ .x = current_x, .y = bar_y, .w = button_w, .h = bar_h };
+            const is_active = self.world.player_controller.current_action == .railgun;
+            const state = try self.renderer.ui.button(rect, is_active, false, "5. Railgun", self.renderer.font);
+            if (state.is_clicked) {
+                self.world.player_controller.current_action = .railgun;
+            }
+            current_x += button_w + spacing;
         }
     }
 
