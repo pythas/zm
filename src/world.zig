@@ -94,6 +94,7 @@ pub const World = struct {
         };
 
         ship.object_type = .ship_part;
+        ship.repairAll();
         try ship.recalculatePhysics(&physics);
         try ship.initInventories();
         try self.objects.append(ship);
@@ -230,6 +231,28 @@ pub const World = struct {
         for (new_objects_list.items) |*new_obj| {
             try new_obj.recalculatePhysics(&self.physics);
             try self.objects.append(new_obj.*);
+        }
+
+        // cleanup dead objects (no tiles)
+        var obj_idx: usize = 0;
+        while (obj_idx < self.objects.items.len) {
+            const obj = &self.objects.items[obj_idx];
+
+            var has_tiles = false;
+            for (obj.tiles) |tile| {
+                if (tile.data != .empty) {
+                    has_tiles = true;
+                    break;
+                }
+            }
+
+            if (!has_tiles and obj.id != 0) {
+                self.physics.destroyBody(obj.body_id);
+                obj.deinit();
+                _ = self.objects.swapRemove(obj_idx);
+            } else {
+                obj_idx += 1;
+            }
         }
 
         if (self.objects.items.len > 0) {
@@ -374,7 +397,7 @@ pub const World = struct {
                 .ship_part = .{
                     .kind = .smart_core,
                     .tier = 4,
-                    .health = 250.0,
+                    .health = 50.0,
                     .rotation = .north,
                     .modules = modules,
                 },
