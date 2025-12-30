@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Enemy drone system with stateful AI (Idle/Combat modes).
+- `smart_core` high-tech modular ship part
+- AI combat: Reactors-first targeting priority and raycast-based hit detection.
+- Tile damage system: Lasers can now damage and destroy ship components and terrain.
+- Visual effects for Laser Beams with fading color support.
 - Railgun weapon system with raycast-based firing.
 - Health system for terrain tiles, allowing destruction.
 - Physics impulse on hit objects, causing them to react to railgun impacts.

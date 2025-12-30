@@ -11,6 +11,8 @@ const NotificationSystem = @import("notification.zig").NotificationSystem;
 const Camera = @import("camera.zig").Camera;
 const Vec2 = @import("vec2.zig").Vec2;
 const Tile = @import("tile.zig").Tile;
+const PartModule = @import("tile.zig").PartModule;
+const Direction = @import("tile.zig").Direction;
 const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
 const AsteroidGenerator = @import("asteroid_generator.zig").AsteroidGenerator;
@@ -21,6 +23,8 @@ const SectorConfig = WorldGen.SectorConfig;
 const SectorType = WorldGen.SectorType;
 const rng = @import("rng.zig");
 const RailgunTrail = @import("effects.zig").RailgunTrail;
+const LaserBeam = @import("effects.zig").LaserBeam;
+const AiController = @import("ai_controller.zig").AiController;
 
 pub const ChunkCoord = struct {
     x: i32,
@@ -35,12 +39,14 @@ pub const World = struct {
 
     camera: Camera,
     player_controller: PlayerController,
+    ai_controller: AiController,
     research_manager: ResearchManager,
     notifications: NotificationSystem,
 
     next_object_id: u64 = 0,
     objects: std.ArrayList(TileObject),
     railgun_trails: std.ArrayList(RailgunTrail),
+    laser_beams: std.ArrayList(LaserBeam),
 
     physics: Physics,
 
@@ -57,6 +63,7 @@ pub const World = struct {
         );
 
         const player_controller = PlayerController.init(allocator, 0);
+        const ai_controller = AiController.init(allocator);
         const notifications = NotificationSystem.init(allocator);
         const world_generator = WorldGenerator.init(12345); // TODO: load from settings
         const sector_config = SectorConfig{
@@ -69,7 +76,9 @@ pub const World = struct {
             .camera = camera,
             .objects = std.ArrayList(TileObject).init(allocator),
             .railgun_trails = std.ArrayList(RailgunTrail).init(allocator),
+            .laser_beams = std.ArrayList(LaserBeam).init(allocator),
             .player_controller = player_controller,
+            .ai_controller = ai_controller,
             .research_manager = ResearchManager.init(),
             .notifications = notifications,
             .physics = physics,
@@ -89,6 +98,9 @@ pub const World = struct {
         try ship.initInventories();
         try self.objects.append(ship);
 
+        // tmp: spawn a test drone nearby
+        // try self.spawnEnemyDrone(Vec2.init(0, -100));
+
         try self.updateWorldGeneration(Vec2.init(0, 0));
 
         return self;
@@ -100,8 +112,10 @@ pub const World = struct {
         }
         self.objects.deinit();
         self.railgun_trails.deinit();
+        self.laser_beams.deinit();
         self.physics.deinit();
         self.player_controller.deinit();
+        self.ai_controller.deinit();
         self.notifications.deinit();
         self.generated_chunks.deinit();
     }
@@ -145,6 +159,18 @@ pub const World = struct {
             }
         }
 
+        i = 0;
+        while (i < self.laser_beams.items.len) {
+            var beam = &self.laser_beams.items[i];
+            beam.lifetime -= dt;
+
+            if (beam.lifetime <= 0) {
+                _ = self.laser_beams.swapRemove(i);
+            } else {
+                i += 1;
+            }
+        }
+
         for (self.objects.items) |*obj| {
             if (!obj.body_id.isValid()) {
                 continue;
@@ -156,6 +182,8 @@ pub const World = struct {
             obj.position = pos;
             obj.rotation = rot;
         }
+
+        try self.ai_controller.update(dt, self);
 
         try self.player_controller.update(
             dt,
@@ -315,6 +343,10 @@ pub const World = struct {
             self.physics.setAngularVelocity(asteroid.body_id, ang_vel);
 
             try self.objects.append(asteroid);
+        } else if (center.length() > 300.0 and rng.random().float(f32) < 0.05) {
+            const jitter_x = (rng.random().float(f32) - 0.5) * chunkSize;
+            const jitter_y = (rng.random().float(f32) - 0.5) * chunkSize;
+            try self.spawnEnemyDrone(Vec2.init(center.x + jitter_x, center.y + jitter_y));
         }
     }
 
@@ -328,6 +360,31 @@ pub const World = struct {
         }
 
         self.camera.zoom = @max(0.1, @min(10.0, self.camera.zoom));
+    }
+
+    fn spawnEnemyDrone(self: *Self, position: Vec2) !void {
+        const drone_id = self.generateObjectId();
+        var drone = try TileObject.init(self.allocator, drone_id, 1, 1, position, 0);
+        drone.object_type = .enemy_drone;
+
+        const modules = PartModule.thruster | PartModule.laser | PartModule.shield | PartModule.reactor;
+
+        const core_tile = Tile{
+            .data = .{
+                .ship_part = .{
+                    .kind = .smart_core,
+                    .tier = 4,
+                    .health = 250.0,
+                    .rotation = .north,
+                    .modules = modules,
+                },
+            },
+        };
+
+        drone.setTile(0, 0, core_tile);
+        try drone.recalculatePhysics(&self.physics);
+
+        try self.objects.append(drone);
     }
 };
 

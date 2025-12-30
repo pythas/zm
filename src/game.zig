@@ -131,6 +131,26 @@ pub const Game = struct {
         self.renderer.line.draw(pass, &self.renderer.global, lines.items);
     }
 
+    fn drawLaserBeams(self: *Self, pass: zgpu.wgpu.RenderPassEncoder) !void {
+        if (self.world.laser_beams.items.len == 0) return;
+
+        var lines = std.ArrayList(LineRenderData).init(self.allocator);
+        defer lines.deinit();
+
+        for (self.world.laser_beams.items) |beam| {
+            const alpha = beam.lifetime / beam.max_lifetime;
+            try lines.append(.{
+                .start = .{ beam.start.x, beam.start.y },
+                .end = .{ beam.end.x, beam.end.y },
+                .color = .{ beam.color[0], beam.color[1], beam.color[2], beam.color[3] * alpha },
+                .thickness = 2.0,
+                .dash_scale = 0.0,
+            });
+        }
+
+        self.renderer.line.draw(pass, &self.renderer.global, lines.items);
+    }
+
     fn drawLaserLines(self: *Self, pass: zgpu.wgpu.RenderPassEncoder, world_pos: @import("vec2.zig").Vec2) !void {
         if (self.world.player_controller.current_action != .laser) {
             return;
@@ -316,6 +336,7 @@ pub const Game = struct {
                 if (self.mode == .in_world) {
                     try self.drawLaserLines(pass, world_pos);
                     try self.drawRailgunTrails(pass);
+                    try self.drawLaserBeams(pass);
                 }
 
                 const beam_instance_count = try self.renderer.beam.writeBuffers(world);

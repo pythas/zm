@@ -297,7 +297,11 @@ pub const ShipManagement = struct {
                         prefix = "Broken ";
                     }
 
-                    const text = std.fmt.bufPrint(&self.hover_text_buf, "{s}{s}{s}", .{ prefix, name, extra }) catch "!";
+                    const text = std.fmt.bufPrint(
+                        &self.hover_text_buf,
+                        "{s}{s}{s}{s}{d}",
+                        .{ prefix, name, extra, "\nHealth: ", ship_part.health },
+                    ) catch "!";
 
                     self.hovered_item_name = text;
                     self.hover_pos_x = self.mouse.x + hover_offset_x;

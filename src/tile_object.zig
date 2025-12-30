@@ -7,6 +7,7 @@ const Direction = @import("tile.zig").Direction;
 const Directions = @import("tile.zig").Directions;
 const Offset = @import("tile.zig").Offset;
 const PartKind = @import("tile.zig").PartKind;
+const PartModule = @import("tile.zig").PartModule;
 const TileReference = @import("tile.zig").TileReference;
 const TileCoords = @import("tile.zig").TileCoords;
 const Physics = @import("box2d_physics.zig").Physics;
@@ -39,6 +40,7 @@ pub const ObjectType = enum {
     ship_part,
     asteroid,
     debris,
+    enemy_drone,
 };
 
 pub const TileObject = struct {
@@ -142,7 +144,24 @@ pub const TileObject = struct {
         for (self.tiles, 0..) |tile, i| {
             const current_part_kind = tile.getPartKind() orelse continue;
 
-            if (current_part_kind == part_kind) {
+            var match = current_part_kind == part_kind;
+
+            // also check smart core modules
+            if (!match and current_part_kind == .smart_core) {
+                if (tile.data == .ship_part) {
+                    const modules = tile.data.ship_part.modules;
+                    match = switch (part_kind) {
+                        .chemical_thruster => PartModule.has(modules, PartModule.thruster),
+                        .laser => PartModule.has(modules, PartModule.laser),
+                        .railgun => PartModule.has(modules, PartModule.railgun),
+                        .storage => PartModule.has(modules, PartModule.storage),
+                        .reactor => PartModule.has(modules, PartModule.reactor),
+                        else => false,
+                    };
+                }
+            }
+
+            if (match) {
                 try tile_refs.append(.{
                     .object_id = self.id,
                     .tile_x = i % self.width,
@@ -780,7 +799,7 @@ pub const TileObject = struct {
     fn rebuildThrusters(self: *Self) !void {
         self.thrusters.clearRetainingCapacity();
 
-        if (self.object_type != .ship_part) {
+        if (self.object_type != .ship_part and self.object_type != .enemy_drone) {
             return;
         }
 
@@ -789,33 +808,49 @@ pub const TileObject = struct {
                 const tile = self.getTile(x, y) orelse continue;
                 const ship_part = tile.getShipPart() orelse continue;
 
-                var power: f32 = switch (ship_part.kind) {
-                    .chemical_thruster => PartStats.getEnginePower(ship_part.tier),
-                    else => continue,
-                };
+                if (ship_part.kind == .chemical_thruster) {
+                    var power = PartStats.getEnginePower(ship_part.tier);
+                    if (PartStats.isBroken(ship_part)) {
+                        power *= 0.1;
+                    }
 
-                const kind: ThrusterKind = switch (ship_part.kind) {
-                    .chemical_thruster => .main,
-                    else => continue,
-                };
+                    const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
+                    const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
+                    const local_x = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
+                    const local_y = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
 
-                // reduce power of broken engines
-                if (PartStats.isBroken(ship_part)) {
-                    power *= 0.1;
+                    try self.thrusters.append(.{
+                        .kind = .main,
+                        .x = local_x,
+                        .y = local_y,
+                        .direction = ship_part.rotation,
+                        .power = power,
+                    });
+                } else if (ship_part.kind == .smart_core and PartModule.has(ship_part.modules, PartModule.thruster)) {
+                    var power = PartStats.getEnginePower(ship_part.tier);
+                    if (PartStats.isBroken(ship_part)) {
+                        power *= 0.1;
+                    }
+
+                    power *= 0.02;
+
+                    const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
+                    const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
+                    const local_x = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
+                    const local_y = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
+
+                    // smart_core thrusters are omnidirectional
+                    const directions = [_]Direction{ .north, .east, .south, .west };
+                    for (directions) |dir| {
+                        try self.thrusters.append(.{
+                            .kind = .main,
+                            .x = local_x,
+                            .y = local_y,
+                            .direction = dir,
+                            .power = power,
+                        });
+                    }
                 }
-
-                const object_center_x = @as(f32, @floatFromInt(self.width)) * 4.0;
-                const object_center_y = @as(f32, @floatFromInt(self.height)) * 4.0;
-                const local_x = @as(f32, @floatFromInt(x)) * 8.0 + 4.0 - object_center_x;
-                const local_y = @as(f32, @floatFromInt(y)) * 8.0 + 4.0 - object_center_y;
-
-                try self.thrusters.append(.{
-                    .kind = kind,
-                    .x = local_x,
-                    .y = local_y,
-                    .direction = ship_part.rotation,
-                    .power = power,
-                });
             }
         }
     }

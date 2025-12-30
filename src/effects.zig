@@ -6,3 +6,11 @@ pub const RailgunTrail = struct {
     lifetime: f32,
     max_lifetime: f32,
 };
+
+pub const LaserBeam = struct {
+    start: Vec2,
+    end: Vec2,
+    lifetime: f32,
+    max_lifetime: f32,
+    color: [4]f32,
+};

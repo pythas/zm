@@ -18,13 +18,16 @@ pub const PartStats = struct {
             .laser => "Laser",
             .storage => "Storage",
             .railgun => "Railgun",
+            .smart_core => "Smart Core",
         };
     }
 
     pub fn getMaxHealth(kind: PartKind, tier: u8) f32 {
-        _ = kind;
         _ = tier;
-        return 100.0;
+        return switch (kind) {
+            .smart_core => 250.0,
+            else => 100.0,
+        };
     }
 
     pub fn getFunctionalThreshold(kind: PartKind, tier: u8) f32 {
@@ -45,6 +48,7 @@ pub const PartStats = struct {
             .reactor => 1.5,
             .storage => 0.5,
             .railgun => 4.0,
+            .smart_core => 5.0,
         };
     }
 
@@ -60,6 +64,10 @@ pub const PartStats = struct {
                 .{ .item = .{ .resource = .iron }, .amount = 15 },
                 .{ .item = .{ .resource = .copper }, .amount = 5 },
             },
+            .smart_core => &.{
+                .{ .item = .{ .resource = .gold }, .amount = 50 },
+                .{ .item = .{ .resource = .uranium }, .amount = 10 },
+            },
             else => &[_]RepairCost{},
         };
     }
@@ -69,6 +77,7 @@ pub const PartStats = struct {
             1 => 15_000.0,
             2 => 100_000.0,
             3 => 200_000.0,
+            4 => 500_000.0, // High tier for drones
             else => 0.0,
         };
     }
@@ -78,6 +87,7 @@ pub const PartStats = struct {
             1 => 100.0,
             2 => 160.0,
             3 => 320.0,
+            4 => 400.0,
             else => 0.0,
         };
 
@@ -88,11 +98,22 @@ pub const PartStats = struct {
         return range * range;
     }
 
+    pub fn getLaserDamage(tier: u8) f32 {
+        return switch (tier) {
+            1 => 10.0,
+            2 => 15.0,
+            3 => 20.0,
+            4 => 25.0,
+            else => 0.0,
+        };
+    }
+
     pub fn getLaserRadius(tier: u8) u8 {
         return switch (tier) {
             1 => 0,
             2 => 1,
             3 => 2,
+            4 => 2,
             else => 0,
         };
     }
@@ -102,6 +123,7 @@ pub const PartStats = struct {
             1 => 4,
             2 => 8,
             3 => 16,
+            4 => 32,
             else => 0,
         };
     }
@@ -111,6 +133,7 @@ pub const PartStats = struct {
             1 => 200.0,
             2 => 500.0,
             3 => 1000.0,
+            4 => 1500.0,
             else => 0.0,
         };
     }
@@ -120,6 +143,7 @@ pub const PartStats = struct {
             1 => 2000.0,
             2 => 3000.0,
             3 => 5000.0,
+            4 => 6000.0,
             else => 0.0,
         };
     }
@@ -129,6 +153,7 @@ pub const PartStats = struct {
             1 => 0.25,
             2 => 0.20,
             3 => 0.15,
+            4 => 0.10,
             else => 1.0,
         };
     }

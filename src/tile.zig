@@ -14,6 +14,20 @@ pub const PartKind = enum(u8) {
     laser,
     storage,
     railgun,
+    smart_core,
+};
+
+pub const PartModule = struct {
+    pub const thruster: u32 = 1 << 0;
+    pub const laser: u32 = 1 << 1;
+    pub const railgun: u32 = 1 << 2;
+    pub const shield: u32 = 1 << 3;
+    pub const storage: u32 = 1 << 4;
+    pub const reactor: u32 = 1 << 5;
+
+    pub fn has(modules: u32, module: u32) bool {
+        return (modules & module) != 0;
+    }
 };
 
 pub const BaseMaterial = enum(u8) {
@@ -62,6 +76,7 @@ pub const ShipPartTileType = struct {
     tier: u8,
     health: f32,
     rotation: Direction = .north,
+    modules: u32 = 0,
 };
 
 pub const TileData = union(TileType) {
