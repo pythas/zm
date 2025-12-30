@@ -12,6 +12,7 @@ pub const Tool = enum(u8) {
 pub const Recipe = enum(u8) {
     chemical_thruster = 0,
     laser,
+    railgun,
 };
 
 pub const RecipeStats = struct {
@@ -28,6 +29,9 @@ pub const RecipeStats = struct {
             .laser => &[_]Cost{
                 .{ .item = .{ .resource = .iron }, .amount = 40 },
             },
+            .railgun => &[_]Cost{
+                .{ .item = .{ .resource = .iron }, .amount = 10 },
+            },
         };
     }
 
@@ -35,6 +39,7 @@ pub const RecipeStats = struct {
         return switch (recipe) {
             .chemical_thruster => .{ .component = .chemical_thruster },
             .laser => .{ .component = .laser },
+            .railgun => .{ .component = .railgun },
         };
     }
 
@@ -42,6 +47,7 @@ pub const RecipeStats = struct {
         return switch (recipe) {
             .chemical_thruster => "Chemical Thruster",
             .laser => "Laser",
+            .railgun => "Railgun",
         };
     }
 
@@ -49,6 +55,7 @@ pub const RecipeStats = struct {
         return switch (recipe) {
             .chemical_thruster => "Chemical Thruster\nCost: 20 iron",
             .laser => "Laser\nCost: 40 iron",
+            .railgun => "Railgun\nCost: 10 iron",
         };
     }
 
@@ -56,6 +63,7 @@ pub const RecipeStats = struct {
         return switch (recipe) {
             .chemical_thruster => .chemical_thruster,
             .laser => .laser,
+            .railgun => .railgun,
         };
     }
 };

@@ -13,6 +13,7 @@ pub const PartKind = enum(u8) {
     chemical_thruster,
     laser,
     storage,
+    railgun,
 };
 
 pub const BaseMaterial = enum(u8) {
@@ -36,6 +37,7 @@ pub const TerrainTileType = struct {
 
     base_material: BaseMaterial,
     variant: u8 = 0,
+    health: f32 = 50.0,
     resources: std.BoundedArray(ResourceAmount, 4) = .{},
 
     pub fn getMostCommonResource(self: Self) ?ResourceAmount {
@@ -191,9 +193,10 @@ pub const Tile = struct {
         };
     }
 
-    pub fn getHealth(self: Self) ?u8 {
+    pub fn getHealth(self: Self) ?f32 {
         return switch (self.data) {
             .ship_part => |ship| ship.health,
+            .terrain => |terrain| terrain.health,
             else => null,
         };
     }

@@ -41,6 +41,8 @@ pub const KeyboardState = struct {
         left_shift,
         left_ctrl,
         f1,
+        one,
+        two,
     };
 
     pub fn init(window: *zglfw.Window) Self {
@@ -70,6 +72,8 @@ pub const KeyboardState = struct {
         if (self.window.getKey(.left_shift) == .press) self.curr |= bit(.left_shift);
         if (self.window.getKey(.left_control) == .press) self.curr |= bit(.left_ctrl);
         if (self.window.getKey(.F1) == .press) self.curr |= bit(.f1);
+        if (self.window.getKey(.one) == .press) self.curr |= bit(.one);
+        if (self.window.getKey(.two) == .press) self.curr |= bit(.two);
     }
 
     pub fn isDown(self: *const Self, k: Key) bool {

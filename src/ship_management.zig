@@ -24,9 +24,6 @@ const ShipManagementLayout = @import("ship_management/layout.zig").ShipManagemen
 const DropdownItem = @import("renderer/ui_renderer.zig").UiRenderer.DropdownItem;
 const RepairCost = @import("ship.zig").RepairCost;
 
-const tilemapWidth = @import("tile.zig").tilemapWidth;
-const tilemapHeight = @import("tile.zig").tilemapHeight;
-
 const hover_offset_x = 10;
 const hover_offset_y = 10;
 

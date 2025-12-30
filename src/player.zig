@@ -15,6 +15,12 @@ const PartKind = @import("tile.zig").PartKind;
 const PartStats = @import("ship.zig").PartStats;
 const rng = @import("rng.zig");
 const UiVec4 = @import("renderer/ui_renderer.zig").UiVec4;
+const RailgunTrail = @import("effects.zig").RailgunTrail;
+
+pub const Action = enum {
+    laser,
+    railgun,
+};
 
 pub const PlayerController = struct {
     const Self = @This();
@@ -22,6 +28,8 @@ pub const PlayerController = struct {
     allocator: std.mem.Allocator,
 
     target_id: u64,
+    current_action: Action,
+    railgun_cooldown: f32 = 0.0,
 
     tile_actions: std.ArrayList(TileAction),
 
@@ -29,6 +37,8 @@ pub const PlayerController = struct {
         return .{
             .allocator = allocator,
             .target_id = target_id,
+            .current_action = .laser,
+            .railgun_cooldown = 0.0,
             .tile_actions = std.ArrayList(TileAction).init(allocator),
         };
     }
@@ -108,6 +118,91 @@ pub const PlayerController = struct {
         return min;
     }
 
+    fn fireRailgun(self: *Self, ship: *TileObject, world: *World, world_pos: Vec2) !void {
+        if (self.railgun_cooldown > 0.0) return;
+
+        const tile_refs = try ship.getTilesByPartKind(.railgun);
+        defer self.allocator.free(tile_refs);
+
+        // find closest railgun
+        var best_railgun_pos: ?Vec2 = null;
+        var best_railgun_tier: u8 = 1;
+        var min_dist_sq: f32 = std.math.floatMax(f32);
+
+        for (tile_refs) |tile_ref| {
+            const part_pos = ship.getTileWorldPos(tile_ref.tile_x, tile_ref.tile_y);
+            const dist_sq = part_pos.sub(world_pos).lengthSq();
+
+            // check if functional
+            const tile = ship.getTile(tile_ref.tile_x, tile_ref.tile_y).?;
+            const part = tile.getShipPart().?;
+            if (PartStats.isBroken(part)) continue;
+
+            if (dist_sq < min_dist_sq) {
+                min_dist_sq = dist_sq;
+                best_railgun_pos = part_pos;
+                best_railgun_tier = part.tier;
+            }
+        }
+
+        if (best_railgun_pos) |pos| {
+            const dir = world_pos.sub(pos).normalize();
+            var current_pos = pos;
+            var remaining_power: f32 = PartStats.getRailgunPower(best_railgun_tier);
+            const step_size: f32 = 4.0;
+            const max_dist: f32 = PartStats.getRailgunRange(best_railgun_tier);
+            var dist_traveled: f32 = 0.0;
+
+            while (dist_traveled < max_dist and remaining_power > 0) {
+                current_pos = current_pos.add(dir.mulScalar(step_size));
+                dist_traveled += step_size;
+
+                for (world.objects.items) |*obj| {
+                    if (obj.id == self.target_id or obj.object_type == .debris) continue;
+
+                    if (obj.getTileCoordsAtWorldPos(current_pos)) |coords| {
+                        if (obj.getTile(coords.x, coords.y)) |tile| {
+                            if (tile.data != .empty) {
+                                const health = tile.getHealth() orelse 10.0;
+                                var power_consumed: f32 = 0.0;
+
+                                if (remaining_power >= health) {
+                                    power_consumed = health;
+                                    remaining_power -= health;
+                                    obj.setEmptyTile(coords.x, coords.y);
+                                } else {
+                                    power_consumed = remaining_power;
+                                    switch (tile.data) {
+                                        .ship_part => |*p| p.health -= remaining_power,
+                                        .terrain => |*t| t.health -= remaining_power,
+                                        else => {},
+                                    }
+                                    remaining_power = 0;
+                                    obj.dirty = true;
+                                }
+
+                                if (obj.body_id.isValid()) {
+                                    const impulse_mag = power_consumed * PartStats.getRailgunImpulseMultiplier();
+                                    const impulse = dir.mulScalar(impulse_mag);
+                                    world.physics.addLinearImpulseAtPoint(obj.body_id, impulse, current_pos, true);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            try world.railgun_trails.append(.{
+                .start = pos,
+                .end = current_pos,
+                .lifetime = 0.5,
+                .max_lifetime = 0.5,
+            });
+
+            self.railgun_cooldown = PartStats.getRailgunCooldown(best_railgun_tier);
+        }
+    }
+
     pub fn update(
         self: *Self,
         dt: f32,
@@ -115,6 +210,10 @@ pub const PlayerController = struct {
         keyboard_state: *const KeyboardState,
         mouse_state: *const MouseState,
     ) !void {
+        if (self.railgun_cooldown > 0.0) {
+            self.railgun_cooldown -= dt;
+        }
+
         var ship = world.getObjectById(self.target_id) orelse return;
 
         if (!keyboard_state.isDown(.left_shift)) {
@@ -167,66 +266,73 @@ pub const PlayerController = struct {
             }
         }
 
-        if (mouse_state.is_left_clicked) {
+        if (mouse_state.is_left_down) {
             const mouse_pos = mouse_state.getRelativePosition();
             const world_pos = world.camera.screenToWorld(mouse_pos);
 
-            for (world.objects.items) |*object| {
-                if (object.id == self.target_id) {
-                    continue;
-                }
+            switch (self.current_action) {
+                .laser => {
+                    for (world.objects.items) |*object| {
+                        if (object.id == self.target_id) {
+                            continue;
+                        }
 
-                const coords = object.getTileCoordsAtWorldPos(world_pos) orelse continue;
-                const tile = object.getTile(coords.x, coords.y) orelse continue;
-                if (tile.data == .empty) continue;
+                        const coords = object.getTileCoordsAtWorldPos(world_pos) orelse continue;
+                        const tile = object.getTile(coords.x, coords.y) orelse continue;
+                        if (tile.data == .empty) continue;
 
-                const target_pos = object.getTileWorldPos(coords.x, coords.y);
+                        const target_pos = object.getTileWorldPos(coords.x, coords.y);
 
-                const best_candidate = try self.getLaserCandidate(ship, target_pos);
+                        const best_candidate = try self.getLaserCandidate(ship, target_pos);
 
-                if (best_candidate == null) {
-                    std.debug.print("No valid laser avaiable for mining\n", .{});
-                    break;
-                }
+                        if (best_candidate == null) {
+                            std.debug.print("No valid laser avaiable for mining\n", .{});
+                            break;
+                        }
 
-                var targets = std.ArrayList(TileReference).init(self.allocator);
-                defer targets.deinit();
+                        var targets = std.ArrayList(TileReference).init(self.allocator);
+                        defer targets.deinit();
 
-                const radius: i32 = @intCast(PartStats.getLaserRadius(best_candidate.?.tier));
-                const center_x: i32 = @intCast(coords.x);
-                const center_y: i32 = @intCast(coords.y);
+                        const radius: i32 = @intCast(PartStats.getLaserRadius(best_candidate.?.tier));
+                        const center_x: i32 = @intCast(coords.x);
+                        const center_y: i32 = @intCast(coords.y);
 
-                var dy: i32 = -radius;
-                while (dy <= radius) : (dy += 1) {
-                    var dx: i32 = -radius;
-                    while (dx <= radius) : (dx += 1) {
-                        if (@abs(dx) + @abs(dy) <= radius) {
-                            const target_x = center_x + dx;
-                            const target_y = center_y + dy;
+                        var dy: i32 = -radius;
+                        while (dy <= radius) : (dy += 1) {
+                            var dx: i32 = -radius;
+                            while (dx <= radius) : (dx += 1) {
+                                if (@abs(dx) + @abs(dy) <= radius) {
+                                    const target_x = center_x + dx;
+                                    const target_y = center_y + dy;
 
-                            if (target_x < 0 or target_y < 0) continue;
+                                    if (target_x < 0 or target_y < 0) continue;
 
-                            const tile_x: usize = @intCast(target_x);
-                            const tile_y: usize = @intCast(target_y);
+                                    const tile_x: usize = @intCast(target_x);
+                                    const tile_y: usize = @intCast(target_y);
 
-                            if (object.getTile(tile_x, tile_y)) |target_tile| {
-                                if (target_tile.data == .empty) continue;
+                                    if (object.getTile(tile_x, tile_y)) |target_tile| {
+                                        if (target_tile.data == .empty) continue;
 
-                                try targets.append(.{
-                                    .object_id = object.id,
-                                    .tile_x = tile_x,
-                                    .tile_y = tile_y,
-                                });
+                                        try targets.append(.{
+                                            .object_id = object.id,
+                                            .tile_x = tile_x,
+                                            .tile_y = tile_y,
+                                        });
+                                    }
+                                }
                             }
                         }
+
+                        for (targets.items) |target| {
+                            try self.startMining(best_candidate.?.coords, target);
+                        }
+
+                        break;
                     }
-                }
-
-                for (targets.items) |target| {
-                    try self.startMining(best_candidate.?.coords, target);
-                }
-
-                break;
+                },
+                .railgun => {
+                    try self.fireRailgun(ship, world, world_pos);
+                },
             }
         }
 

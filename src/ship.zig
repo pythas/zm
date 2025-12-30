@@ -17,6 +17,7 @@ pub const PartStats = struct {
             .chemical_thruster => "Chemical Thruster",
             .laser => "Laser",
             .storage => "Storage",
+            .railgun => "Railgun",
         };
     }
 
@@ -43,6 +44,7 @@ pub const PartStats = struct {
             .laser => 1.0,
             .reactor => 1.5,
             .storage => 0.5,
+            .railgun => 4.0,
         };
     }
 
@@ -102,5 +104,36 @@ pub const PartStats = struct {
             3 => 16,
             else => 0,
         };
+    }
+
+    pub fn getRailgunPower(tier: u8) f32 {
+        return switch (tier) {
+            1 => 200.0,
+            2 => 500.0,
+            3 => 1000.0,
+            else => 0.0,
+        };
+    }
+
+    pub fn getRailgunRange(tier: u8) f32 {
+        return switch (tier) {
+            1 => 2000.0,
+            2 => 3000.0,
+            3 => 5000.0,
+            else => 0.0,
+        };
+    }
+
+    pub fn getRailgunCooldown(tier: u8) f32 {
+        return switch (tier) {
+            1 => 0.25,
+            2 => 0.20,
+            3 => 0.15,
+            else => 1.0,
+        };
+    }
+
+    pub fn getRailgunImpulseMultiplier() f32 {
+        return 40.0;
     }
 };

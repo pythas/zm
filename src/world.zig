@@ -20,6 +20,7 @@ const WorldGenerator = WorldGen.WorldGenerator;
 const SectorConfig = WorldGen.SectorConfig;
 const SectorType = WorldGen.SectorType;
 const rng = @import("rng.zig");
+const RailgunTrail = @import("effects.zig").RailgunTrail;
 
 pub const ChunkCoord = struct {
     x: i32,
@@ -39,6 +40,7 @@ pub const World = struct {
 
     next_object_id: u64 = 0,
     objects: std.ArrayList(TileObject),
+    railgun_trails: std.ArrayList(RailgunTrail),
 
     physics: Physics,
 
@@ -66,6 +68,7 @@ pub const World = struct {
             .allocator = allocator,
             .camera = camera,
             .objects = std.ArrayList(TileObject).init(allocator),
+            .railgun_trails = std.ArrayList(RailgunTrail).init(allocator),
             .player_controller = player_controller,
             .research_manager = ResearchManager.init(),
             .notifications = notifications,
@@ -96,6 +99,7 @@ pub const World = struct {
             obj.deinit();
         }
         self.objects.deinit();
+        self.railgun_trails.deinit();
         self.physics.deinit();
         self.player_controller.deinit();
         self.notifications.deinit();
@@ -129,6 +133,18 @@ pub const World = struct {
         self.physics.update(dt);
         self.notifications.update(dt);
 
+        var i: usize = 0;
+        while (i < self.railgun_trails.items.len) {
+            var trail = &self.railgun_trails.items[i];
+            trail.lifetime -= dt;
+
+            if (trail.lifetime <= 0) {
+                _ = self.railgun_trails.swapRemove(i);
+            } else {
+                i += 1;
+            }
+        }
+
         for (self.objects.items) |*obj| {
             if (!obj.body_id.isValid()) {
                 continue;
@@ -161,11 +177,11 @@ pub const World = struct {
             }
 
             if (obj.dirty) {
-                const result_opt = try obj.checkSplit(
-                    self.allocator,
-                    self,
-                    struct { fn gen(ctx: *World) u64 { return ctx.generateObjectId(); } }.gen
-                );
+                const result_opt = try obj.checkSplit(self.allocator, self, struct {
+                    fn gen(ctx: *World) u64 {
+                        return ctx.generateObjectId();
+                    }
+                }.gen);
 
                 if (result_opt) |result| {
                     var list = result;
@@ -184,8 +200,8 @@ pub const World = struct {
         }
 
         for (new_objects_list.items) |*new_obj| {
-             try new_obj.recalculatePhysics(&self.physics);
-             try self.objects.append(new_obj.*);
+            try new_obj.recalculatePhysics(&self.physics);
+            try self.objects.append(new_obj.*);
         }
 
         if (self.objects.items.len > 0) {

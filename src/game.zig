@@ -3,6 +3,7 @@ const zgpu = @import("zgpu");
 const zglfw = @import("zglfw");
 
 const World = @import("world.zig").World;
+const RailgunTrail = @import("effects.zig").RailgunTrail;
 const KeyboardState = @import("input.zig").KeyboardState;
 const MouseState = @import("input.zig").MouseState;
 const Renderer = @import("renderer.zig").Renderer;
@@ -78,15 +79,23 @@ pub const Game = struct {
             }
         }
 
+        if (self.keyboard_state.isPressed(.one)) {
+            self.world.player_controller.current_action = .laser;
+        }
+
+        if (self.keyboard_state.isPressed(.two)) {
+            self.world.player_controller.current_action = .railgun;
+        }
+
         if (self.keyboard_state.isPressed(.f1)) {
             self.world.research_manager.unlockAll();
             if (self.world.objects.items.len > 0) {
                 const ship = &self.world.objects.items[0];
 
-                // ship.repairAll();
+                ship.repairAll();
                 std.log.info("Game: CHEAT - Ship Repaired", .{});
 
-                _ = try ship.addItemToInventory(.{ .resource = .iron }, 50, ship.position);
+                _ = try ship.addItemToInventory(.{ .resource = .iron }, 32, ship.position);
             }
         }
 
@@ -102,7 +111,31 @@ pub const Game = struct {
         }
     }
 
+    fn drawRailgunTrails(self: *Self, pass: zgpu.wgpu.RenderPassEncoder) !void {
+        if (self.world.railgun_trails.items.len == 0) return;
+
+        var lines = std.ArrayList(LineRenderData).init(self.allocator);
+        defer lines.deinit();
+
+        for (self.world.railgun_trails.items) |trail| {
+            const alpha = trail.lifetime / trail.max_lifetime;
+            try lines.append(.{
+                .start = .{ trail.start.x, trail.start.y },
+                .end = .{ trail.end.x, trail.end.y },
+                .color = .{ 0.5, 0.9, 1.0, alpha },
+                .thickness = 3.0 * alpha,
+                .dash_scale = 0.0,
+            });
+        }
+
+        self.renderer.line.draw(pass, &self.renderer.global, lines.items);
+    }
+
     fn drawLaserLines(self: *Self, pass: zgpu.wgpu.RenderPassEncoder, world_pos: @import("vec2.zig").Vec2) !void {
+        if (self.world.player_controller.current_action != .laser) {
+            return;
+        }
+
         var lines = std.ArrayList(LineRenderData).init(self.allocator);
         defer lines.deinit();
 
@@ -179,6 +212,50 @@ pub const Game = struct {
         self.renderer.line.draw(pass, &self.renderer.global, lines.items);
     }
 
+    fn getHoverCoords(self: *Self, obj: *@import("tile_object.zig").TileObject, world_pos: @import("vec2.zig").Vec2, ship: *@import("tile_object.zig").TileObject) !?struct { x: i32, y: i32 } {
+        if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
+            if (obj.id != ship.id and obj.object_type != .debris) {
+                var valid_candidate = false;
+                if (self.world.player_controller.current_action == .laser) {
+                    const target_pos = obj.getTileWorldPos(coords.x, coords.y);
+                    if (try self.world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
+                        valid_candidate = true;
+                    }
+                }
+
+                if (valid_candidate) {
+                    if (obj.getTile(coords.x, coords.y)) |tile| {
+                        if (tile.data != .empty) {
+                            return .{ .x = @intCast(coords.x), .y = @intCast(coords.y) };
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    fn renderActionBar(self: *Self, screen_w: f32, screen_h: f32) !void {
+        const bar_w = 200.0;
+        const bar_h = 40.0;
+        const bar_x = (screen_w - bar_w) / 2.0;
+        const bar_y = screen_h - bar_h - 20.0;
+
+        const laser_rect = UiRect{ .x = bar_x, .y = bar_y, .w = 95.0, .h = bar_h };
+        const is_laser = self.world.player_controller.current_action == .laser;
+        const laser_state = try self.renderer.ui.button(laser_rect, is_laser, false, "1. Laser", self.renderer.font);
+        if (laser_state.is_clicked) {
+            self.world.player_controller.current_action = .laser;
+        }
+
+        const railgun_rect = UiRect{ .x = bar_x + 105.0, .y = bar_y, .w = 95.0, .h = bar_h };
+        const is_railgun = self.world.player_controller.current_action == .railgun;
+        const railgun_state = try self.renderer.ui.button(railgun_rect, is_railgun, false, "2. Railgun", self.renderer.font);
+        if (railgun_state.is_clicked) {
+            self.world.player_controller.current_action = .railgun;
+        }
+    }
+
     pub fn render(
         self: *Self,
         pass: zgpu.wgpu.RenderPassEncoder,
@@ -201,18 +278,9 @@ pub const Game = struct {
                     var hover_x: i32 = -1;
                     var hover_y: i32 = -1;
 
-                    if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
-                        if (obj.id != ship.id and obj.object_type != .debris) {
-                            const target_pos = obj.getTileWorldPos(coords.x, coords.y);
-                            if (try world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
-                                if (obj.getTile(coords.x, coords.y)) |tile| {
-                                    if (tile.data != .empty) {
-                                        hover_x = @intCast(coords.x);
-                                        hover_y = @intCast(coords.y);
-                                    }
-                                }
-                            }
-                        }
+                    if (try self.getHoverCoords(obj, world_pos, ship)) |coords| {
+                        hover_x = coords.x;
+                        hover_y = coords.y;
                     }
 
                     try self.renderer.sprite.prepareObject(obj);
@@ -225,6 +293,7 @@ pub const Game = struct {
                 // lines
                 if (self.mode == .in_world) {
                     try self.drawLaserLines(pass, world_pos);
+                    try self.drawRailgunTrails(pass);
                 }
 
                 const beam_instance_count = try self.renderer.beam.writeBuffers(world);
@@ -232,7 +301,12 @@ pub const Game = struct {
 
                 self.renderer.ui.beginFrame();
                 const fb_size = self.window.getFramebufferSize();
-                try world.notifications.draw(&self.renderer.ui, @floatFromInt(fb_size[0]), self.renderer.font);
+                const screen_w: f32 = @floatFromInt(fb_size[0]);
+                const screen_h: f32 = @floatFromInt(fb_size[1]);
+
+                try world.notifications.draw(&self.renderer.ui, screen_w, self.renderer.font);
+                try self.renderActionBar(screen_w, screen_h);
+
                 self.renderer.ui.flush(pass, global);
             },
             .ship_management => {

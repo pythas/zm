@@ -109,6 +109,7 @@ pub const Assets = struct {
             .chemical_thruster => getEngineSprite(ship),
             .laser => getLaserSprite(ship),
             .storage => getStorageSprite(ship),
+            .railgun => getRailgunSprite(ship),
             // else => Sprite.initEmpty(),
         };
     }
@@ -156,5 +157,15 @@ pub const Assets = struct {
         }
 
         return Sprite.init(ship_sheet, setRow(4, index));
+    }
+
+    pub fn getRailgunSprite(ship: ShipPartTileType) Sprite {
+        var index = @intFromEnum(ship.rotation);
+
+        if (PartStats.isBroken(ship)) {
+            index += 1;
+        }
+
+        return Sprite.init(ship_sheet, setRow(5, index));
     }
 };

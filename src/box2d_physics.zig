@@ -122,6 +122,13 @@ pub const Physics = struct {
         c.b2Body_ApplyForce(body_id.id, c.b2Vec2{ .x = force.x, .y = force.y }, c.b2Vec2{ .x = point.x, .y = point.y }, wake);
     }
 
+    pub fn addLinearImpulseAtPoint(self: *Self, body_id: BodyId, impulse: Vec2, point: Vec2, wake: bool) void {
+        _ = self;
+        if (!body_id.isValid()) return;
+
+        c.b2Body_ApplyLinearImpulse(body_id.id, c.b2Vec2{ .x = impulse.x, .y = impulse.y }, c.b2Vec2{ .x = point.x, .y = point.y }, wake);
+    }
+
     pub fn addTorque(self: *Self, body_id: BodyId, torque: f32, wake: bool) void {
         _ = self;
         if (!body_id.isValid()) return;

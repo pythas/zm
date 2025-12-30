@@ -6,6 +6,7 @@ pub const ResearchId = enum {
     welding,
     chemical_thruster,
     laser,
+    railgun,
 };
 
 pub const ResearchManager = struct {
