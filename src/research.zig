@@ -8,6 +8,7 @@ pub const ResearchId = enum {
     laser,
     railgun,
     radar,
+    storage,
 };
 
 pub const ResearchManager = struct {
@@ -57,6 +58,10 @@ pub const ResearchManager = struct {
 
         if (std.mem.eql(u8, component_name, "broken_radar")) {
             return self.unlock(.radar);
+        }
+
+        if (std.mem.eql(u8, component_name, "broken_storage")) {
+            return self.unlock(.storage);
         }
 
         return false;

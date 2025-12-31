@@ -73,6 +73,9 @@ pub const PartStats = struct {
             .radar => &.{
                 .{ .item = .{ .resource = .iron }, .amount = 15 },
             },
+            .storage => &.{
+                .{ .item = .{ .resource = .iron }, .amount = 20 },
+            },
             else => &[_]RepairCost{},
         };
     }

@@ -68,7 +68,7 @@ pub const ShipManagement = struct {
         world: *World,
         dt: f32,
         t: f32,
-    ) void {
+    ) !void {
         const wh = self.window.getFramebufferSize();
         const screen_w: f32 = @floatFromInt(wh[0]);
         const screen_h: f32 = @floatFromInt(wh[1]);
@@ -89,7 +89,7 @@ pub const ShipManagement = struct {
                 hover_x = tile_pos.x;
                 hover_y = tile_pos.y;
 
-                self.handleTileInteraction(ship, tile_pos.x, tile_pos.y, world);
+                try self.handleTileInteraction(ship, tile_pos.x, tile_pos.y, world);
             }
         }
 
@@ -122,7 +122,7 @@ pub const ShipManagement = struct {
         ship.setTile(x, y, Tile.initEmpty() catch unreachable);
     }
 
-    fn repairTile(self: *Self, ship: *TileObject, world: *World, x: usize, y: usize) void {
+    fn repairTile(self: *Self, ship: *TileObject, world: *World, x: usize, y: usize) !void {
         const tile = ship.getTile(x, y) orelse return;
         const ship_part = tile.getShipPart() orelse return;
         const repair_costs = PartStats.getRepairCosts(ship_part.kind);
@@ -140,8 +140,11 @@ pub const ShipManagement = struct {
                 .chemical_thruster => _ = world.research_manager.reportRepair("broken_chemical_thruster"),
                 .laser => _ = world.research_manager.reportRepair("broken_laser"),
                 .radar => _ = world.research_manager.reportRepair("broken_radar"),
+                .storage => _ = world.research_manager.reportRepair("broken_storage"),
                 else => {},
             }
+
+            try ship.initInventories();
         }
     }
 
@@ -163,7 +166,7 @@ pub const ShipManagement = struct {
         }
     }
 
-    fn handleTileInteraction(self: *Self, ship: *TileObject, hover_x: i32, hover_y: i32, world: *World) void {
+    fn handleTileInteraction(self: *Self, ship: *TileObject, hover_x: i32, hover_y: i32, world: *World) !void {
         _ = world;
         const tile_x: usize = @intCast(hover_x);
         const tile_y: usize = @intCast(hover_y);
@@ -194,6 +197,8 @@ pub const ShipManagement = struct {
                             if (self.cursor_item.amount == 0) {
                                 self.cursor_item = .{};
                             }
+
+                            try ship.initInventories();
                         }
                     }
                 },
@@ -584,7 +589,7 @@ pub const ShipManagement = struct {
         if (result.selected_index) |index| {
             switch (actions[index]) {
                 .rotate => self.rotateTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y),
-                .repair => self.repairTile(ship, world, self.tile_menu_tile_x, self.tile_menu_tile_y),
+                .repair => try self.repairTile(ship, world, self.tile_menu_tile_x, self.tile_menu_tile_y),
                 .dismantle => self.removeTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y),
             }
             self.is_tile_menu_open = false;

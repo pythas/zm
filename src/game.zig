@@ -70,6 +70,8 @@ pub const Game = struct {
     }
 
     pub fn update(self: *Self, dt: f32, t: f32) !void {
+        const ship = &self.world.objects.items[0];
+
         self.keyboard_state.update();
         self.mouse_state.update();
 
@@ -77,9 +79,10 @@ pub const Game = struct {
             if (self.mode == .in_world) {
                 self.mode = .ship_management;
             } else {
-                try self.world.objects.items[0].recalculatePhysics(&self.world.physics);
-                try self.world.objects.items[0].initInventories();
                 self.mode = .in_world;
+
+                try ship.recalculatePhysics(&self.world.physics);
+                try ship.initInventories();
             }
         }
 
@@ -93,13 +96,14 @@ pub const Game = struct {
 
         if (self.keyboard_state.isPressed(.f1)) {
             self.world.research_manager.unlockAll();
-            if (self.world.objects.items.len > 0) {
-                const ship = &self.world.objects.items[0];
 
+            if (self.world.objects.items.len > 0) {
                 ship.repairAll();
                 std.log.info("Game: CHEAT - Ship Repaired", .{});
 
                 _ = try ship.addItemToInventory(.{ .resource = .iron }, 32, ship.position);
+
+                try ship.initInventories();
             }
         }
 
@@ -110,7 +114,7 @@ pub const Game = struct {
                 self.renderer.global.write(self.window, &self.world, dt, t, self.mode);
             },
             .ship_management => {
-                self.ship_management.update(&self.renderer, &self.world, dt, t);
+                try self.ship_management.update(&self.renderer, &self.world, dt, t);
             },
         }
     }
@@ -192,14 +196,13 @@ pub const Game = struct {
                             break;
                         }
                     }
-
                     if (is_used) continue;
 
                     const laser_world_pos = ship.getTileWorldPos(tile_ref.tile_x, tile_ref.tile_y);
                     const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y).?;
-                    const sp = ti.getShipPart().?;
-                    const is_broken = @import("ship.zig").PartStats.isBroken(sp);
-                    const range_sq = @import("ship.zig").PartStats.getLaserRangeSq(sp.tier, is_broken);
+                    const part = ti.getShipPart().?;
+                    const is_broken = PartStats.isBroken(part);
+                    const range_sq = PartStats.getLaserRangeSq(part.tier, is_broken);
                     const range = std.math.sqrt(range_sq);
 
                     const diff = target_pos.sub(laser_world_pos);
@@ -311,6 +314,7 @@ pub const Game = struct {
                 var valid_candidate = false;
                 if (self.world.player_controller.current_action == .laser) {
                     const target_pos = obj.getTileWorldPos(coords.x, coords.y);
+
                     if (try self.world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
                         valid_candidate = true;
                     }

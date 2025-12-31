@@ -358,9 +358,10 @@ pub const TileObject = struct {
 
         for (tile_refs) |tile_ref| {
             const tile = self.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;
-            const ship_part = tile.getShipPart() orelse continue;
+            const part = tile.getShipPart() orelse continue;
+            if (PartStats.isBroken(part)) continue;
 
-            _ = try self.addInventory(tile_ref.tile_x, tile_ref.tile_y, PartStats.getStorageSlotLimit(ship_part.tier));
+            _ = try self.addInventory(tile_ref.tile_x, tile_ref.tile_y, PartStats.getStorageSlotLimit(part.tier));
         }
     }
 

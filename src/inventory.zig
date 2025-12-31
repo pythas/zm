@@ -14,6 +14,7 @@ pub const Recipe = enum(u8) {
     laser,
     railgun,
     radar,
+    storage,
 };
 
 pub const RecipeStats = struct {
@@ -36,6 +37,9 @@ pub const RecipeStats = struct {
             .radar => &[_]Cost{
                 .{ .item = .{ .resource = .iron }, .amount = 15 },
             },
+            .storage => &[_]Cost{
+                .{ .item = .{ .resource = .iron }, .amount = 50 },
+            },
         };
     }
 
@@ -45,6 +49,7 @@ pub const RecipeStats = struct {
             .laser => .{ .component = .laser },
             .railgun => .{ .component = .railgun },
             .radar => .{ .component = .radar },
+            .storage => .{ .component = .storage },
         };
     }
 
@@ -54,6 +59,7 @@ pub const RecipeStats = struct {
             .laser => "Laser",
             .railgun => "Railgun",
             .radar => "Radar",
+            .storage => "Storage",
         };
     }
 
@@ -63,6 +69,7 @@ pub const RecipeStats = struct {
             .laser => "Laser\nCost: 40 iron",
             .railgun => "Railgun\nCost: 10 iron",
             .radar => "Radar\nCost: 15 iron",
+            .storage => "Storage\nCost: 50 iron",
         };
     }
 
@@ -72,6 +79,7 @@ pub const RecipeStats = struct {
             .laser => .laser,
             .railgun => .railgun,
             .radar => .radar,
+            .storage => .storage,
         };
     }
 };
@@ -116,6 +124,7 @@ pub const Item = union(enum) {
                 .laser => "Laser",
                 .railgun => "Railgun",
                 .radar => "Radar",
+                .storage => "Storage",
                 else => "N/A",
             },
         };

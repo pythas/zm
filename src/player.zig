@@ -261,9 +261,9 @@ pub const PlayerController = struct {
 
             const tile = ship.getTile(ref.tile_x, ref.tile_y).?;
             const part = tile.getShipPart().?;
-            if (PartStats.isBroken(part)) continue;
+            const is_broken = PartStats.isBroken(part);
 
-            const range = PartStats.getLaserRangeSq(part.tier, false);
+            const range = PartStats.getLaserRangeSq(part.tier, is_broken);
             const dist = ship.getDistanceToTileSq(ref.tile_x, ref.tile_y, target_pos);
 
             if (dist <= range) {
