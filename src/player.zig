@@ -356,11 +356,11 @@ pub const PlayerController = struct {
         var candidates = std.ArrayList(Candidate).init(self.allocator);
         defer candidates.deinit();
 
-        const max_targeting_range = 250.0;
+        const max_targeting_range = 500.0;
         const max_range_sq = max_targeting_range * max_targeting_range;
 
         for (world.objects.items) |*obj| {
-            if (obj.id == self.target_id or obj.object_type == .debris or !obj.body_id.isValid()) continue;
+            if (obj.id == self.target_id or obj.object_type == .debris or obj.object_type == .debris or !obj.body_id.isValid()) continue;
 
             const dist = obj.position.sub(ship.position).lengthSq();
             if (dist <= max_range_sq) {

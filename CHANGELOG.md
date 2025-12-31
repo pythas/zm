@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Basic radar.
 - Targeting system. Press R to cycle targets.
 - Space to shoot current weapon.
 - Enemy drone system with stateful AI (Idle/Combat modes).

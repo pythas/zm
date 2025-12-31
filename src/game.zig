@@ -242,7 +242,7 @@ pub const Game = struct {
         }
 
         const ship = &self.world.objects.items[0];
-        const range = 1000.0;
+        const range = 2000.0;
         const range_sq = range * range;
 
         const radar_size = 200.0;
