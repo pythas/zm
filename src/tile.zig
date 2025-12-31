@@ -15,6 +15,7 @@ pub const PartKind = enum(u8) {
     storage,
     railgun,
     smart_core,
+    radar,
 };
 
 pub const PartModule = struct {

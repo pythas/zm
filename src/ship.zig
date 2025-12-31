@@ -19,6 +19,7 @@ pub const PartStats = struct {
             .storage => "Storage",
             .railgun => "Railgun",
             .smart_core => "Smart Core",
+            .radar => "Radar",
         };
     }
 
@@ -49,6 +50,7 @@ pub const PartStats = struct {
             .storage => 0.5,
             .railgun => 4.0,
             .smart_core => 5.0,
+            .radar => 2.0,
         };
     }
 
@@ -67,6 +69,9 @@ pub const PartStats = struct {
             .smart_core => &.{
                 .{ .item = .{ .resource = .gold }, .amount = 50 },
                 .{ .item = .{ .resource = .uranium }, .amount = 10 },
+            },
+            .radar => &.{
+                .{ .item = .{ .resource = .iron }, .amount = 15 },
             },
             else => &[_]RepairCost{},
         };

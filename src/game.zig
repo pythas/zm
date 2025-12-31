@@ -14,6 +14,8 @@ const UiVec4 = @import("renderer/ui_renderer.zig").UiVec4;
 const ShipManagement = @import("ship_management.zig").ShipManagement;
 const LineRenderData = @import("renderer/line_renderer.zig").LineRenderData;
 const Vec2 = @import("vec2.zig").Vec2;
+const PartStats = @import("ship.zig").PartStats;
+const TileObject = @import("tile_object.zig").TileObject;
 
 const scrollCallback = @import("world.zig").scrollCallback;
 
@@ -234,15 +236,20 @@ pub const Game = struct {
         self.renderer.line.draw(pass, &self.renderer.global, lines.items);
     }
 
-    fn drawRadar(self: *Self, screen_w: f32, screen_h: f32) !void {
+    fn drawRadar(self: *Self, ship: *TileObject, screen_w: f32, screen_h: f32) !void {
         _ = screen_h;
+
+        const radar_refs = try ship.getTilesByPartKind(.radar);
+        if (radar_refs.len == 0) return;
+        const radar = ship.getTile(radar_refs[0].tile_x, radar_refs[0].tile_y) orelse return;
+        const radar_part = radar.getShipPart() orelse return;
+        if (PartStats.isBroken(radar_part)) return;
 
         if (self.world.objects.items.len == 0) {
             return;
         }
 
-        const ship = &self.world.objects.items[0];
-        const range = 2000.0;
+        const range = 1000.0;
         const range_sq = range * range;
 
         const radar_size = 200.0;
@@ -412,7 +419,7 @@ pub const Game = struct {
                 const screen_w: f32 = @floatFromInt(fb_size[0]);
                 const screen_h: f32 = @floatFromInt(fb_size[1]);
 
-                try self.drawRadar(screen_w, screen_h);
+                try self.drawRadar(ship, screen_w, screen_h);
 
                 try world.notifications.draw(&self.renderer.ui, screen_w, self.renderer.font);
                 try self.renderActionBar(screen_w, screen_h);

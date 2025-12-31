@@ -7,6 +7,7 @@ pub const ResearchId = enum {
     chemical_thruster,
     laser,
     railgun,
+    radar,
 };
 
 pub const ResearchManager = struct {
@@ -27,6 +28,7 @@ pub const ResearchManager = struct {
         inline for (std.meta.fields(ResearchId)) |field| {
             self.unlocked.insert(@enumFromInt(field.value));
         }
+
         std.log.info("Research: CHEAT - All Tech Unlocked", .{});
     }
 
@@ -51,6 +53,10 @@ pub const ResearchManager = struct {
 
         if (std.mem.eql(u8, component_name, "broken_laser")) {
             return self.unlock(.laser);
+        }
+
+        if (std.mem.eql(u8, component_name, "broken_radar")) {
+            return self.unlock(.radar);
         }
 
         return false;

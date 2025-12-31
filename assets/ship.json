@@ -1202,11 +1202,11 @@
     {
       "x": 5,
       "y": 8,
-      "data_type": "ship_part",
-      "kind": "hull",
+      "data_type": "empty",
+      "kind": null,
       "base_material": null,
-      "rotation": "north",
-      "health": 1e2
+      "rotation": null,
+      "health": null
     },
     {
       "x": 6,
@@ -1238,11 +1238,11 @@
     {
       "x": 9,
       "y": 8,
-      "data_type": "ship_part",
-      "kind": "hull",
+      "data_type": "empty",
+      "kind": null,
       "base_material": null,
-      "rotation": "north",
-      "health": 1e2
+      "rotation": null,
+      "health": null
     },
     {
       "x": 10,
@@ -1337,11 +1337,11 @@
     {
       "x": 4,
       "y": 9,
-      "data_type": "ship_part",
-      "kind": "hull",
+      "data_type": "empty",
+      "kind": null,
       "base_material": null,
-      "rotation": "north",
-      "health": 1e2
+      "rotation": null,
+      "health": null
     },
     {
       "x": 5,
@@ -1391,11 +1391,11 @@
     {
       "x": 10,
       "y": 9,
-      "data_type": "ship_part",
-      "kind": "hull",
+      "data_type": "empty",
+      "kind": null,
       "base_material": null,
-      "rotation": "north",
-      "health": 1e2
+      "rotation": null,
+      "health": null
     },
     {
       "x": 11,
@@ -1491,9 +1491,9 @@
       "x": 5,
       "y": 10,
       "data_type": "ship_part",
-      "kind": "chemical_thruster",
+      "kind": "hull",
       "base_material": null,
-      "rotation": "south",
+      "rotation": "north",
       "health": 1e2
     },
     {
@@ -1509,9 +1509,9 @@
       "x": 7,
       "y": 10,
       "data_type": "ship_part",
-      "kind": "chemical_thruster",
+      "kind": "radar",
       "base_material": null,
-      "rotation": "south",
+      "rotation": "north",
       "health": 0e0
     },
     {
@@ -1526,11 +1526,11 @@
     {
       "x": 9,
       "y": 10,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "hull",
       "base_material": null,
-      "rotation": null,
-      "health": null
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 10,
@@ -1625,20 +1625,20 @@
     {
       "x": 4,
       "y": 11,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "hull",
       "base_material": null,
-      "rotation": null,
-      "health": null
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 5,
       "y": 11,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "chemical_thruster",
       "base_material": null,
-      "rotation": null,
-      "health": null
+      "rotation": "south",
+      "health": 1e2
     },
     {
       "x": 6,
@@ -1652,11 +1652,11 @@
     {
       "x": 7,
       "y": 11,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "chemical_thruster",
       "base_material": null,
-      "rotation": null,
-      "health": null
+      "rotation": "south",
+      "health": 0e0
     },
     {
       "x": 8,
@@ -1679,11 +1679,11 @@
     {
       "x": 10,
       "y": 11,
-      "data_type": "empty",
-      "kind": null,
+      "data_type": "ship_part",
+      "kind": "hull",
       "base_material": null,
-      "rotation": null,
-      "health": null
+      "rotation": "north",
+      "health": 1e2
     },
     {
       "x": 11,

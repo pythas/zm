@@ -94,7 +94,7 @@ pub const World = struct {
         };
 
         ship.object_type = .ship_part;
-        ship.repairAll();
+
         try ship.recalculatePhysics(&physics);
         try ship.initInventories();
         try self.objects.append(ship);

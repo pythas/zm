@@ -136,7 +136,12 @@ pub const ShipManagement = struct {
                 ship.removeNumberOfItemsFromInventory(repair_cost.item, repair_cost.amount);
             }
 
-            _ = world.research_manager.reportRepair("broken_chemical_thruster");
+            switch (ship_part.kind) {
+                .chemical_thruster => _ = world.research_manager.reportRepair("broken_chemical_thruster"),
+                .laser => _ = world.research_manager.reportRepair("broken_laser"),
+                .radar => _ = world.research_manager.reportRepair("broken_radar"),
+                else => {},
+            }
         }
     }
 
