@@ -30,6 +30,14 @@ pub const TileData = struct {
     layer: CollisionLayer = .default,
 };
 
+pub const RayHit = struct {
+    point: Vec2,
+    normal: Vec2,
+    fraction: f32,
+    hit: bool,
+    body_id: BodyId,
+};
+
 pub const Physics = struct {
     const Self = @This();
 
@@ -55,6 +63,67 @@ pub const Physics = struct {
 
     pub fn update(self: *Self, dt: f32) void {
         c.b2World_Step(self.world_id, dt, 4);
+    }
+
+    const RayCastContext = struct {
+        result: *RayHit,
+        ignore_body: BodyId,
+    };
+
+    fn rayCastCallback(
+        shape_id: c.b2ShapeId,
+        point: c.b2Vec2,
+        normal: c.b2Vec2,
+        fraction: f32,
+        context: ?*anyopaque,
+    ) callconv(.C) f32 {
+        const ctx: *RayCastContext = @ptrCast(@alignCast(context));
+        const hit_body_id = c.b2Shape_GetBody(shape_id);
+
+        if (ctx.ignore_body.isValid()) {
+            const id1 = hit_body_id;
+            const id2 = ctx.ignore_body.id;
+            if (id1.index1 == id2.index1 and id1.generation == id2.generation and id1.world0 == id2.world0) {
+                return -1.0;
+            }
+        }
+
+        ctx.result.hit = true;
+        ctx.result.fraction = fraction;
+        ctx.result.point = Vec2.init(point.x, point.y);
+        ctx.result.normal = Vec2.init(normal.x, normal.y);
+        ctx.result.body_id = BodyId{ .id = hit_body_id };
+        return fraction;
+    }
+
+    pub fn castRay(self: *Self, origin: Vec2, end_pos: Vec2, ignore_body: ?BodyId) RayHit {
+        const translation = end_pos.sub(origin);
+        var filter = c.b2DefaultQueryFilter();
+        filter.categoryBits = 0x0001;
+        filter.maskBits = 0xFFFFFFFF;
+
+        var result: RayHit = undefined;
+        result.hit = false;
+        result.fraction = 1.0;
+        result.point = end_pos;
+        result.normal = Vec2.init(0, 0);
+        result.body_id = BodyId.invalid;
+
+        var context = RayCastContext{
+            .result = &result,
+            .ignore_body = ignore_body orelse BodyId.invalid,
+        };
+
+        _ = c.b2World_CastRay(
+            self.world_id,
+            c.b2Vec2{ .x = origin.x, .y = origin.y },
+            c.b2Vec2{ .x = translation.x, .y = translation.y },
+            filter,
+            rayCastCallback,
+            &context,
+        );
+
+        return result;
     }
 
     pub fn createBody(self: *Self, pos: Vec2, rotation: f32) !BodyId {
@@ -188,7 +257,7 @@ pub const Physics = struct {
             switch (tile.layer) {
                 .default => {
                     shape_def.filter.categoryBits = 0x0001;
-                    shape_def.filter.maskBits = 0xFFFF;
+                    shape_def.filter.maskBits = 0xFFFFFFFF;
                 },
                 .debris => {
                     shape_def.filter.categoryBits = 0x0002;

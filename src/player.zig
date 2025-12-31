@@ -500,6 +500,27 @@ pub const PlayerController = struct {
     pub fn startMining(self: *Self, source: TileCoords, target: TileReference) !void {
         try self.tile_actions.append(TileAction.init(.mine, source, target, 3.0));
     }
+
+    // pub fn performSensorSweep(self: *Self, world: *World, origin: Vec2, range: f32) !void {
+    //     var hits = std.ArrayList(Vec2).init(self.allocator);
+    //     defer hits.deinit();
+    //
+    //     const segments = 128;
+    //     for (0..segments) |i| {
+    //         const angle = (@as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(segments))) * std.math.tau;
+    //         const target = origin.add(Vec2.init(@cos(angle) * range, @sin(angle) * range));
+    //
+    //         // We pass null for ignore_body here because the sweep should probably see everything,
+    //         // or we could pass the player's body ID if we had easy access to it here.
+    //         // For now, null is safe as it just means we might hit ourselves if origin is inside.
+    //         const hit = world.physics.castRay(origin, target, null);
+    //
+    //         if (hit.hit) {
+    //             try hits.append(hit.point);
+    //         }
+    //     }
+    //     // In the future, this list would be sent to the renderer or UI to draw the "ping" effect.
+    // }
 };
 
 pub const TileAction = struct {

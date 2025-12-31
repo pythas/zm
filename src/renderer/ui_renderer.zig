@@ -176,6 +176,10 @@ pub const UiRenderer = struct {
         try self.vertices.append(.{ .position = .{ .x = x, .y = y + h }, .uv = .{ .x = u, .y = v + dv }, .color = color, .data = data, .mode = mode });
     }
 
+    pub fn rectangle(self: *Self, rect: UiRect, color: UiVec4) !void {
+        try self.pushQuad(rect, color, 0, 0);
+    }
+
     pub fn panel(self: *Self, rect: UiRect, title: ?[]const u8, font: ?*const Font) !UiRect {
         try self.pushQuad(rect, .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 }, 0, 0);
 

@@ -10,8 +10,10 @@ const Renderer = @import("renderer.zig").Renderer;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
+const UiVec4 = @import("renderer/ui_renderer.zig").UiVec4;
 const ShipManagement = @import("ship_management.zig").ShipManagement;
 const LineRenderData = @import("renderer/line_renderer.zig").LineRenderData;
+const Vec2 = @import("vec2.zig").Vec2;
 
 const scrollCallback = @import("world.zig").scrollCallback;
 
@@ -232,6 +234,70 @@ pub const Game = struct {
         self.renderer.line.draw(pass, &self.renderer.global, lines.items);
     }
 
+    fn drawRadar(self: *Self, screen_w: f32, screen_h: f32) !void {
+        _ = screen_h;
+
+        if (self.world.objects.items.len == 0) {
+            return;
+        }
+
+        const ship = &self.world.objects.items[0];
+        const range = 1000.0;
+        const range_sq = range * range;
+
+        const radar_size = 200.0;
+        const padding = 20.0;
+        const radar_rect = UiRect{
+            .x = screen_w - radar_size - padding,
+            .y = padding,
+            .w = radar_size,
+            .h = radar_size,
+        };
+
+        const radar_center_x = radar_rect.x + radar_size / 2.0;
+        const radar_center_y = radar_rect.y + radar_size / 2.0;
+        const scale = (radar_size / 2.0) / range;
+
+        const blip_size = 2.0;
+
+        // background
+        _ = try self.renderer.ui.panel(radar_rect, null, null);
+
+        // objects
+        for (self.world.objects.items) |*obj| {
+            if (obj.id == ship.id) continue;
+            if (obj.object_type == .debris) continue;
+
+            const rel_pos = obj.position.sub(ship.position);
+            const dist_sq = rel_pos.lengthSq();
+
+            if (dist_sq > range_sq) continue;
+
+            const blip_x = radar_center_x + rel_pos.x * scale;
+            const blip_y = radar_center_y + rel_pos.y * scale;
+
+            const color: UiVec4 = switch (obj.object_type) {
+                .enemy_drone => .{ .r = 1.0, .g = 0.2, .b = 0.2, .a = 1.0 },
+                else => .{ .r = 0.2, .g = 1.0, .b = 0.2, .a = 0.8 },
+            };
+
+            try self.renderer.ui.rectangle(.{
+                .x = blip_x - blip_size / 2.0,
+                .y = blip_y - blip_size / 2.0,
+                .w = blip_size,
+                .h = blip_size,
+            }, color);
+        }
+
+        // player blip
+        try self.renderer.ui.rectangle(.{
+            .x = radar_center_x - 1.5,
+            .y = radar_center_y - 1.5,
+            .w = 3.0,
+            .h = 3.0,
+        }, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+    }
+
     fn getHoverCoords(self: *Self, obj: *@import("tile_object.zig").TileObject, world_pos: @import("vec2.zig").Vec2, ship: *@import("tile_object.zig").TileObject) !?struct { x: i32, y: i32 } {
         if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
             if (obj.id != ship.id and obj.object_type != .debris) {
@@ -281,9 +347,11 @@ pub const Game = struct {
             const rect = UiRect{ .x = current_x, .y = bar_y, .w = button_w, .h = bar_h };
             const is_active = self.world.player_controller.current_action == .laser;
             const state = try self.renderer.ui.button(rect, is_active, false, "1. Laser", self.renderer.font);
+
             if (state.is_clicked) {
                 self.world.player_controller.current_action = .laser;
             }
+
             current_x += button_w + spacing;
         }
 
@@ -291,9 +359,11 @@ pub const Game = struct {
             const rect = UiRect{ .x = current_x, .y = bar_y, .w = button_w, .h = bar_h };
             const is_active = self.world.player_controller.current_action == .railgun;
             const state = try self.renderer.ui.button(rect, is_active, false, "5. Railgun", self.renderer.font);
+
             if (state.is_clicked) {
                 self.world.player_controller.current_action = .railgun;
             }
+
             current_x += button_w + spacing;
         }
     }
@@ -332,20 +402,17 @@ pub const Game = struct {
                 try self.renderer.sprite.writeInstances(instances.items);
                 self.renderer.sprite.draw(pass, global, self.world.objects.items);
 
-                // lines
-                if (self.mode == .in_world) {
-                    try self.drawLaserLines(pass, world_pos);
-                    try self.drawRailgunTrails(pass);
-                    try self.drawLaserBeams(pass);
-                }
-
-                const beam_instance_count = try self.renderer.beam.writeBuffers(world);
-                self.renderer.beam.draw(pass, global, beam_instance_count);
+                try self.drawLaserLines(pass, world_pos);
+                try self.drawRailgunTrails(pass);
+                try self.drawLaserBeams(pass);
 
                 self.renderer.ui.beginFrame();
+
                 const fb_size = self.window.getFramebufferSize();
                 const screen_w: f32 = @floatFromInt(fb_size[0]);
                 const screen_h: f32 = @floatFromInt(fb_size[1]);
+
+                try self.drawRadar(screen_w, screen_h);
 
                 try world.notifications.draw(&self.renderer.ui, screen_w, self.renderer.font);
                 try self.renderActionBar(screen_w, screen_h);
