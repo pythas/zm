@@ -1,4 +1,5 @@
 const UiRect = @import("../renderer/ui_renderer.zig").UiRect;
+const UiStyle = @import("../renderer/ui_renderer.zig").UiStyle;
 const tilemapWidth = @import("../tile.zig").tilemapWidth;
 const tilemapHeight = @import("../tile.zig").tilemapHeight;
 
@@ -8,7 +9,7 @@ pub const ShipManagementLayout = struct {
     const scaling: f32 = 3.0;
     const padding: f32 = 10.0;
     const tile_size_base: f32 = 8.0;
-    const header_height: f32 = 50.0;
+    const header_height: f32 = 50.0; // approx height
 
     scale: f32,
     tile_size: f32,
@@ -20,7 +21,7 @@ pub const ShipManagementLayout = struct {
     recipe_rect: UiRect,
     crafting_rect: UiRect,
 
-    pub fn compute(screen_w: f32, screen_h: f32) Self {
+    pub fn compute(screen_w: f32, screen_h: f32, style: UiStyle) Self {
         _ = screen_w;
         _ = screen_h;
 
@@ -45,39 +46,48 @@ pub const ShipManagementLayout = struct {
             .h = grid_h,
         };
 
-        const inv_w = tile_size_base * scaling * 8;
-        const inv_h = tile_size_base * scaling * 8;
+        // common width based on slots_per_row
+        const content_w = (style.slot_size * style.slots_per_row) + (style.slot_padding * (style.slots_per_row - 1.0));
+        const panel_w = content_w + (style.content_padding * 2.0);
+
+        // inventory
+        const inv_content_h = (style.slot_size * style.inventory_rows) + (style.slot_padding * (style.inventory_rows - 1.0));
+        const inv_h = inv_content_h + (style.content_padding * 2.0) + header_height;
+
         const inv_rect = UiRect{
             .x = ship_rect.x + ship_rect.w + padding,
             .y = padding,
-            .w = inv_w,
+            .w = panel_w,
             .h = inv_h,
         };
 
-        const tools_w = tile_size_base * scaling * 8;
-        const tools_h = tile_size_base * scaling * 4;
+        // tools
+        const tools_content_h = (style.slot_size * style.tools_rows) + (style.slot_padding * (style.tools_rows - 1.0));
+        const tools_h = tools_content_h + (style.content_padding * 2.0) + header_height;
+
         const tools_rect = UiRect{
             .x = inv_rect.x + inv_rect.w + padding,
             .y = padding,
-            .w = tools_w,
+            .w = panel_w,
             .h = tools_h,
         };
 
-        const recipe_w = tile_size_base * scaling * 8;
-        const recipe_h = tile_size_base * scaling * 4;
+        // recipes
+        const recipe_content_h = (style.slot_size * style.recipe_rows) + (style.slot_padding * (style.recipe_rows - 1.0));
+        const recipe_h = recipe_content_h + (style.content_padding * 2.0) + header_height;
+
         const recipe_rect = UiRect{
             .x = ship_rect.x + ship_rect.w + padding,
             .y = inv_rect.y + inv_rect.h + padding,
-            .w = recipe_w,
+            .w = panel_w,
             .h = recipe_h,
         };
 
-        const crafting_w = tile_size_base * scaling * 8;
-        const crafting_h = tile_size_base * scaling * 1;
+        const crafting_h = style.action_button_height;
         const crafting_rect = UiRect{
             .x = recipe_rect.x,
             .y = recipe_rect.y + recipe_rect.h + padding,
-            .w = crafting_w,
+            .w = panel_w,
             .h = crafting_h,
         };
 

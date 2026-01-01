@@ -51,22 +51,45 @@ pub const UiRect = struct {
 };
 
 pub const UiState = struct {
-    is_hovered: bool,
-    is_clicked: bool,
-    is_down: bool,
-    is_right_clicked: bool,
-    is_right_down: bool,
+    is_hovered: bool = false,
+    is_clicked: bool = false,
+    is_down: bool = false,
+    is_right_clicked: bool = false,
+    is_right_down: bool = false,
 };
 
 pub const UiStyle = struct {
     content_padding: f32 = 4.0,
-    slot_padding: f32 = 8.0,
+    slot_padding: f32 = 2.0,
+    slot_size: f32 = 32.0,
     text_padding: f32 = 4.0,
     item_padding: f32 = 4.0,
     title_padding: f32 = 4.0,
     title_margin_bottom: f32 = 4.0,
+    slots_per_row: f32 = 6.0,
+    inventory_rows: f32 = 4.0,
+    tools_rows: f32 = 2.0,
+    recipe_rows: f32 = 2.0,
+    progress_bar_height: f32 = 20.0,
+    progress_bar_padding: f32 = 5.0,
+    progress_bar_bg_color: UiVec4 = .{ .r = 0.2, .g = 0.2, .b = 0.2, .a = 1.0 },
+    progress_bar_fg_color: UiVec4 = .{ .r = 0.2, .g = 0.8, .b = 0.2, .a = 1.0 },
+    progress_bar_text_color: UiVec4 = .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 },
     text_color: UiVec4 = .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 },
     text_color_disabled: UiVec4 = .{ .r = 0.5, .g = 0.5, .b = 0.5, .a = 1.0 },
+
+    panel_bg_color: UiVec4 = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 },
+
+    slot_bg_color: UiVec4 = .{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 },
+    slot_bg_color_selected: UiVec4 = .{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 },
+    slot_bg_color_hovered: UiVec4 = .{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 },
+
+    button_bg_color: UiVec4 = .{ .r = 0.18, .g = 0.18, .b = 0.22, .a = 1.0 },
+    button_bg_color_active: UiVec4 = .{ .r = 0.25, .g = 0.25, .b = 0.35, .a = 1.0 },
+    button_bg_color_disabled: UiVec4 = .{ .r = 0.10, .g = 0.10, .b = 0.18, .a = 1.0 },
+    button_bg_color_hovered: UiVec4 = .{ .r = 0.35, .g = 0.35, .b = 0.45, .a = 1.0 },
+
+    dropdown_item_bg_color_hovered: UiVec4 = .{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 },
 
     action_button_width: f32 = 95.0,
     action_button_height: f32 = 40.0,
@@ -181,7 +204,7 @@ pub const UiRenderer = struct {
     }
 
     pub fn panel(self: *Self, rect: UiRect, title: ?[]const u8, font: ?*const Font) !UiRect {
-        try self.pushQuad(rect, .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 }, 0, 0);
+        try self.pushQuad(rect, self.style.panel_bg_color, 0, 0);
 
         var content_rect = UiRect{
             .x = rect.x + self.style.content_padding,
@@ -224,12 +247,12 @@ pub const UiRenderer = struct {
         const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)
-            UiVec4{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }
+            self.style.slot_bg_color_selected
         else
-            UiVec4{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 };
+            self.style.slot_bg_color;
 
         color = if (is_hovered)
-            UiVec4{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 }
+            self.style.slot_bg_color_hovered
         else
             color;
 
@@ -294,14 +317,7 @@ pub const UiRenderer = struct {
     }
 
     pub fn toolSlot(self: *Self, rect: UiRect, item: Item) !UiState {
-        const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
-
-        var color = UiVec4{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 };
-
-        color = if (is_hovered)
-            UiVec4{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 }
-        else
-            color;
+        const color = self.style.slot_bg_color;
 
         try self.pushQuad(rect, color, 0, 0);
 
@@ -323,25 +339,19 @@ pub const UiRenderer = struct {
             .component => {},
         }
 
-        return UiState{
-            .is_hovered = is_hovered,
-            .is_clicked = is_hovered and self.mouse.is_left_clicked,
-            .is_down = is_hovered and self.mouse.is_left_down,
-            .is_right_clicked = is_hovered and self.mouse.is_right_clicked,
-            .is_right_down = is_hovered and self.mouse.is_right_down,
-        };
+        return UiState{};
     }
 
     pub fn recipeSlot(self: *Self, rect: UiRect, item: Item, is_selected: bool) !UiState {
         const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)
-            UiVec4{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 }
+            self.style.slot_bg_color_selected
         else
-            UiVec4{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 };
+            self.style.slot_bg_color;
 
         color = if (is_hovered)
-            UiVec4{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 }
+            self.style.slot_bg_color_hovered
         else
             color;
 
@@ -384,14 +394,14 @@ pub const UiRenderer = struct {
     ) !UiState {
         const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
         var color = if (is_active)
-            UiVec4{ .r = 0.25, .g = 0.25, .b = 0.35, .a = 1.0 }
+            self.style.button_bg_color_active
         else
-            UiVec4{ .r = 0.18, .g = 0.18, .b = 0.22, .a = 1.0 };
+            self.style.button_bg_color;
 
         color = if (is_disabled)
-            UiVec4{ .r = 0.10, .g = 0.10, .b = 0.18, .a = 1.0 }
+            self.style.button_bg_color_disabled
         else if (is_hovered)
-            UiVec4{ .r = 0.35, .g = 0.35, .b = 0.45, .a = 1.0 }
+            self.style.button_bg_color_hovered
         else
             color;
 
@@ -537,7 +547,7 @@ pub const UiRenderer = struct {
             if (is_hovered) {
                 try self.pushQuad(
                     item_rect,
-                    .{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 },
+                    self.style.dropdown_item_bg_color_hovered,
                     0,
                     0,
                 );

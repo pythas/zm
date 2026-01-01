@@ -112,7 +112,7 @@ pub const ShipManagement = struct {
 
         try self.updateCrafting(dt, world);
 
-        const layout = ShipManagementLayout.compute(screen_w, screen_h);
+        const layout = ShipManagementLayout.compute(screen_w, screen_h, renderer.ui.style);
 
         self.handleShortcuts(ship);
 
@@ -255,7 +255,7 @@ pub const ShipManagement = struct {
         const screen_w: f32 = @floatFromInt(wh[0]);
         const screen_h: f32 = @floatFromInt(wh[1]);
 
-        const layout = ShipManagementLayout.compute(screen_w, screen_h);
+        const layout = ShipManagementLayout.compute(screen_w, screen_h, renderer.ui.style);
         const ship = &world.objects.items[0];
 
         // reset hover state
@@ -292,7 +292,7 @@ pub const ShipManagement = struct {
         ui.flush(pass, &renderer.global);
 
         if (self.cursor_item.item != .none) {
-            const slot_size: f32 = 20.0;
+            const slot_size = renderer.ui.style.slot_size;
             const cursor_rect = UiRect{
                 .x = self.mouse.x - slot_size / 2,
                 .y = self.mouse.y - slot_size / 2,
@@ -363,8 +363,8 @@ pub const ShipManagement = struct {
         var ui = &renderer.ui;
         const content_rect = try ui.panel(layout.inventory_rect, "Inventory", renderer.font);
 
-        const slot_size: f32 = 32.0;
-        const slot_padding: f32 = 2.0;
+        const slot_size = renderer.ui.style.slot_size;
+        const slot_padding = renderer.ui.style.slot_padding;
 
         var inv_x = content_rect.x;
         var inv_y = content_rect.y;
@@ -462,11 +462,11 @@ pub const ShipManagement = struct {
             self.current_recipe = null;
         }
 
-        const slot_size: f32 = 20.0;
-        const slot_padding: f32 = 2.0;
+        const slot_size = renderer.ui.style.slot_size;
+        const slot_padding = renderer.ui.style.slot_padding;
 
         var tool_x = content_rect.x;
-        const tool_y = content_rect.y;
+        var tool_y = content_rect.y;
 
         if (world.research_manager.isUnlocked(.welding)) {
             const tool_rect = UiRect{ .x = tool_x, .y = tool_y, .w = slot_size, .h = slot_size };
@@ -480,6 +480,11 @@ pub const ShipManagement = struct {
 
             _ = try ui.toolSlot(tool_rect, item);
             tool_x += slot_size + slot_padding;
+
+            if (tool_x + slot_size > content_rect.x + content_rect.w) {
+                tool_x = content_rect.x;
+                tool_y += slot_size + slot_padding;
+            }
         }
     }
 
@@ -487,11 +492,11 @@ pub const ShipManagement = struct {
         var ui = &renderer.ui;
         const content_rect = try ui.panel(layout.recipe_rect, "Recipes", renderer.font);
 
-        const slot_size: f32 = 20.0;
-        const slot_padding: f32 = 2.0;
+        const slot_size = renderer.ui.style.slot_size;
+        const slot_padding = renderer.ui.style.slot_padding;
 
         var recipe_x = content_rect.x;
-        const recipe_y = content_rect.y;
+        var recipe_y = content_rect.y;
 
         for (std.enums.values(Recipe)) |recipe| {
             if (world.research_manager.isUnlocked(RecipeStats.getResearchId(recipe))) {
@@ -514,6 +519,15 @@ pub const ShipManagement = struct {
                 }
 
                 recipe_x += slot_size + slot_padding;
+
+                if (recipe_x + slot_size > content_rect.x + content_rect.w) {
+                    recipe_x = content_rect.x;
+                    recipe_y += slot_size + slot_padding;
+                }
+
+                if (recipe_y + slot_size > content_rect.y + content_rect.h) {
+                    break;
+                }
             }
         }
     }
@@ -551,24 +565,25 @@ pub const ShipManagement = struct {
             // progress bar
             _ = try ui.panel(layout.crafting_rect, null, null);
 
-            const padding = 5.0;
-            const bar_h = 20.0;
+            const padding = renderer.ui.style.progress_bar_padding;
+            const bar_h = renderer.ui.style.progress_bar_height;
             const bar_w = layout.crafting_rect.w - padding * 2.0;
             const bar_x = layout.crafting_rect.x + padding;
             const bar_y = layout.crafting_rect.y + (layout.crafting_rect.h - bar_h) / 2.0;
 
             // background
-            try ui.rectangle(.{ .x = bar_x, .y = bar_y, .w = bar_w, .h = bar_h }, .{ .r = 0.2, .g = 0.2, .b = 0.2, .a = 1.0 });
+            try ui.rectangle(.{ .x = bar_x, .y = bar_y, .w = bar_w, .h = bar_h }, renderer.ui.style.progress_bar_bg_color);
 
             // foreground
             const progress = task.progress / task.duration;
             const fill_w = bar_w * progress;
-            try ui.rectangle(.{ .x = bar_x, .y = bar_y, .w = fill_w, .h = bar_h }, .{ .r = 0.2, .g = 0.8, .b = 0.2, .a = 1.0 });
+            try ui.rectangle(.{ .x = bar_x, .y = bar_y, .w = fill_w, .h = bar_h }, renderer.ui.style.progress_bar_fg_color);
 
             // text
             var buf: [64]u8 = undefined;
             const text = std.fmt.bufPrint(&buf, "Crafting: {d:.1}s", .{task.duration - task.progress}) catch "Crafting...";
-            try ui.label(.{ .x = bar_x + 5.0, .y = bar_y + 2.0 + renderer.font.ascent }, text, renderer.font, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+            const text_y = bar_y + (bar_h + renderer.font.ascent) / 2.0;
+            try ui.label(.{ .x = bar_x + padding, .y = text_y }, text, renderer.font, renderer.ui.style.progress_bar_text_color);
         } else {
             const button_state = try ui.button(
                 layout.crafting_rect,
