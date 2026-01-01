@@ -307,6 +307,8 @@ pub const Game = struct {
         _ = screen_h;
 
         const radar_refs = try ship.getTilesByPartKind(.radar);
+        defer ship.allocator.free(radar_refs);
+
         if (radar_refs.len == 0) return;
         const radar = ship.getTile(radar_refs[0].tile_x, radar_refs[0].tile_y) orelse return;
         const radar_part = radar.getShipPart() orelse return;

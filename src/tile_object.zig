@@ -355,6 +355,7 @@ pub const TileObject = struct {
     // inventory
     pub fn initInventories(self: *Self) !void {
         const tile_refs = try self.getTilesByPartKind(.storage);
+        defer self.allocator.free(tile_refs);
 
         for (tile_refs) |tile_ref| {
             const tile = self.getTile(tile_ref.tile_x, tile_ref.tile_y) orelse continue;

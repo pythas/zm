@@ -158,7 +158,7 @@ pub const PlayerController = struct {
 
     fn updateDebrisPickup(self: *Self, ship: *TileObject, world: *World) !void {
         _ = self;
-        const pickup_radius = 32.0; // 4 tiles * 8
+        const pickup_radius = 32.0; // 4 tiles
         const pickup_radius_sq = pickup_radius * pickup_radius;
 
         var i: usize = 0;
