@@ -65,11 +65,11 @@ pub const RecipeStats = struct {
 
     pub fn getDisplayName(recipe: Recipe) []const u8 {
         return switch (recipe) {
-            .chemical_thruster => "Chemical Thruster\nCost: 20 iron",
-            .laser => "Laser\nCost: 40 iron",
-            .railgun => "Railgun\nCost: 10 iron",
-            .radar => "Radar\nCost: 15 iron",
-            .storage => "Storage\nCost: 50 iron",
+            .chemical_thruster => "Chemical Thruster\nCost: 20 iron\nTime: 5.0s",
+            .laser => "Laser\nCost: 40 iron\nTime: 10.0s",
+            .railgun => "Railgun\nCost: 10 iron\nTime: 10.0s",
+            .radar => "Radar\nCost: 15 iron\nTime: 5.0s",
+            .storage => "Storage\nCost: 50 iron\nTime: 2.0s",
         };
     }
 
@@ -80,6 +80,16 @@ pub const RecipeStats = struct {
             .railgun => .railgun,
             .radar => .radar,
             .storage => .storage,
+        };
+    }
+
+    pub fn getDuration(recipe: Recipe) f32 {
+        return switch (recipe) {
+            .chemical_thruster => 5.0,
+            .laser => 10.0,
+            .railgun => 10.0,
+            .radar => 5.0,
+            .storage => 2.0,
         };
     }
 };

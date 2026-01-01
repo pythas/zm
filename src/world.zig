@@ -177,6 +177,8 @@ pub const World = struct {
                 continue;
             }
 
+            obj.updateThrusterVisuals(dt);
+
             const pos = self.physics.getPosition(obj.body_id);
             const rot = self.physics.getRotation(obj.body_id);
 

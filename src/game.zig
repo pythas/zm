@@ -117,10 +117,16 @@ pub const Game = struct {
         switch (self.mode) {
             .in_world => {
                 try self.world.update(dt, &self.keyboard_state, &self.mouse_state);
+                try self.ship_management.updateCrafting(dt, &self.world);
 
                 self.renderer.global.write(self.window, &self.world, dt, t, self.mode);
             },
             .ship_management => {
+                // update world with dummy inputs to keep simulation running
+                const dummy_keyboard = KeyboardState.init(self.window);
+                const dummy_mouse = MouseState.init(self.window);
+                try self.world.update(dt, &dummy_keyboard, &dummy_mouse);
+
                 try self.ship_management.update(&self.renderer, &self.world, dt, t);
             },
         }
@@ -163,6 +169,9 @@ pub const Game = struct {
                 try self.drawLaserLines(pass, world_pos);
                 try self.drawRailgunTrails(pass);
                 try self.drawLaserBeams(pass);
+
+                const thruster_count = try self.renderer.beam.writeThrusters(&self.world);
+                self.renderer.beam.draw(pass, global, thruster_count);
 
                 self.renderer.ui.beginFrame();
 

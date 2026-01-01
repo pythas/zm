@@ -171,25 +171,42 @@ pub const PlayerController = struct {
 
             const dist = debris.position.sub(ship.position).lengthSq();
             if (dist < pickup_radius_sq) {
-                const tile = debris.tiles[0];
-                const resources = tile.data.terrain.resources;
+                var tile = &debris.tiles[0];
+                var resources = tile.data.terrain.resources;
+                var new_resources = try std.BoundedArray(@import("tile.zig").ResourceAmount, 4).init(0);
+                var picked_up_something = false;
+                var fully_depleted = true;
 
                 for (resources.slice()) |res_amount| {
-                    const amount = rng.random().intRangeAtMost(u8, 0, res_amount.amount);
+                    const amount = res_amount.amount;
+                    if (amount == 0) continue;
+
                     const remaining = try ship.addItemToInventory(.{ .resource = res_amount.resource }, amount, debris.position);
                     const added = amount - remaining;
 
                     if (added > 0) {
+                        picked_up_something = true;
                         _ = world.research_manager.reportResourcePickup(res_amount.resource, added);
                         var buf: [64]u8 = undefined;
                         const text = std.fmt.bufPrint(&buf, "+ {d} {s}", .{ added, @tagName(res_amount.resource) }) catch "+ resource";
                         world.notifications.add(text, .{ .r = 0.8, .g = 1.0, .b = 0.8, .a = 1.0 });
                     }
+
+                    if (remaining > 0) {
+                        fully_depleted = false;
+                        try new_resources.append(.{ .resource = res_amount.resource, .amount = @intCast(remaining) });
+                    }
                 }
 
-                world.physics.destroyBody(debris.body_id);
-                debris.deinit();
-                _ = world.objects.swapRemove(i);
+                if (fully_depleted) {
+                    world.physics.destroyBody(debris.body_id);
+                    debris.deinit();
+                    _ = world.objects.swapRemove(i);
+                } else {
+                    tile.data.terrain.resources = new_resources;
+                    debris.dirty = true;
+                    i += 1;
+                }
             } else {
                 i += 1;
             }

@@ -26,6 +26,12 @@ const RepairCost = @import("ship.zig").RepairCost;
 const hover_offset_x = 10;
 const hover_offset_y = 10;
 
+pub const CraftingTask = struct {
+    recipe: Recipe,
+    progress: f32,
+    duration: f32,
+};
+
 pub const ShipManagement = struct {
     const Self = @This();
 
@@ -34,6 +40,7 @@ pub const ShipManagement = struct {
     mouse: MouseState,
     keyboard: KeyboardState,
     current_recipe: ?Recipe = null,
+    active_crafting: ?CraftingTask = null,
 
     cursor_item: Stack = .{},
 
@@ -61,6 +68,32 @@ pub const ShipManagement = struct {
         _ = self;
     }
 
+    pub fn updateCrafting(self: *Self, dt: f32, world: *World) !void {
+        var task = &(self.active_crafting orelse return);
+        task.progress += dt;
+
+        if (task.progress < task.duration) {
+            return;
+        }
+
+        const ship = &world.objects.items[0];
+        const result = RecipeStats.getResult(task.recipe);
+        const remaining = try ship.addItemToInventory(result, 1, ship.position);
+
+        if (remaining == 0) {
+            std.log.info("ShipManagement: Constructed {s}", .{RecipeStats.getName(task.recipe)});
+        } else {
+            std.log.warn("ShipManagement: Failed to add {s} to inventory (no space?). Refunding resources.", .{RecipeStats.getName(task.recipe)});
+
+            const costs = RecipeStats.getCost(task.recipe);
+            for (costs) |cost| {
+                _ = try ship.addItemToInventory(cost.item, cost.amount, ship.position);
+            }
+        }
+
+        self.active_crafting = null;
+    }
+
     pub fn update(
         self: *Self,
         renderer: *Renderer,
@@ -76,6 +109,9 @@ pub const ShipManagement = struct {
         self.keyboard.update();
 
         const ship = &world.objects.items[0];
+
+        try self.updateCrafting(dt, world);
+
         const layout = ShipManagementLayout.compute(screen_w, screen_h);
 
         self.handleShortcuts(ship);
@@ -483,7 +519,10 @@ pub const ShipManagement = struct {
     }
 
     fn tryCraft(self: *Self, ship: *TileObject, recipe: Recipe) !void {
-        _ = self;
+        if (self.active_crafting != null) {
+            return;
+        }
+
         const costs = RecipeStats.getCost(recipe);
 
         for (costs) |cost| {
@@ -498,32 +537,51 @@ pub const ShipManagement = struct {
             ship.removeNumberOfItemsFromInventory(cost.item, cost.amount);
         }
 
-        const result = RecipeStats.getResult(recipe);
-        const remaining = try ship.addItemToInventory(
-            result,
-            1,
-            ship.position,
-        );
-
-        if (remaining == 0) {
-            std.log.info("ShipManagement: Constructed {s}", .{RecipeStats.getName(recipe)});
-        } else {
-            std.log.warn("ShipManagement: Failed to add {s} to inventory (no space?)", .{RecipeStats.getName(recipe)});
-        }
+        self.active_crafting = .{
+            .recipe = recipe,
+            .progress = 0.0,
+            .duration = RecipeStats.getDuration(recipe),
+        };
     }
 
     fn drawCraftingPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
-        const button_state = try ui.button(
-            layout.crafting_rect,
-            false,
-            self.current_recipe == null,
-            "Construct",
-            renderer.font,
-        );
-        if (button_state.is_clicked) {
-            if (self.current_recipe) |recipe| {
-                try self.tryCraft(ship, recipe);
+
+        if (self.active_crafting) |task| {
+            // progress bar
+            _ = try ui.panel(layout.crafting_rect, null, null);
+
+            const padding = 5.0;
+            const bar_h = 20.0;
+            const bar_w = layout.crafting_rect.w - padding * 2.0;
+            const bar_x = layout.crafting_rect.x + padding;
+            const bar_y = layout.crafting_rect.y + (layout.crafting_rect.h - bar_h) / 2.0;
+
+            // background
+            try ui.rectangle(.{ .x = bar_x, .y = bar_y, .w = bar_w, .h = bar_h }, .{ .r = 0.2, .g = 0.2, .b = 0.2, .a = 1.0 });
+
+            // foreground
+            const progress = task.progress / task.duration;
+            const fill_w = bar_w * progress;
+            try ui.rectangle(.{ .x = bar_x, .y = bar_y, .w = fill_w, .h = bar_h }, .{ .r = 0.2, .g = 0.8, .b = 0.2, .a = 1.0 });
+
+            // text
+            var buf: [64]u8 = undefined;
+            const text = std.fmt.bufPrint(&buf, "Crafting: {d:.1}s", .{task.duration - task.progress}) catch "Crafting...";
+            try ui.label(.{ .x = bar_x + 5.0, .y = bar_y + 2.0 + renderer.font.ascent }, text, renderer.font, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+        } else {
+            const button_state = try ui.button(
+                layout.crafting_rect,
+                false,
+                self.current_recipe == null,
+                "Construct",
+                renderer.font,
+            );
+
+            if (button_state.is_clicked) {
+                if (self.current_recipe) |recipe| {
+                    try self.tryCraft(ship, recipe);
+                }
             }
         }
     }

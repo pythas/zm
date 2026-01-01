@@ -13,7 +13,7 @@ const packTileForGpu = @import("common.zig").packTileForGpu;
 
 pub const BeamRenderer = struct {
     const Self = @This();
-    const maxInstances = 128;
+    const maxInstances = 512;
 
     allocator: std.mem.Allocator,
     gctx: *zgpu.GraphicsContext,
@@ -25,7 +25,6 @@ pub const BeamRenderer = struct {
         start: [2]f32,
         end: [2]f32,
         width: f32,
-        intensity: f32,
     };
 
     pub fn init(
@@ -60,67 +59,66 @@ pub const BeamRenderer = struct {
         _ = self;
     }
 
-    pub fn writeBuffers(self: *Self, world: *const World) !u32 {
-        _ = self;
-        _ = world;
+    pub fn writeThrusters(self: *Self, world: *const World) !u32 {
+        var beams = try self.allocator.alloc(BeamRenderData, maxInstances);
+        defer self.allocator.free(beams);
 
-        return 0;
+        var count: usize = 0;
 
-        // const player = &world.objects.items[0];
-        // const actions = world.player_controller.tile_actions.items;
-        //
-        // var active_count: usize = 0;
-        // for (actions) |action| {
-        //     if (action.isActive() and action.kind == .Mine) {
-        //         active_count += 1;
-        //     }
-        // }
-        //
-        // if (active_count == 0) {
-        //     return 0;
-        // }
-        //
-        // const count = @min(active_count, maxInstances);
-        // var beams = try self.allocator.alloc(BeamRenderData, count);
-        // defer self.allocator.free(beams);
-        //
-        // var bi: usize = 0;
-        // for (actions) |action| {
-        //     if (!action.isActive() or action.kind != .Mine) continue;
-        //     if (bi >= count) break;
-        //
-        //     const p = action.getProgress();
-        //
-        //     const start = player.body.position;
-        //
-        //     const tile_world_pos = action.tile_ref.worldCenter();
-        //     const tile_size = @as(f32, @floatFromInt(tileSize));
-        //     const tile_pos = Vec2.init(tile_world_pos.x / tile_size, tile_world_pos.y / tile_size);
-        //
-        //     const base_width: f32 = 6.0;
-        //     const extra_pulse: f32 = 2.0 * @sin(p * std.math.pi);
-        //     const width: f32 = base_width + extra_pulse;
-        //
-        //     beams[bi] = .{
-        //         .start = .{ start.x, start.y },
-        //         .end = .{ tile_pos.x, tile_pos.y },
-        //         .width = width,
-        //         .intensity = p,
-        //     };
-        //
-        //     bi += 1;
-        // }
-        //
-        // if (bi == 0) return 0;
-        //
-        // self.gctx.queue.writeBuffer(
-        //     self.gctx.lookupResource(self.buffer).?,
-        //     0,
-        //     u8,
-        //     std.mem.sliceAsBytes(beams[0..bi]),
-        // );
-        //
-        // return @intCast(bi);
+        for (world.objects.items) |*obj| {
+            if (!obj.body_id.isValid()) continue;
+
+            const cos_rot = @cos(obj.rotation);
+            const sin_rot = @sin(obj.rotation);
+
+            for (obj.thrusters.items) |thruster| {
+                if (thruster.current_visual_power < 1.0) continue;
+                if (count >= maxInstances) break;
+
+                const local_x = thruster.x;
+                const local_y = thruster.y;
+                const world_offset_x = local_x * cos_rot - local_y * sin_rot;
+                const world_offset_y = local_x * sin_rot + local_y * cos_rot;
+
+                const start_x = obj.position.x + world_offset_x;
+                const start_y = obj.position.y + world_offset_y;
+
+                const local_dir = switch (thruster.direction) {
+                    .north => Vec2.init(0.0, -1.0),
+                    .south => Vec2.init(0.0, 1.0),
+                    .east => Vec2.init(1.0, 0.0),
+                    .west => Vec2.init(-1.0, 0.0),
+                };
+
+                const dir_x = local_dir.x * cos_rot - local_dir.y * sin_rot;
+                const dir_y = local_dir.x * sin_rot + local_dir.y * cos_rot;
+
+                const length = thruster.current_visual_power * 0.0012;
+                const width = 3.0 + thruster.current_visual_power * 0.0001;
+
+                const edge_offset = 4.0;
+                const beam_start_x = start_x + dir_x * edge_offset;
+                const beam_start_y = start_y + dir_y * edge_offset;
+
+                beams[count] = .{
+                    .start = .{ beam_start_x, beam_start_y },
+                    .end = .{ beam_start_x + dir_x * length, beam_start_y + dir_y * length },
+                    .width = width,
+                };
+                count += 1;
+            }
+        }
+
+        if (count > 0) {
+            self.gctx.queue.writeBuffer(
+                self.gctx.lookupResource(self.buffer).?,
+                0,
+                u8,
+                std.mem.sliceAsBytes(beams[0..count]),
+            );
+        }
+
+        return @intCast(count);
     }
 
     pub fn draw(

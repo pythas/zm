@@ -34,6 +34,7 @@ pub const Thruster = struct {
     y: f32,
     direction: Direction,
     power: f32,
+    current_visual_power: f32 = 0.0,
 };
 
 pub const ObjectType = enum {
@@ -401,7 +402,7 @@ pub const TileObject = struct {
     pub fn addItemToInventory(
         self: *Self,
         item: Item,
-        amount: u8,
+        amount: u32,
         from_position: Vec2,
     ) !u32 {
         const storage_list = try self.getTilesByPartKindSortedByDist(.storage, from_position);
@@ -495,7 +496,7 @@ pub const TileObject = struct {
         const cos_rot = @cos(body_rot);
         const sin_rot = @sin(body_rot);
 
-        for (self.thrusters.items) |thruster| {
+        for (self.thrusters.items) |*thruster| {
             var should_fire = false;
 
             switch (thruster.direction) {
@@ -518,6 +519,8 @@ pub const TileObject = struct {
             }
 
             if (should_fire) {
+                thruster.current_visual_power = thruster.power;
+
                 const local_dir = switch (thruster.direction) {
                     .north => Vec2.init(0.0, 1.0),
                     .south => Vec2.init(0.0, -1.0),
@@ -535,6 +538,17 @@ pub const TileObject = struct {
                 const apply_point = Vec2.init(body_pos.x + world_offset.x, body_pos.y + world_offset.y);
 
                 physics.addForceAtPoint(self.body_id, force, apply_point, true);
+            }
+        }
+    }
+
+    pub fn updateThrusterVisuals(self: *Self, dt: f32) void {
+        for (self.thrusters.items) |*thruster| {
+            if (thruster.current_visual_power > 0) {
+                thruster.current_visual_power -= thruster.current_visual_power * 10.0 * dt;
+                if (thruster.current_visual_power < 0.1) {
+                    thruster.current_visual_power = 0;
+                }
             }
         }
     }
