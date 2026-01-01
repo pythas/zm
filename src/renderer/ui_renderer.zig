@@ -72,24 +72,24 @@ pub const UiStyle = struct {
     recipe_rows: f32 = 2.0,
     progress_bar_height: f32 = 20.0,
     progress_bar_padding: f32 = 5.0,
-    progress_bar_bg_color: UiVec4 = .{ .r = 0.2, .g = 0.2, .b = 0.2, .a = 1.0 },
-    progress_bar_fg_color: UiVec4 = .{ .r = 0.2, .g = 0.8, .b = 0.2, .a = 1.0 },
+    progress_bar_bg_color: UiVec4 = .{ .r = 0.14, .g = 0.14, .b = 0.14, .a = 1.0 },
+    progress_bar_fg_color: UiVec4 = .{ .r = 0.8, .g = 0.5, .b = 0.1, .a = 1.0 }, // brighter amber
     progress_bar_text_color: UiVec4 = .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 },
     text_color: UiVec4 = .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 },
     text_color_disabled: UiVec4 = .{ .r = 0.5, .g = 0.5, .b = 0.5, .a = 1.0 },
 
-    panel_bg_color: UiVec4 = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 0.9 },
+    panel_bg_color: UiVec4 = .{ .r = 0.11, .g = 0.11, .b = 0.11, .a = 0.95 },
 
-    slot_bg_color: UiVec4 = .{ .r = 0.15, .g = 0.15, .b = 0.15, .a = 1.0 },
-    slot_bg_color_selected: UiVec4 = .{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 },
-    slot_bg_color_hovered: UiVec4 = .{ .r = 0.4, .g = 0.4, .b = 0.5, .a = 1.0 },
+    slot_bg_color: UiVec4 = .{ .r = 0.18, .g = 0.18, .b = 0.18, .a = 1.0 },
+    slot_bg_color_selected: UiVec4 = .{ .r = 0.7, .g = 0.4, .b = 0.1, .a = 1.0 }, // amber
+    slot_bg_color_hovered: UiVec4 = .{ .r = 0.25, .g = 0.25, .b = 0.25, .a = 1.0 },
 
-    button_bg_color: UiVec4 = .{ .r = 0.18, .g = 0.18, .b = 0.22, .a = 1.0 },
-    button_bg_color_active: UiVec4 = .{ .r = 0.25, .g = 0.25, .b = 0.35, .a = 1.0 },
-    button_bg_color_disabled: UiVec4 = .{ .r = 0.10, .g = 0.10, .b = 0.18, .a = 1.0 },
-    button_bg_color_hovered: UiVec4 = .{ .r = 0.35, .g = 0.35, .b = 0.45, .a = 1.0 },
+    button_bg_color: UiVec4 = .{ .r = 0.18, .g = 0.18, .b = 0.18, .a = 1.0 },
+    button_bg_color_active: UiVec4 = .{ .r = 0.7, .g = 0.4, .b = 0.1, .a = 1.0 }, // amber
+    button_bg_color_disabled: UiVec4 = .{ .r = 0.14, .g = 0.14, .b = 0.14, .a = 1.0 },
+    button_bg_color_hovered: UiVec4 = .{ .r = 0.25, .g = 0.25, .b = 0.25, .a = 1.0 },
 
-    dropdown_item_bg_color_hovered: UiVec4 = .{ .r = 0.3, .g = 0.3, .b = 0.4, .a = 1.0 },
+    dropdown_item_bg_color_hovered: UiVec4 = .{ .r = 0.7, .g = 0.4, .b = 0.1, .a = 1.0 }, // amber
 
     action_button_width: f32 = 95.0,
     action_button_height: f32 = 40.0,
