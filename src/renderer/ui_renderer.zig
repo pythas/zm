@@ -213,7 +213,14 @@ pub const UiRenderer = struct {
         try self.pushQuad(rect, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 }, data, 1);
     }
 
-    pub fn inventorySlot(self: *Self, rect: UiRect, item: Item, amount: u32, is_selected: bool, font: *const Font) !UiState {
+    pub fn inventorySlot(
+        self: *Self,
+        rect: UiRect,
+        item: Item,
+        amount: u32,
+        is_selected: bool,
+        font: *const Font,
+    ) !UiState {
         const is_hovered = self.interaction_enabled and rect.contains(UiVec2{ .x = self.mouse.x, .y = self.mouse.y });
 
         var color = if (is_selected)

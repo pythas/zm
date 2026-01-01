@@ -782,7 +782,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -800,7 +800,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -935,7 +935,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1070,7 +1070,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1079,7 +1079,7 @@
       "data_type": "ship_part",
       "kind": "laser",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 0.0
     },
     {
@@ -1088,7 +1088,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1214,7 +1214,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1223,7 +1223,7 @@
       "data_type": "ship_part",
       "kind": "reactor",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1232,7 +1232,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1349,7 +1349,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1358,7 +1358,7 @@
       "data_type": "ship_part",
       "kind": "storage",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1367,7 +1367,7 @@
       "data_type": "ship_part",
       "kind": "storage",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1376,7 +1376,7 @@
       "data_type": "ship_part",
       "kind": "storage",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 0.0
     },
     {
@@ -1385,7 +1385,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1484,7 +1484,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1493,7 +1493,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1502,7 +1502,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1511,7 +1511,7 @@
       "data_type": "ship_part",
       "kind": "radar",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 0.0
     },
     {
@@ -1520,7 +1520,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1529,7 +1529,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1538,7 +1538,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1628,7 +1628,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1646,7 +1646,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1664,7 +1664,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {
@@ -1682,7 +1682,7 @@
       "data_type": "ship_part",
       "kind": "hull",
       "base_material": null,
-      "rotation": "north",
+      "rotation": null,
       "health": 100.0
     },
     {

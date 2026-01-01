@@ -10,7 +10,6 @@ const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderDat
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
 const Tile = @import("tile.zig").Tile;
 const Direction = @import("tile.zig").Direction;
-const Directions = @import("tile.zig").Directions;
 const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
 const TileObject = @import("tile_object.zig").TileObject;
 const ship_serialization = @import("ship_serialization.zig");
@@ -112,8 +111,10 @@ pub const ShipManagement = struct {
         if (ship.getTile(x, y)) |tile| {
             if (tile.data == .ship_part) {
                 var new_tile = tile.*;
-                new_tile.data.ship_part.rotation = @enumFromInt((@intFromEnum(new_tile.data.ship_part.rotation) + 1) % 4);
-                ship.setTile(x, y, new_tile);
+                if (new_tile.data.ship_part.rotation) |rot| {
+                    new_tile.data.ship_part.rotation = @enumFromInt((@intFromEnum(rot) + 1) % 4);
+                    ship.setTile(x, y, new_tile);
+                }
             }
         }
     }
@@ -182,12 +183,13 @@ pub const ShipManagement = struct {
                         if (tile.data == .empty) {
                             const tier = 1; // Default tier
                             const health = PartStats.getMaxHealth(part_kind, tier);
+                            const rotation: ?Direction = if (part_kind == .chemical_thruster) .north else null;
                             const new_tile = Tile.init(.{
                                 .ship_part = .{
                                     .kind = part_kind,
                                     .tier = tier,
                                     .health = health,
-                                    .rotation = .north,
+                                    .rotation = rotation,
                                 },
                             }) catch unreachable;
 
@@ -325,7 +327,7 @@ pub const ShipManagement = struct {
         var ui = &renderer.ui;
         const content_rect = try ui.panel(layout.inventory_rect, "Inventory", renderer.font);
 
-        const slot_size: f32 = 20.0;
+        const slot_size: f32 = 32.0;
         const slot_padding: f32 = 2.0;
 
         var inv_x = content_rect.x;
@@ -570,9 +572,11 @@ pub const ShipManagement = struct {
         var items_buf: [3]DropdownItem = undefined;
         var count: usize = 0;
 
-        actions[count] = .rotate;
-        items_buf[count] = DropdownItem{ .text = "Rotate [R]", .is_enabled = true };
-        count += 1;
+        if (ship_part.rotation != null) {
+            actions[count] = .rotate;
+            items_buf[count] = DropdownItem{ .text = "Rotate [R]", .is_enabled = ship_part.rotation != null };
+            count += 1;
+        }
 
         if (can_weld) {
             actions[count] = .repair;

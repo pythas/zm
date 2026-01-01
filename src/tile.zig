@@ -76,7 +76,7 @@ pub const ShipPartTileType = struct {
     kind: PartKind,
     tier: u8,
     health: f32,
-    rotation: Direction = .north,
+    rotation: ?Direction = null,
     modules: u32 = 0,
 };
 

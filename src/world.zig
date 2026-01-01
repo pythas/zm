@@ -398,7 +398,7 @@ pub const World = struct {
                     .kind = .smart_core,
                     .tier = 4,
                     .health = 50.0,
-                    .rotation = .north,
+                    .rotation = null,
                     .modules = modules,
                 },
             },

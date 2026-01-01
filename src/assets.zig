@@ -121,7 +121,7 @@ pub const Assets = struct {
     }
 
     pub fn getReactorSprite(ship: ShipPartTileType) Sprite {
-        var index = @intFromEnum(ship.rotation);
+        var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
             index += 1;
@@ -131,7 +131,7 @@ pub const Assets = struct {
     }
 
     pub fn getEngineSprite(ship: ShipPartTileType) Sprite {
-        var index = @intFromEnum(ship.rotation);
+        var index: u16 = @intFromEnum(ship.rotation orelse .north);
 
         if (PartStats.isBroken(ship)) {
             index += 4;
@@ -141,7 +141,7 @@ pub const Assets = struct {
     }
 
     pub fn getLaserSprite(ship: ShipPartTileType) Sprite {
-        var index = @intFromEnum(ship.rotation);
+        var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
             index += 1;
@@ -151,7 +151,7 @@ pub const Assets = struct {
     }
 
     pub fn getStorageSprite(ship: ShipPartTileType) Sprite {
-        var index = @intFromEnum(ship.rotation);
+        var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
             index += 1;
@@ -161,7 +161,7 @@ pub const Assets = struct {
     }
 
     pub fn getRailgunSprite(ship: ShipPartTileType) Sprite {
-        var index = @intFromEnum(ship.rotation);
+        var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
             index += 1;
@@ -171,7 +171,7 @@ pub const Assets = struct {
     }
 
     pub fn getSmartCoreSprite(ship: ShipPartTileType) Sprite {
-        var index = @intFromEnum(ship.rotation);
+        var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
             index += 1;
@@ -181,7 +181,7 @@ pub const Assets = struct {
     }
 
     pub fn getRadarSprite(ship: ShipPartTileType) Sprite {
-        var index = @intFromEnum(ship.rotation);
+        var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
             index += 1;

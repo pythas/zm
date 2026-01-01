@@ -51,7 +51,7 @@ pub fn saveShip(allocator: std.mem.Allocator, ship: TileObject, filename: []cons
             switch (tile.data) {
                 .ship_part => |s| {
                     part_str = @tagName(s.kind);
-                    rotation = @tagName(s.rotation);
+                    rotation = if (s.rotation) |r| @tagName(r) else null;
                     health = s.health;
                 },
                 .terrain => |t| base_material_str = @tagName(t.base_material),
@@ -118,8 +118,12 @@ pub fn loadShip(
             .ship_part => blk: {
                 const kind_str = json_tile.kind orelse return ShipSerializationError.InvalidEnumString;
                 const kind = std.meta.stringToEnum(PartKind, kind_str) orelse return ShipSerializationError.InvalidEnumString;
-                const rotation_str = json_tile.rotation orelse return ShipSerializationError.InvalidEnumString;
-                const rotation = std.meta.stringToEnum(Direction, rotation_str) orelse return ShipSerializationError.InvalidEnumString;
+                
+                const rotation: ?Direction = if (json_tile.rotation) |rot_str|
+                    std.meta.stringToEnum(Direction, rot_str) orelse return ShipSerializationError.InvalidEnumString
+                else
+                    null;
+
                 const health = json_tile.health orelse PartStats.getMaxHealth(kind, 1);
 
                 break :blk .{

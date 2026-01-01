@@ -102,6 +102,13 @@ pub const Game = struct {
                 std.log.info("Game: CHEAT - Ship Repaired", .{});
 
                 _ = try ship.addItemToInventory(.{ .resource = .iron }, 32, ship.position);
+                _ = try ship.addItemToInventory(.{ .resource = .nickel }, 32, ship.position);
+                _ = try ship.addItemToInventory(.{ .resource = .copper }, 32, ship.position);
+                _ = try ship.addItemToInventory(.{ .resource = .carbon }, 32, ship.position);
+                _ = try ship.addItemToInventory(.{ .resource = .gold }, 32, ship.position);
+                _ = try ship.addItemToInventory(.{ .resource = .platinum }, 32, ship.position);
+                _ = try ship.addItemToInventory(.{ .resource = .titanium }, 32, ship.position);
+                _ = try ship.addItemToInventory(.{ .resource = .uranium }, 32, ship.position);
 
                 try ship.initInventories();
             }
@@ -115,6 +122,63 @@ pub const Game = struct {
             },
             .ship_management => {
                 try self.ship_management.update(&self.renderer, &self.world, dt, t);
+            },
+        }
+    }
+
+    pub fn render(
+        self: *Self,
+        pass: zgpu.wgpu.RenderPassEncoder,
+    ) !void {
+        switch (self.mode) {
+            .in_world => {
+                const global = &self.renderer.global;
+                const world = &self.world;
+
+                self.renderer.background.draw(pass, global);
+
+                var instances = std.ArrayList(SpriteRenderData).init(self.allocator);
+                defer instances.deinit();
+
+                const mouse_pos = self.mouse_state.getRelativePosition();
+                const world_pos = world.camera.screenToWorld(mouse_pos);
+                const ship = &self.world.objects.items[0];
+
+                for (self.world.objects.items) |*obj| {
+                    var hover_x: i32 = -1;
+                    var hover_y: i32 = -1;
+
+                    if (try self.getHoverCoords(obj, world_pos, ship)) |coords| {
+                        hover_x = coords.x;
+                        hover_y = coords.y;
+                    }
+
+                    try self.renderer.sprite.prepareObject(obj);
+                    try instances.append(SpriteRenderer.buildInstance(obj, hover_x, hover_y));
+                }
+
+                try self.renderer.sprite.writeInstances(instances.items);
+                self.renderer.sprite.draw(pass, global, self.world.objects.items);
+
+                try self.drawLaserLines(pass, world_pos);
+                try self.drawRailgunTrails(pass);
+                try self.drawLaserBeams(pass);
+
+                self.renderer.ui.beginFrame();
+
+                const fb_size = self.window.getFramebufferSize();
+                const screen_w: f32 = @floatFromInt(fb_size[0]);
+                const screen_h: f32 = @floatFromInt(fb_size[1]);
+
+                try self.drawRadar(ship, screen_w, screen_h);
+
+                try world.notifications.draw(&self.renderer.ui, screen_w, self.renderer.font);
+                try self.drawActionBar(screen_w, screen_h);
+
+                self.renderer.ui.flush(pass, global);
+            },
+            .ship_management => {
+                try self.ship_management.draw(&self.renderer, &self.world, pass);
             },
         }
     }
@@ -287,8 +351,8 @@ pub const Game = struct {
             const blip_y = radar_center_y + rel_pos.y * scale;
 
             const color: UiVec4 = switch (obj.object_type) {
-                .enemy_drone => .{ .r = 1.0, .g = 0.2, .b = 0.2, .a = 1.0 },
-                else => .{ .r = 0.2, .g = 1.0, .b = 0.2, .a = 0.8 },
+                .enemy_drone => .{ .r = 1.0, .g = 0.2, .b = 0.2, .a = 0.8 },
+                else => .{ .r = 0.2, .g = 1.0, .b = 0.2, .a = 0.6 },
             };
 
             try self.renderer.ui.rectangle(.{
@@ -308,31 +372,7 @@ pub const Game = struct {
         }, .{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
     }
 
-    fn getHoverCoords(self: *Self, obj: *@import("tile_object.zig").TileObject, world_pos: @import("vec2.zig").Vec2, ship: *@import("tile_object.zig").TileObject) !?struct { x: i32, y: i32 } {
-        if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
-            if (obj.id != ship.id and obj.object_type != .debris) {
-                var valid_candidate = false;
-                if (self.world.player_controller.current_action == .laser) {
-                    const target_pos = obj.getTileWorldPos(coords.x, coords.y);
-
-                    if (try self.world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
-                        valid_candidate = true;
-                    }
-                }
-
-                if (valid_candidate) {
-                    if (obj.getTile(coords.x, coords.y)) |tile| {
-                        if (tile.data != .empty) {
-                            return .{ .x = @intCast(coords.x), .y = @intCast(coords.y) };
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    fn renderActionBar(self: *Self, screen_w: f32, screen_h: f32) !void {
+    fn drawActionBar(self: *Self, screen_w: f32, screen_h: f32) !void {
         const style = &self.renderer.ui.style;
         const bar_h = style.action_button_height;
         const button_w = style.action_button_width;
@@ -379,60 +419,27 @@ pub const Game = struct {
         }
     }
 
-    pub fn render(
-        self: *Self,
-        pass: zgpu.wgpu.RenderPassEncoder,
-    ) !void {
-        switch (self.mode) {
-            .in_world => {
-                const global = &self.renderer.global;
-                const world = &self.world;
+    fn getHoverCoords(self: *Self, obj: *@import("tile_object.zig").TileObject, world_pos: @import("vec2.zig").Vec2, ship: *@import("tile_object.zig").TileObject) !?struct { x: i32, y: i32 } {
+        if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
+            if (obj.id != ship.id and obj.object_type != .debris) {
+                var valid_candidate = false;
+                if (self.world.player_controller.current_action == .laser) {
+                    const target_pos = obj.getTileWorldPos(coords.x, coords.y);
 
-                self.renderer.background.draw(pass, global);
-
-                var instances = std.ArrayList(SpriteRenderData).init(self.allocator);
-                defer instances.deinit();
-
-                const mouse_pos = self.mouse_state.getRelativePosition();
-                const world_pos = world.camera.screenToWorld(mouse_pos);
-                const ship = &self.world.objects.items[0];
-
-                for (self.world.objects.items) |*obj| {
-                    var hover_x: i32 = -1;
-                    var hover_y: i32 = -1;
-
-                    if (try self.getHoverCoords(obj, world_pos, ship)) |coords| {
-                        hover_x = coords.x;
-                        hover_y = coords.y;
+                    if (try self.world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
+                        valid_candidate = true;
                     }
-
-                    try self.renderer.sprite.prepareObject(obj);
-                    try instances.append(SpriteRenderer.buildInstance(obj, hover_x, hover_y));
                 }
 
-                try self.renderer.sprite.writeInstances(instances.items);
-                self.renderer.sprite.draw(pass, global, self.world.objects.items);
-
-                try self.drawLaserLines(pass, world_pos);
-                try self.drawRailgunTrails(pass);
-                try self.drawLaserBeams(pass);
-
-                self.renderer.ui.beginFrame();
-
-                const fb_size = self.window.getFramebufferSize();
-                const screen_w: f32 = @floatFromInt(fb_size[0]);
-                const screen_h: f32 = @floatFromInt(fb_size[1]);
-
-                try self.drawRadar(ship, screen_w, screen_h);
-
-                try world.notifications.draw(&self.renderer.ui, screen_w, self.renderer.font);
-                try self.renderActionBar(screen_w, screen_h);
-
-                self.renderer.ui.flush(pass, global);
-            },
-            .ship_management => {
-                try self.ship_management.draw(&self.renderer, &self.world, pass);
-            },
+                if (valid_candidate) {
+                    if (obj.getTile(coords.x, coords.y)) |tile| {
+                        if (tile.data != .empty) {
+                            return .{ .x = @intCast(coords.x), .y = @intCast(coords.y) };
+                        }
+                    }
+                }
+            }
         }
+        return null;
     }
 };

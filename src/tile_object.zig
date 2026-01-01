@@ -824,7 +824,7 @@ pub const TileObject = struct {
                         .kind = .main,
                         .x = local_x,
                         .y = local_y,
-                        .direction = ship_part.rotation,
+                        .direction = ship_part.rotation orelse .north,
                         .power = power,
                     });
                 } else if (ship_part.kind == .smart_core and PartModule.has(ship_part.modules, PartModule.thruster)) {
