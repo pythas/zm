@@ -30,10 +30,10 @@ pub fn build(b: *std.Build) void {
     exe.linkLibrary(zgpu.artifact("zdawn"));
 
     if (target.result.os.tag == .linux and target.result.cpu.arch.isX86()) {
-        const dawn_prebuilt = b.dependency("dawn_x86_64_linux_gnu", .{});
+        const dawn_prebuilt = zgpu.builder.dependency("dawn_x86_64_linux_gnu", .{});
         exe.addLibraryPath(dawn_prebuilt.path(""));
     } else if (target.result.os.tag == .windows) {
-        const dawn_prebuilt = b.dependency("dawn_x86_64_windows_gnu", .{});
+        const dawn_prebuilt = zgpu.builder.dependency("dawn_x86_64_windows_gnu", .{});
         exe.addLibraryPath(dawn_prebuilt.path(""));
     }
 
