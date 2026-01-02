@@ -648,7 +648,12 @@ pub const TileObject = struct {
 
             const id = id_gen_fn(id_gen_ctx);
             var new_obj = try TileObject.init(allocator, id, w, h, self.position, self.rotation);
-            new_obj.object_type = self.object_type;
+            
+            if (comp.tiles.items.len == 1) {
+                new_obj.object_type = .debris;
+            } else {
+                new_obj.object_type = self.object_type;
+            }
 
             // calculate new position
             const min_x_f = @as(f32, @floatFromInt(comp.min_x));
