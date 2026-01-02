@@ -75,17 +75,17 @@ pub const PlayerController = struct {
         if (!is_shifted) {
             if (keyboard_state.isDown(.w)) ship.applyInputThrust(&world.physics, .forward);
             if (keyboard_state.isDown(.s)) ship.applyInputThrust(&world.physics, .backward);
-            if (keyboard_state.isDown(.q)) ship.applyInputThrust(&world.physics, .left);
-            if (keyboard_state.isDown(.e)) ship.applyInputThrust(&world.physics, .right);
+            if (keyboard_state.isDown(.a)) ship.applyInputThrust(&world.physics, .left);
+            if (keyboard_state.isDown(.d)) ship.applyInputThrust(&world.physics, .right);
         } else {
-            if (keyboard_state.isDown(.w)) ship.applyInputThrust(&world.physics, .secondary_forward);
-            if (keyboard_state.isDown(.s)) ship.applyInputThrust(&world.physics, .secondary_backward);
-            if (keyboard_state.isDown(.q)) ship.applyInputThrust(&world.physics, .secondary_left);
-            if (keyboard_state.isDown(.e)) ship.applyInputThrust(&world.physics, .secondary_right);
+            // if (keyboard_state.isDown(.w)) ship.applyInputThrust(&world.physics, .secondary_forward);
+            // if (keyboard_state.isDown(.s)) ship.applyInputThrust(&world.physics, .secondary_backward);
+            // if (keyboard_state.isDown(.q)) ship.applyInputThrust(&world.physics, .secondary_left);
+            // if (keyboard_state.isDown(.e)) ship.applyInputThrust(&world.physics, .secondary_right);
         }
 
-        if (keyboard_state.isDown(.a)) ship.applyInputTorque(&world.physics, .rotate_ccw);
-        if (keyboard_state.isDown(.d)) ship.applyInputTorque(&world.physics, .rotate_cw);
+        // if (keyboard_state.isDown(.a)) ship.applyInputTorque(&world.physics, .rotate_ccw);
+        // if (keyboard_state.isDown(.d)) ship.applyInputTorque(&world.physics, .rotate_cw);
     }
 
     fn updateCombatInputs(self: *Self, ship: *TileObject, world: *World, keyboard_state: *const KeyboardState) !void {

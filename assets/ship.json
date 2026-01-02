@@ -792,7 +792,7 @@
       "kind": "chemical_thruster",
       "base_material": null,
       "rotation": "north",
-      "health": 0.0
+      "health": 100.0
     },
     {
       "x": 8,
