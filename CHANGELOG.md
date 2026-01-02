@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Inventory limits and crafting timers.
+- Thruster beam visuals.
+- Storage repair functionality.
+- Radar tile.
+- Support for optional rotation in recipes.
 - Basic radar.
 - Targeting system. Press R to cycle targets.
 - Space to shoot current weapon.
@@ -29,5 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactored UI layout and updated colors.
 - Added context menu in ship management for handling tile interactions.
 - Tools are no longer toggled and welding is triggered via the tile menu.
+
+### Fixed
+
+- Fixed a memory deallocation issue.
