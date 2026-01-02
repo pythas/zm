@@ -169,6 +169,7 @@ pub const Game = struct {
                 try self.drawLaserLines(pass, world_pos);
                 try self.drawRailgunTrails(pass);
                 try self.drawLaserBeams(pass);
+                try self.drawMiningBeams(pass);
 
                 const thruster_count = try self.renderer.beam.writeThrusters(&self.world);
                 self.renderer.beam.draw(pass, global, thruster_count);
@@ -227,6 +228,35 @@ pub const Game = struct {
                 .thickness = 2.0,
                 .dash_scale = 0.0,
             });
+        }
+
+        self.renderer.line.draw(pass, &self.renderer.global, lines.items);
+    }
+
+    fn drawMiningBeams(self: *Self, pass: zgpu.wgpu.RenderPassEncoder) !void {
+        if (self.world.player_controller.tile_actions.items.len == 0) return;
+
+        var lines = std.ArrayList(LineRenderData).init(self.allocator);
+        defer lines.deinit();
+
+        const ship = &self.world.objects.items[0];
+
+        for (self.world.player_controller.tile_actions.items) |action| {
+             if (action.kind != .mine) continue;
+
+             const source_pos = ship.getTileWorldPos(action.source.x, action.source.y);
+
+             if (self.world.getObjectById(action.target.object_id)) |target_obj| {
+                 const target_pos = target_obj.getTileWorldPos(action.target.tile_x, action.target.tile_y);
+
+                 try lines.append(.{
+                     .start = .{ source_pos.x, source_pos.y },
+                     .end = .{ target_pos.x, target_pos.y },
+                     .color = .{ 1.0, 0.6, 0.1, 0.7 }, // Amber/Orange
+                     .thickness = 1.5,
+                     .dash_scale = 0.0,
+                 });
+             }
         }
 
         self.renderer.line.draw(pass, &self.renderer.global, lines.items);

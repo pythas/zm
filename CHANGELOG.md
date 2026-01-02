@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.7]
+
+## Added
+
+- Dismissible notifications.
+- Mining visual.
+- Notification for unlocks.
+
+## Changed
+
+- If asteroid is split into one tile, convert it to debris.
+- Use tile thrusters for A and D.
+
 ## [0.0.6]
 
 ### Added
