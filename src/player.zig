@@ -186,10 +186,12 @@ pub const PlayerController = struct {
 
                     if (added > 0) {
                         picked_up_something = true;
-                        _ = world.research_manager.reportResourcePickup(res_amount.resource, added);
+                        if (world.research_manager.reportResourcePickup(res_amount.resource, added)) {
+                            world.notifications.add("Unlocked: Welding", .{ .r = 1.0, .g = 0.8, .b = 0.0, .a = 1.0 }, .manual_dismiss);
+                        }
                         var buf: [64]u8 = undefined;
                         const text = std.fmt.bufPrint(&buf, "+ {d} {s}", .{ added, @tagName(res_amount.resource) }) catch "+ resource";
-                        world.notifications.add(text, .{ .r = 0.8, .g = 1.0, .b = 0.8, .a = 1.0 });
+                        world.notifications.add(text, .{ .r = 0.8, .g = 1.0, .b = 0.8, .a = 1.0 }, .auto_dismiss);
                     }
 
                     if (remaining > 0) {
@@ -387,7 +389,7 @@ pub const PlayerController = struct {
 
         if (candidates.items.len == 0) {
             self.locked_target_id = null;
-            world.notifications.add("No Target Found", .{ .r = 1.0, .g = 1.0, .b = 0.0, .a = 1.0 });
+            world.notifications.add("No Target Found", .{ .r = 1.0, .g = 1.0, .b = 0.0, .a = 1.0 }, .auto_dismiss);
             return;
         }
 
@@ -417,7 +419,7 @@ pub const PlayerController = struct {
 
         var buf: [64]u8 = undefined;
         const text = std.fmt.bufPrint(&buf, "Target Locked: {d}", .{self.locked_target_id.?}) catch "Target Locked";
-        world.notifications.add(text, .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 });
+        world.notifications.add(text, .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 }, .auto_dismiss);
     }
 
     fn fireLasersAtLockedTarget(self: *Self, ship: *TileObject, world: *World) !void {

@@ -181,7 +181,7 @@ pub const Game = struct {
 
                 try self.drawRadar(ship, screen_w, screen_h);
 
-                try world.notifications.draw(&self.renderer.ui, screen_w, self.renderer.font);
+                try world.notifications.draw(&self.renderer.ui, screen_w, screen_h, self.renderer.font);
                 try self.drawActionBar(screen_w, screen_h);
 
                 self.renderer.ui.flush(pass, global);

@@ -173,12 +173,20 @@ pub const ShipManagement = struct {
                 ship.removeNumberOfItemsFromInventory(repair_cost.item, repair_cost.amount);
             }
 
+            var unlocked = false;
             switch (ship_part.kind) {
-                .chemical_thruster => _ = world.research_manager.reportRepair("broken_chemical_thruster"),
-                .laser => _ = world.research_manager.reportRepair("broken_laser"),
-                .radar => _ = world.research_manager.reportRepair("broken_radar"),
-                .storage => _ = world.research_manager.reportRepair("broken_storage"),
+                .chemical_thruster => unlocked = world.research_manager.reportRepair("broken_chemical_thruster"),
+                .laser => unlocked = world.research_manager.reportRepair("broken_laser"),
+                .radar => unlocked = world.research_manager.reportRepair("broken_radar"),
+                .storage => unlocked = world.research_manager.reportRepair("broken_storage"),
                 else => {},
+            }
+
+            if (unlocked) {
+                 var buf: [64]u8 = undefined;
+                 const name = PartStats.getName(ship_part.kind);
+                 const text = std.fmt.bufPrint(&buf, "Unlocked: {s}", .{name}) catch "Unlocked Tech";
+                 world.notifications.add(text, .{ .r = 1.0, .g = 0.8, .b = 0.0, .a = 1.0 }, .manual_dismiss);
             }
 
             try ship.initInventories();
@@ -303,6 +311,9 @@ pub const ShipManagement = struct {
             _ = try ui.inventorySlot(cursor_rect, self.cursor_item.item, self.cursor_item.amount, true, renderer.font);
             ui.flush(pass, &renderer.global);
         }
+
+        try world.notifications.draw(ui, screen_w, screen_h, renderer.font);
+        ui.flush(pass, &renderer.global);
     }
 
     fn drawShipPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
