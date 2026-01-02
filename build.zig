@@ -31,10 +31,10 @@ pub fn build(b: *std.Build) void {
 
     if (target.result.os.tag == .linux and target.result.cpu.arch.isX86()) {
         const dawn_prebuilt = b.dependency("dawn_x86_64_linux_gnu", .{});
-        exe.addLibraryPath(dawn_prebuilt.path("."));
+        exe.addLibraryPath(dawn_prebuilt.path(""));
     } else if (target.result.os.tag == .windows) {
         const dawn_prebuilt = b.dependency("dawn_x86_64_windows_gnu", .{});
-        exe.addLibraryPath(dawn_prebuilt.path("."));
+        exe.addLibraryPath(dawn_prebuilt.path(""));
     }
 
     const zstbi = b.dependency("zstbi", .{});
