@@ -559,7 +559,7 @@ pub const TileObject = struct {
                     vel.x * sin + vel.y * cos,
                 );
 
-                const threshold = 0.2;
+                const threshold = 20;
 
                 if (local_vel.y > threshold) self.applyInputThrust(physics, .forward);
                 if (local_vel.y < -threshold) self.applyInputThrust(physics, .backward);
@@ -733,6 +733,8 @@ pub const TileObject = struct {
         var linear_velocity = Vec2.init(0, 0);
         var angular_velocity: f32 = 0.0;
 
+        const terrain_density = 10.0; // TODO: should be based on terrain type
+
         if (self.body_id.isValid()) {
             self.position = physics.getPosition(self.body_id);
             self.rotation = physics.getRotation(self.body_id);
@@ -760,7 +762,7 @@ pub const TileObject = struct {
                 const tile = self.getTile(x, y) orelse continue;
                 const density: f32 = switch (tile.data) {
                     .ship_part => |ship_data| PartStats.getDensity(ship_data.kind),
-                    .terrain => 1.0,
+                    .terrain => terrain_density,
                     .empty => 0.0,
                 };
 
@@ -779,7 +781,7 @@ pub const TileObject = struct {
                     const next_tile = self.getTile(x + w, y) orelse break;
                     const next_density: f32 = switch (next_tile.data) {
                         .ship_part => |ship_data| PartStats.getDensity(ship_data.kind),
-                        .terrain => 1.0,
+                        .terrain => terrain_density,
                         .empty => 0.0,
                     };
 
@@ -794,7 +796,7 @@ pub const TileObject = struct {
                         const next_tile = self.getTile(x + dx, y + h) orelse break :can_expand_h;
                         const next_density: f32 = switch (next_tile.data) {
                             .ship_part => |ship_data| PartStats.getDensity(ship_data.kind),
-                            .terrain => 1.0,
+                            .terrain => terrain_density,
                             .empty => 0.0,
                         };
 
@@ -835,7 +837,20 @@ pub const TileObject = struct {
             return;
         }
 
-        self.body_id = try physics.createBody(self.position, self.rotation);
+        var linear_damping: f32 = 0.0;
+        var angular_damping: f32 = 0.0;
+
+        if (self.object_type == .ship_part) {
+            linear_damping = 0.05;
+            angular_damping = 2.00;
+        }
+
+        self.body_id = try physics.createBody(
+            self.position,
+            self.rotation,
+            linear_damping,
+            angular_damping,
+        );
 
         try physics.createTileShape(self.body_id, physics_tiles.items);
 

@@ -360,7 +360,8 @@ pub const World = struct {
             try asteroid.recalculatePhysics(&self.physics);
 
             // add initial motion
-            const vel_x = (rand.float(f32) - 0.5) * 10.0;
+            // TODO: should be based on zones
+            const vel_x = (rand.float(f32) - 0.5) * 40.0;
             const vel_y = (rand.float(f32) - 0.5) * 10.0;
             const ang_vel = (rand.float(f32) - 0.5) * 1.0;
 

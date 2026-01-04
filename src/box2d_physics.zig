@@ -126,13 +126,19 @@ pub const Physics = struct {
         return result;
     }
 
-    pub fn createBody(self: *Self, pos: Vec2, rotation: f32) !BodyId {
+    pub fn createBody(
+        self: *Self,
+        pos: Vec2,
+        rotation: f32,
+        linear_damping: f32,
+        angular_damping: f32,
+    ) !BodyId {
         var body_def = c.b2DefaultBodyDef();
         body_def.position = c.b2Vec2{ .x = pos.x, .y = pos.y };
         body_def.rotation = c.b2MakeRot(rotation);
         body_def.type = c.b2_dynamicBody;
-        body_def.linearDamping = 0.05;
-        body_def.angularDamping = 2.0;
+        body_def.linearDamping = linear_damping;
+        body_def.angularDamping = angular_damping;
 
         const body_id = c.b2CreateBody(self.world_id, &body_def);
         return BodyId{ .id = body_id };
