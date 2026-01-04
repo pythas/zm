@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## Added
+
 - Flight assist. Enabled by default. Z to toggle.
+
+## Changed
+
+- Reduce zoom distance by half.
 
 ## [0.0.7]
 

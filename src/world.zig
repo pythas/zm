@@ -384,7 +384,7 @@ pub const World = struct {
             self.camera.zoom *= 0.9;
         }
 
-        self.camera.zoom = @max(0.1, @min(10.0, self.camera.zoom));
+        self.camera.zoom = @max(0.2, @min(10.0, self.camera.zoom));
     }
 
     fn spawnEnemyDrone(self: *Self, position: Vec2) !void {
