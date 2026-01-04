@@ -31,6 +31,7 @@ pub const PlayerController = struct {
     current_action: Action,
     railgun_cooldown: f32 = 0.0,
     laser_cooldown: f32 = 0.0,
+    flight_assist_enabled: bool = true,
 
     tile_actions: std.ArrayList(TileAction),
 
@@ -41,6 +42,7 @@ pub const PlayerController = struct {
             .current_action = .laser,
             .railgun_cooldown = 0.0,
             .laser_cooldown = 0.0,
+            .flight_assist_enabled = true,
             .tile_actions = std.ArrayList(TileAction).init(allocator),
         };
     }
@@ -69,23 +71,34 @@ pub const PlayerController = struct {
     }
 
     fn updateMovementInputs(self: *Self, ship: *TileObject, world: *World, keyboard_state: *const KeyboardState) void {
-        _ = self;
-        const is_shifted = keyboard_state.isDown(.left_shift);
-
-        if (!is_shifted) {
-            if (keyboard_state.isDown(.w)) ship.applyInputThrust(&world.physics, .forward);
-            if (keyboard_state.isDown(.s)) ship.applyInputThrust(&world.physics, .backward);
-            if (keyboard_state.isDown(.a)) ship.applyInputThrust(&world.physics, .left);
-            if (keyboard_state.isDown(.d)) ship.applyInputThrust(&world.physics, .right);
-        } else {
-            // if (keyboard_state.isDown(.w)) ship.applyInputThrust(&world.physics, .secondary_forward);
-            // if (keyboard_state.isDown(.s)) ship.applyInputThrust(&world.physics, .secondary_backward);
-            // if (keyboard_state.isDown(.q)) ship.applyInputThrust(&world.physics, .secondary_left);
-            // if (keyboard_state.isDown(.e)) ship.applyInputThrust(&world.physics, .secondary_right);
+        if (keyboard_state.isPressed(.z)) {
+            self.flight_assist_enabled = !self.flight_assist_enabled;
+            const text = if (self.flight_assist_enabled) "Flight Assist: ON" else "Flight Assist: OFF";
+            world.notifications.add(text, .{ .r = 0.5, .g = 0.8, .b = 1.0, .a = 1.0 }, .auto_dismiss);
         }
 
-        // if (keyboard_state.isDown(.a)) ship.applyInputTorque(&world.physics, .rotate_ccw);
-        // if (keyboard_state.isDown(.d)) ship.applyInputTorque(&world.physics, .rotate_cw);
+        var has_linear_input = false;
+
+        if (keyboard_state.isDown(.w)) {
+            ship.applyInputThrust(&world.physics, .forward);
+            has_linear_input = true;
+        }
+        if (keyboard_state.isDown(.s)) {
+            ship.applyInputThrust(&world.physics, .backward);
+            has_linear_input = true;
+        }
+        if (keyboard_state.isDown(.a)) {
+            ship.applyInputThrust(&world.physics, .left);
+            has_linear_input = true;
+        }
+        if (keyboard_state.isDown(.d)) {
+            ship.applyInputThrust(&world.physics, .right);
+            has_linear_input = true;
+        }
+
+        if (self.flight_assist_enabled) {
+            ship.stabilize(&world.physics, !has_linear_input);
+        }
     }
 
     fn updateCombatInputs(self: *Self, ship: *TileObject, world: *World, keyboard_state: *const KeyboardState) !void {

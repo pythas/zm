@@ -542,10 +542,38 @@ pub const TileObject = struct {
         }
     }
 
+    pub fn stabilize(self: *Self, physics: *Physics, linear: bool) void {
+        if (!self.body_id.isValid()) return;
+
+        if (linear) {
+            const vel = physics.getLinearVelocity(self.body_id);
+
+            if (vel.lengthSq() > 0.1) {
+                const rot = physics.getRotation(self.body_id);
+                const cos = @cos(-rot);
+                const sin = @sin(-rot);
+
+                // transform velocity to local space
+                const local_vel = Vec2.init(
+                    vel.x * cos - vel.y * sin,
+                    vel.x * sin + vel.y * cos,
+                );
+
+                const threshold = 0.2;
+
+                if (local_vel.y > threshold) self.applyInputThrust(physics, .forward);
+                if (local_vel.y < -threshold) self.applyInputThrust(physics, .backward);
+                if (local_vel.x > threshold) self.applyInputThrust(physics, .left);
+                if (local_vel.x < -threshold) self.applyInputThrust(physics, .right);
+            }
+        }
+    }
+
     pub fn updateThrusterVisuals(self: *Self, dt: f32) void {
         for (self.thrusters.items) |*thruster| {
             if (thruster.current_visual_power > 0) {
                 thruster.current_visual_power -= thruster.current_visual_power * 10.0 * dt;
+
                 if (thruster.current_visual_power < 0.1) {
                     thruster.current_visual_power = 0;
                 }
@@ -648,7 +676,7 @@ pub const TileObject = struct {
 
             const id = id_gen_fn(id_gen_ctx);
             var new_obj = try TileObject.init(allocator, id, w, h, self.position, self.rotation);
-            
+
             if (comp.tiles.items.len == 1) {
                 new_obj.object_type = .debris;
             } else {

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+- Flight assist. Enabled by default. Z to toggle.
+
 ## [0.0.7]
 
 ## Added
