@@ -10,8 +10,10 @@ pub const Tool = enum(u8) {
 };
 
 pub const Recipe = enum(u8) {
-    chemical_thruster = 0,
+    hull = 0,
+    chemical_thruster,
     laser,
+    mining_laser,
     railgun,
     radar,
     storage,
@@ -25,11 +27,17 @@ pub const RecipeStats = struct {
 
     pub fn getCost(recipe: Recipe) []const Cost {
         return switch (recipe) {
+            .hull => &[_]Cost{
+                .{ .item = .{ .resource = .iron }, .amount = 10 },
+            },
             .chemical_thruster => &[_]Cost{
                 .{ .item = .{ .resource = .iron }, .amount = 20 },
             },
             .laser => &[_]Cost{
                 .{ .item = .{ .resource = .iron }, .amount = 40 },
+            },
+            .mining_laser => &[_]Cost{
+                .{ .item = .{ .resource = .iron }, .amount = 20 },
             },
             .railgun => &[_]Cost{
                 .{ .item = .{ .resource = .iron }, .amount = 10 },
@@ -45,8 +53,10 @@ pub const RecipeStats = struct {
 
     pub fn getResult(recipe: Recipe) Item {
         return switch (recipe) {
+            .hull => .{ .component = .hull },
             .chemical_thruster => .{ .component = .chemical_thruster },
             .laser => .{ .component = .laser },
+            .mining_laser => .{ .component = .mining_laser },
             .railgun => .{ .component = .railgun },
             .radar => .{ .component = .radar },
             .storage => .{ .component = .storage },
@@ -55,8 +65,10 @@ pub const RecipeStats = struct {
 
     pub fn getName(recipe: Recipe) []const u8 {
         return switch (recipe) {
+            .hull => "Hull Plate",
             .chemical_thruster => "Chemical Thruster",
-            .laser => "Laser",
+            .laser => "Pulse Laser",
+            .mining_laser => "Mining Laser",
             .railgun => "Railgun",
             .radar => "Radar",
             .storage => "Storage",
@@ -65,8 +77,10 @@ pub const RecipeStats = struct {
 
     pub fn getDisplayName(recipe: Recipe) []const u8 {
         return switch (recipe) {
+            .hull => "Hull Plate\nCost: 10 iron\nTime: 2.0s",
             .chemical_thruster => "Chemical Thruster\nCost: 20 iron\nTime: 5.0s",
-            .laser => "Laser\nCost: 40 iron\nTime: 10.0s",
+            .laser => "Pulse Laser\nCost: 40 iron\nTime: 10.0s",
+            .mining_laser => "Mining Laser\nCost: 20 iron\nTime: 5.0s",
             .railgun => "Railgun\nCost: 10 iron\nTime: 10.0s",
             .radar => "Radar\nCost: 15 iron\nTime: 5.0s",
             .storage => "Storage\nCost: 50 iron\nTime: 2.0s",
@@ -75,8 +89,10 @@ pub const RecipeStats = struct {
 
     pub fn getResearchId(recipe: Recipe) ResearchId {
         return switch (recipe) {
+            .hull => .hull,
             .chemical_thruster => .chemical_thruster,
             .laser => .laser,
+            .mining_laser => .mining_laser,
             .railgun => .railgun,
             .radar => .radar,
             .storage => .storage,
@@ -85,8 +101,10 @@ pub const RecipeStats = struct {
 
     pub fn getDuration(recipe: Recipe) f32 {
         return switch (recipe) {
+            .hull => 2.0,
             .chemical_thruster => 5.0,
             .laser => 10.0,
+            .mining_laser => 5.0,
             .railgun => 10.0,
             .radar => 5.0,
             .storage => 2.0,
@@ -131,7 +149,8 @@ pub const Item = union(enum) {
             .recipe => |r| RecipeStats.getDisplayName(r),
             .component => |c| switch (c) {
                 .chemical_thruster => "Chemical Thruster",
-                .laser => "Laser",
+                .laser => "Pulse Laser",
+                .mining_laser => "Mining Laser",
                 .railgun => "Railgun",
                 .radar => "Radar",
                 .storage => "Storage",

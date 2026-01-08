@@ -12,6 +12,7 @@ pub const PartKind = enum(u8) {
     reactor,
     chemical_thruster,
     laser,
+    mining_laser,
     storage,
     railgun,
     smart_core,
@@ -25,6 +26,7 @@ pub const PartModule = struct {
     pub const shield: u32 = 1 << 3;
     pub const storage: u32 = 1 << 4;
     pub const reactor: u32 = 1 << 5;
+    pub const mining_laser: u32 = 1 << 6;
 
     pub fn has(modules: u32, module: u32) bool {
         return (modules & module) != 0;

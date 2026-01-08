@@ -20,6 +20,7 @@ const config = @import("config.zig");
 
 pub const Action = enum {
     laser,
+    mining,
     railgun,
 };
 
@@ -121,7 +122,7 @@ pub const PlayerController = struct {
         const world_pos = input.getMouseWorldPos(world.camera);
 
         switch (self.current_action) {
-            .laser => {
+            .mining => {
                 for (world.objects.items) |*object| {
                     if (object.id == self.target_id) continue;
 
@@ -130,11 +131,11 @@ pub const PlayerController = struct {
                     if (tile.data == .empty) continue;
 
                     const target_pos = object.getTileWorldPos(coords.x, coords.y);
-                    const best_candidate = try self.getLaserCandidate(ship, target_pos);
+                    const best_candidate = try self.getMiningCandidate(ship, target_pos);
 
                     if (best_candidate == null) break;
 
-                    const radius: i32 = @intCast(PartStats.getLaserRadius(best_candidate.?.tier));
+                    const radius: i32 = @intCast(PartStats.getMiningRadius(best_candidate.?.tier));
                     const center_x: i32 = @intCast(coords.x);
                     const center_y: i32 = @intCast(coords.y);
 
@@ -156,13 +157,16 @@ pub const PlayerController = struct {
                                         .object_id = object.id,
                                         .tile_x = tx,
                                         .tile_y = ty,
-                                    });
+                                    }, PartStats.getMiningDuration(best_candidate.?.tier));
                                 }
                             }
                         }
                     }
                     break;
                 }
+            },
+            .laser => {
+                try self.fireLasersAtPosition(ship, world, world_pos);
             },
             .railgun => {
                 try self.fireRailgun(ship, world, world_pos);
@@ -274,13 +278,13 @@ pub const PlayerController = struct {
         }
     }
 
-    pub const LaserCandidate = struct { coords: TileCoords, dist: f32, tier: u8 };
+    pub const MiningCandidate = struct { coords: TileCoords, dist: f32, tier: u8 };
 
-    pub fn getLaserCandidate(self: *const Self, ship: *TileObject, target_pos: Vec2) !?LaserCandidate {
-        const tile_refs = try ship.getTilesByPartKind(.laser);
+    pub fn getMiningCandidate(self: *const Self, ship: *TileObject, target_pos: Vec2) !?MiningCandidate {
+        const tile_refs = try ship.getTilesByPartKind(.mining_laser);
         defer self.allocator.free(tile_refs);
 
-        var best: ?LaserCandidate = null;
+        var best: ?MiningCandidate = null;
 
         for (tile_refs) |ref| {
             var busy = false;
@@ -296,7 +300,7 @@ pub const PlayerController = struct {
             const part = tile.getShipPart().?;
             const is_broken = PartStats.isBroken(part);
 
-            const range = PartStats.getLaserRangeSq(part.tier, is_broken);
+            const range = PartStats.getMiningRangeSq(part.tier, is_broken);
             const dist = ship.getDistanceToTileSq(ref.tile_x, ref.tile_y, target_pos);
 
             if (dist <= range) {
@@ -436,6 +440,61 @@ pub const PlayerController = struct {
         world.notifications.add(text, .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 }, .auto_dismiss);
     }
 
+    fn fireLasersAtPosition(self: *Self, ship: *TileObject, world: *World, target_pos: Vec2) !void {
+        if (self.laser_cooldown > 0.0) return;
+
+        const lasers = try ship.getTilesByPartKind(.laser);
+        defer self.allocator.free(lasers);
+
+        if (lasers.len == 0) return;
+
+        var fired = false;
+        for (lasers) |ref| {
+            const part = ship.getTile(ref.tile_x, ref.tile_y).?.getShipPart().?;
+            const is_broken = PartStats.isBroken(part);
+            const range_sq = PartStats.getLaserRangeSq(part.tier, is_broken);
+            const start = ship.getTileWorldPos(ref.tile_x, ref.tile_y);
+
+            if (start.sub(target_pos).lengthSq() <= range_sq) {
+                const damage = PartStats.getLaserDamage(part.tier);
+                const hit_pos = self.performGlobalLaserRaycast(world, ship.id, start, target_pos, damage);
+                try world.laser_beams.append(.{ .start = start, .end = hit_pos, .lifetime = 0.2, .max_lifetime = 0.2, .color = .{ 1.0, 0.2, 0.2, 1.0 } });
+                fired = true;
+            }
+        }
+
+        if (fired) {
+            self.laser_cooldown = config.combat.laser_cooldown;
+        }
+    }
+
+    fn performGlobalLaserRaycast(self: *Self, world: *World, ignore_id: u64, start: Vec2, end: Vec2, damage: f32) Vec2 {
+        var hit = end;
+        const diff = end.sub(start);
+        const dist = diff.length();
+        const dir = diff.normalize();
+        var d: f32 = 0.0;
+
+        while (d < dist) : (d += config.combat.laser_raycast_step) {
+            const pt = start.add(dir.mulScalar(d));
+
+            for (world.objects.items) |*obj| {
+                if (obj.id == ignore_id or obj.object_type == .debris) continue;
+
+                if (obj.getTileCoordsAtWorldPos(pt)) |coords| {
+                    if (obj.getTile(coords.x, coords.y)) |tile| {
+                        if (tile.data != .empty) {
+                            hit = obj.getTileWorldPos(coords.x, coords.y);
+                            self.applyDamage(obj, tile, coords.x, coords.y, damage);
+                            return hit;
+                        }
+                    }
+                }
+            }
+        }
+        return hit;
+    }
+
     fn fireLasersAtLockedTarget(self: *Self, ship: *TileObject, world: *World) !void {
         if (self.laser_cooldown > 0.0) return;
 
@@ -530,8 +589,8 @@ pub const PlayerController = struct {
         }
     }
 
-    pub fn startMining(self: *Self, source: TileCoords, target: TileReference) !void {
-        try self.tile_actions.append(TileAction.init(.mine, source, target, 3.0));
+    pub fn startMining(self: *Self, source: TileCoords, target: TileReference, duration: f32) !void {
+        try self.tile_actions.append(TileAction.init(.mine, source, target, duration));
     }
 
     // pub fn performSensorSweep(self: *Self, world: *World, origin: Vec2, range: f32) !void {

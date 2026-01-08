@@ -15,7 +15,8 @@ pub const PartStats = struct {
             .hull => "Hull",
             .reactor => "Reactor",
             .chemical_thruster => "Chemical Thruster",
-            .laser => "Laser",
+            .laser => "Pulse Laser",
+            .mining_laser => "Mining Laser",
             .storage => "Storage",
             .railgun => "Railgun",
             .smart_core => "Smart Core",
@@ -46,6 +47,7 @@ pub const PartStats = struct {
             .chemical_thruster => 2.0,
             .hull => 1.0,
             .laser => 1.0,
+            .mining_laser => 1.5,
             .reactor => 1.5,
             .storage => 0.5,
             .railgun => 4.0,
@@ -65,6 +67,10 @@ pub const PartStats = struct {
             .laser => &.{
                 .{ .item = .{ .resource = .iron }, .amount = 15 },
                 .{ .item = .{ .resource = .copper }, .amount = 5 },
+            },
+            .mining_laser => &.{
+                .{ .item = .{ .resource = .iron }, .amount = 20 },
+                .{ .item = .{ .resource = .copper }, .amount = 10 },
             },
             .smart_core => &.{
                 .{ .item = .{ .resource = .gold }, .amount = 50 },
@@ -116,16 +122,6 @@ pub const PartStats = struct {
         };
     }
 
-    pub fn getLaserRadius(tier: u8) u8 {
-        return switch (tier) {
-            1 => 0,
-            2 => 1,
-            3 => 2,
-            4 => 2,
-            else => 0,
-        };
-    }
-
     pub fn getStorageSlotLimit(tier: u8) u8 {
         return switch (tier) {
             1 => 4,
@@ -168,5 +164,41 @@ pub const PartStats = struct {
 
     pub fn getRailgunImpulseMultiplier() f32 {
         return 40.0;
+    }
+
+    pub fn getMiningRangeSq(tier: u8, is_broken: bool) f32 {
+        var range: f32 = switch (tier) {
+            1 => 150.0,
+            2 => 200.0,
+            3 => 300.0,
+            4 => 400.0,
+            else => 0.0,
+        };
+
+        if (is_broken) {
+            range *= 0.5;
+        }
+
+        return range * range;
+    }
+
+    pub fn getMiningDuration(tier: u8) f32 {
+        return switch (tier) {
+            1 => 3.0,
+            2 => 2.0,
+            3 => 1.5,
+            4 => 1.0,
+            else => 5.0,
+        };
+    }
+
+    pub fn getMiningRadius(tier: u8) u8 {
+        return switch (tier) {
+            1 => 0,
+            2 => 1,
+            3 => 2,
+            4 => 3,
+            else => 0,
+        };
     }
 };

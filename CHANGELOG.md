@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reduce zoom distance by half.
 - Removed damping on asteroids.
+- Changed laser to pulse laser and added mining tile.
 
 ## [0.0.7]
 
@@ -54,6 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Action bar and action switching.
 - Starry background renderer.
 - UI: Context menu support.
+- Separated Laser into Mining Laser (tool) and Pulse Laser (weapon).
+- Added Mining Laser part and recipe.
+- Updated starter ship to include a Mining Laser.
 - Visual laser range indication and target tile highlighting.
 
 ### Changed

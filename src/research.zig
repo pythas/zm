@@ -4,6 +4,8 @@ const Resource = @import("resource.zig").Resource;
 
 pub const ResearchId = enum {
     welding,
+    hull,
+    mining_laser,
     chemical_thruster,
     laser,
     railgun,
@@ -48,12 +50,20 @@ pub const ResearchManager = struct {
     }
 
     pub fn reportRepair(self: *Self, component_name: []const u8) bool {
+        if (std.mem.eql(u8, component_name, "broken_hull")) {
+            return self.unlock(.hull);
+        }
+
         if (std.mem.eql(u8, component_name, "broken_chemical_thruster")) {
             return self.unlock(.chemical_thruster);
         }
 
         if (std.mem.eql(u8, component_name, "broken_laser")) {
             return self.unlock(.laser);
+        }
+
+        if (std.mem.eql(u8, component_name, "broken_mining_laser")) {
+            return self.unlock(.mining_laser);
         }
 
         if (std.mem.eql(u8, component_name, "broken_radar")) {

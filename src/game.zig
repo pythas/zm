@@ -91,6 +91,10 @@ pub const Game = struct {
         }
 
         if (self.input.isActionPressed(.select_action_1)) {
+            self.world.player_controller.current_action = .mining;
+        }
+
+        if (self.input.isActionPressed(.select_action_2)) {
             self.world.player_controller.current_action = .laser;
         }
 
@@ -200,10 +204,10 @@ pub const Game = struct {
         if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
             if (obj.id != ship.id and obj.object_type != .debris) {
                 var valid_candidate = false;
-                if (self.world.player_controller.current_action == .laser) {
+                if (self.world.player_controller.current_action == .mining) {
                     const target_pos = obj.getTileWorldPos(coords.x, coords.y);
 
-                    if (try self.world.player_controller.getLaserCandidate(ship, target_pos)) |_| {
+                    if (try self.world.player_controller.getMiningCandidate(ship, target_pos)) |_| {
                         valid_candidate = true;
                     }
                 }

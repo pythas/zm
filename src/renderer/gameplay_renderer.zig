@@ -92,14 +92,21 @@ pub const GameplayRenderer = struct {
     }
 
     pub fn drawLaserLines(self: *Self, pass: zgpu.wgpu.RenderPassEncoder, world: *World, renderer: *Renderer, world_pos: Vec2) !void {
-        if (world.player_controller.current_action != .laser) {
+        const action = world.player_controller.current_action;
+        if (action != .laser and action != .mining) {
             return;
         }
 
+        const ship = &world.objects.items[0];
+        const PartKind = @import("../tile.zig").PartKind;
+        const part_kind: PartKind = if (action == .mining) .mining_laser else .laser;
+        const tile_refs = try ship.getTilesByPartKind(part_kind);
+        defer self.allocator.free(tile_refs);
+
+        if (tile_refs.len == 0) return;
+
         var lines = std.ArrayList(LineRenderData).init(self.allocator);
         defer lines.deinit();
-
-        const ship = &world.objects.items[0];
 
         for (world.objects.items) |*obj| {
             if (obj.id == ship.id or obj.object_type == .debris) {
@@ -113,9 +120,6 @@ pub const GameplayRenderer = struct {
                 if (tile.data == .empty) {
                     continue;
                 }
-
-                const tile_refs = try ship.getTilesByPartKind(.laser);
-                defer self.allocator.free(tile_refs);
 
                 for (tile_refs) |tile_ref| {
                     // check if busy
@@ -134,7 +138,11 @@ pub const GameplayRenderer = struct {
                     const ti = ship.getTile(tile_ref.tile_x, tile_ref.tile_y).?;
                     const part = ti.getShipPart().?;
                     const is_broken = PartStats.isBroken(part);
-                    const range_sq = PartStats.getLaserRangeSq(part.tier, is_broken);
+                    const range_sq = if (action == .mining)
+                        PartStats.getMiningRangeSq(part.tier, is_broken)
+                    else
+                        PartStats.getLaserRangeSq(part.tier, is_broken);
+
                     const range = std.math.sqrt(range_sq);
 
                     const diff = target_pos.sub(laser_world_pos);
@@ -251,12 +259,15 @@ pub const GameplayRenderer = struct {
         const spacing = style.action_button_spacing;
 
         const ship = &world.objects.items[0];
+        const mining_tiles = try ship.getTilesByPartKind(.mining_laser);
+        defer self.allocator.free(mining_tiles);
         const laser_tiles = try ship.getTilesByPartKind(.laser);
         defer self.allocator.free(laser_tiles);
         const railgun_tiles = try ship.getTilesByPartKind(.railgun);
         defer self.allocator.free(railgun_tiles);
 
         var count: usize = 0;
+        if (mining_tiles.len > 0) count += 1;
         if (laser_tiles.len > 0) count += 1;
         if (railgun_tiles.len > 0) count += 1;
 
@@ -266,10 +277,22 @@ pub const GameplayRenderer = struct {
         var current_x = (screen_w - total_w) / 2.0;
         const bar_y = screen_h - bar_h - 20.0;
 
+        if (mining_tiles.len > 0) {
+            const rect = UiRect{ .x = current_x, .y = bar_y, .w = button_w, .h = bar_h };
+            const is_active = world.player_controller.current_action == .mining;
+            const state = try renderer.ui.button(rect, is_active, false, "1. Mining", renderer.font);
+
+            if (state.is_clicked) {
+                world.player_controller.current_action = .mining;
+            }
+
+            current_x += button_w + spacing;
+        }
+
         if (laser_tiles.len > 0) {
             const rect = UiRect{ .x = current_x, .y = bar_y, .w = button_w, .h = bar_h };
             const is_active = world.player_controller.current_action == .laser;
-            const state = try renderer.ui.button(rect, is_active, false, "1. Laser", renderer.font);
+            const state = try renderer.ui.button(rect, is_active, false, "2. Laser", renderer.font);
 
             if (state.is_clicked) {
                 world.player_controller.current_action = .laser;

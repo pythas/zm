@@ -47,7 +47,7 @@ pub const Assets = struct {
     pub fn getComponentSprite(part_kind: PartKind) Sprite {
         const index = @intFromEnum(part_kind);
 
-        return Sprite.init(resource_sheet, setRow(15, @intCast(index)));
+        return Sprite.init(resource_sheet, setRow(15, index));
     }
 
     pub fn getToolSprite(tool: Tool) Sprite {
@@ -108,6 +108,7 @@ pub const Assets = struct {
             .reactor => getReactorSprite(ship),
             .chemical_thruster => getEngineSprite(ship),
             .laser => getLaserSprite(ship),
+            .mining_laser => getMiningLaserSprite(ship),
             .storage => getStorageSprite(ship),
             .railgun => getRailgunSprite(ship),
             .smart_core => getSmartCoreSprite(ship),
@@ -150,7 +151,7 @@ pub const Assets = struct {
         return Sprite.init(ship_sheet, setRow(3, index));
     }
 
-    pub fn getStorageSprite(ship: ShipPartTileType) Sprite {
+    pub fn getMiningLaserSprite(ship: ShipPartTileType) Sprite {
         var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
@@ -160,7 +161,7 @@ pub const Assets = struct {
         return Sprite.init(ship_sheet, setRow(4, index));
     }
 
-    pub fn getRailgunSprite(ship: ShipPartTileType) Sprite {
+    pub fn getStorageSprite(ship: ShipPartTileType) Sprite {
         var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
@@ -170,7 +171,7 @@ pub const Assets = struct {
         return Sprite.init(ship_sheet, setRow(5, index));
     }
 
-    pub fn getSmartCoreSprite(ship: ShipPartTileType) Sprite {
+    pub fn getRailgunSprite(ship: ShipPartTileType) Sprite {
         var index: u16 = 0;
 
         if (PartStats.isBroken(ship)) {
@@ -188,5 +189,15 @@ pub const Assets = struct {
         }
 
         return Sprite.init(ship_sheet, setRow(7, index));
+    }
+
+    pub fn getSmartCoreSprite(ship: ShipPartTileType) Sprite {
+        var index: u16 = 0;
+
+        if (PartStats.isBroken(ship)) {
+            index += 1;
+        }
+
+        return Sprite.init(ship_sheet, setRow(31, index));
     }
 };

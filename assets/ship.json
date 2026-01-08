@@ -933,10 +933,10 @@
       "x": 7,
       "y": 6,
       "data_type": "ship_part",
-      "kind": "hull",
+      "kind": "laser",
       "base_material": null,
       "rotation": null,
-      "health": 100.0
+      "health": 0.0
     },
     {
       "x": 8,
@@ -1077,7 +1077,7 @@
       "x": 7,
       "y": 7,
       "data_type": "ship_part",
-      "kind": "laser",
+      "kind": "mining_laser",
       "base_material": null,
       "rotation": null,
       "health": 0.0
@@ -1089,7 +1089,7 @@
       "kind": "hull",
       "base_material": null,
       "rotation": null,
-      "health": 100.0
+      "health": 0.0
     },
     {
       "x": 9,

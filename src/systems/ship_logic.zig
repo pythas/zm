@@ -83,8 +83,10 @@ pub const ShipLogic = struct {
 
             var unlocked = false;
             switch (ship_part.kind) {
+                .hull => unlocked = world.research_manager.reportRepair("broken_hull"),
                 .chemical_thruster => unlocked = world.research_manager.reportRepair("broken_chemical_thruster"),
                 .laser => unlocked = world.research_manager.reportRepair("broken_laser"),
+                .mining_laser => unlocked = world.research_manager.reportRepair("broken_mining_laser"),
                 .radar => unlocked = world.research_manager.reportRepair("broken_radar"),
                 .storage => unlocked = world.research_manager.reportRepair("broken_storage"),
                 else => {},
