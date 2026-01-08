@@ -2,46 +2,34 @@ const std = @import("std");
 const zgpu = @import("zgpu");
 const zglfw = @import("zglfw");
 
-const MouseState = @import("input.zig").MouseState;
-const KeyboardState = @import("input.zig").KeyboardState;
-const World = @import("world.zig").World;
-const Renderer = @import("renderer.zig").Renderer;
-const SpriteRenderData = @import("renderer/sprite_renderer.zig").SpriteRenderData;
-const UiRect = @import("renderer/ui_renderer.zig").UiRect;
-const Tile = @import("tile.zig").Tile;
-const Direction = @import("tile.zig").Direction;
-const SpriteRenderer = @import("renderer/sprite_renderer.zig").SpriteRenderer;
-const TileObject = @import("tile_object.zig").TileObject;
-const ship_serialization = @import("ship_serialization.zig");
-const Tool = @import("inventory.zig").Tool;
-const Item = @import("inventory.zig").Item;
-const Stack = @import("inventory.zig").Stack;
-const Recipe = @import("inventory.zig").Recipe;
-const RecipeStats = @import("inventory.zig").RecipeStats;
-const PartStats = @import("ship.zig").PartStats;
-const ShipManagementLayout = @import("ship_management/layout.zig").ShipManagementLayout;
-const DropdownItem = @import("renderer/ui_renderer.zig").UiRenderer.DropdownItem;
-const RepairCost = @import("ship.zig").RepairCost;
+const InputManager = @import("../input/input_manager.zig").InputManager;
+const World = @import("../world.zig").World;
+const Renderer = @import("../renderer.zig").Renderer;
+const SpriteRenderData = @import("../renderer/sprite_renderer.zig").SpriteRenderData;
+const UiRect = @import("../renderer/ui_renderer.zig").UiRect;
+const Tile = @import("../tile.zig").Tile;
+const TileObject = @import("../tile_object.zig").TileObject;
+const Stack = @import("../inventory.zig").Stack;
+const Recipe = @import("../inventory.zig").Recipe;
+const RecipeStats = @import("../inventory.zig").RecipeStats;
+const PartStats = @import("../ship.zig").PartStats;
+const ShipManagementLayout = @import("../ship_management/layout.zig").ShipManagementLayout;
+const DropdownItem = @import("../renderer/ui_renderer.zig").UiRenderer.DropdownItem;
+const ShipLogic = @import("../systems/ship_logic.zig").ShipLogic;
+const Item = @import("../inventory.zig").Item;
 
 const hover_offset_x = 10;
 const hover_offset_y = 10;
 
-pub const CraftingTask = struct {
-    recipe: Recipe,
-    progress: f32,
-    duration: f32,
-};
-
-pub const ShipManagement = struct {
+pub const ShipManagementUi = struct {
     const Self = @This();
 
     allocator: std.mem.Allocator,
     window: *zglfw.Window,
-    mouse: MouseState,
-    keyboard: KeyboardState,
-    current_recipe: ?Recipe = null,
-    active_crafting: ?CraftingTask = null,
+    
+    logic: ShipLogic,
 
+    current_recipe: ?Recipe = null,
     cursor_item: Stack = .{},
 
     hovered_item_name: ?[]const u8 = null,
@@ -56,11 +44,10 @@ pub const ShipManagement = struct {
     tile_menu_tile_y: usize = 0,
 
     pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) Self {
-        return .{
+        return .{ 
             .allocator = allocator,
             .window = window,
-            .mouse = MouseState.init(window),
-            .keyboard = KeyboardState.init(window),
+            .logic = .{},
         };
     }
 
@@ -69,35 +56,15 @@ pub const ShipManagement = struct {
     }
 
     pub fn updateCrafting(self: *Self, dt: f32, world: *World) !void {
-        var task = &(self.active_crafting orelse return);
-        task.progress += dt;
-
-        if (task.progress < task.duration) {
-            return;
-        }
-
         const ship = &world.objects.items[0];
-        const result = RecipeStats.getResult(task.recipe);
-        const remaining = try ship.addItemToInventory(result, 1, ship.position);
-
-        if (remaining == 0) {
-            std.log.info("ShipManagement: Constructed {s}", .{RecipeStats.getName(task.recipe)});
-        } else {
-            std.log.warn("ShipManagement: Failed to add {s} to inventory (no space?). Refunding resources.", .{RecipeStats.getName(task.recipe)});
-
-            const costs = RecipeStats.getCost(task.recipe);
-            for (costs) |cost| {
-                _ = try ship.addItemToInventory(cost.item, cost.amount, ship.position);
-            }
-        }
-
-        self.active_crafting = null;
+        try self.logic.updateCrafting(dt, world, ship);
     }
 
     pub fn update(
         self: *Self,
         renderer: *Renderer,
         world: *World,
+        input: *const InputManager,
         dt: f32,
         t: f32,
     ) !void {
@@ -105,26 +72,23 @@ pub const ShipManagement = struct {
         const screen_w: f32 = @floatFromInt(wh[0]);
         const screen_h: f32 = @floatFromInt(wh[1]);
 
-        self.mouse.update();
-        self.keyboard.update();
-
         const ship = &world.objects.items[0];
 
         try self.updateCrafting(dt, world);
 
         const layout = ShipManagementLayout.compute(screen_w, screen_h, renderer.ui.style);
 
-        self.handleShortcuts(ship);
+        self.handleShortcuts(ship, input);
 
         var hover_x: i32 = -1;
         var hover_y: i32 = -1;
 
         if (!self.is_tile_menu_open) {
-            if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
+            if (layout.getHoveredTile(input.mouse.x, input.mouse.y)) |tile_pos| {
                 hover_x = tile_pos.x;
                 hover_y = tile_pos.y;
 
-                try self.handleTileInteraction(ship, tile_pos.x, tile_pos.y, world);
+                try self.handleTileInteraction(ship, tile_pos.x, tile_pos.y, world, input);
             }
         }
 
@@ -137,116 +101,25 @@ pub const ShipManagement = struct {
         );
     }
 
-    pub fn save(self: *ShipManagement, ship: *TileObject) void {
-        ship_serialization.saveShip(self.allocator, ship.*, "assets/ship.json") catch |err| {
-            std.debug.print("Failed to save ship: {}\n", .{err});
-        };
-    }
-
-    fn rotateTile(_: *Self, ship: *TileObject, x: usize, y: usize) void {
-        if (ship.getTile(x, y)) |tile| {
-            if (tile.data == .ship_part) {
-                var new_tile = tile.*;
-                if (new_tile.data.ship_part.rotation) |rot| {
-                    new_tile.data.ship_part.rotation = @enumFromInt((@intFromEnum(rot) + 1) % 4);
-                    ship.setTile(x, y, new_tile);
-                }
-            }
+    fn handleShortcuts(self: *Self, ship: *TileObject, input: *const InputManager) void {
+        if (input.keyboard.isDown(.left_ctrl) and input.keyboard.isPressed(.s)) {
+            ShipLogic.save(self.allocator, ship);
         }
     }
 
-    fn removeTile(_: *Self, ship: *TileObject, x: usize, y: usize) void {
-        ship.setTile(x, y, Tile.initEmpty() catch unreachable);
-    }
-
-    fn repairTile(self: *Self, ship: *TileObject, world: *World, x: usize, y: usize) !void {
-        const tile = ship.getTile(x, y) orelse return;
-        const ship_part = tile.getShipPart() orelse return;
-        const repair_costs = PartStats.getRepairCosts(ship_part.kind);
-
-        if (self.canRepair(ship, repair_costs)) {
-            var new_tile = tile.*;
-            new_tile.data.ship_part.health = PartStats.getFunctionalThreshold(new_tile.data.ship_part.kind, new_tile.data.ship_part.tier);
-            ship.setTile(x, y, new_tile);
-
-            for (repair_costs) |repair_cost| {
-                ship.removeNumberOfItemsFromInventory(repair_cost.item, repair_cost.amount);
-            }
-
-            var unlocked = false;
-            switch (ship_part.kind) {
-                .chemical_thruster => unlocked = world.research_manager.reportRepair("broken_chemical_thruster"),
-                .laser => unlocked = world.research_manager.reportRepair("broken_laser"),
-                .radar => unlocked = world.research_manager.reportRepair("broken_radar"),
-                .storage => unlocked = world.research_manager.reportRepair("broken_storage"),
-                else => {},
-            }
-
-            if (unlocked) {
-                 var buf: [64]u8 = undefined;
-                 const name = PartStats.getName(ship_part.kind);
-                 const text = std.fmt.bufPrint(&buf, "Unlocked: {s}", .{name}) catch "Unlocked Tech";
-                 world.notifications.add(text, .{ .r = 1.0, .g = 0.8, .b = 0.0, .a = 1.0 }, .manual_dismiss);
-            }
-
-            try ship.initInventories();
-        }
-    }
-
-    fn canRepair(_: *Self, ship: *TileObject, repair_costs: []const RepairCost) bool {
-        for (repair_costs) |repair_cost| {
-            const count = ship.getInventoryCountByItem(repair_cost.item);
-
-            if (count < repair_cost.amount) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    fn handleShortcuts(self: *Self, ship: *TileObject) void {
-        if (self.keyboard.isDown(.left_ctrl) and self.keyboard.isPressed(.s)) {
-            self.save(ship);
-        }
-    }
-
-    fn handleTileInteraction(self: *Self, ship: *TileObject, hover_x: i32, hover_y: i32, world: *World) !void {
+    fn handleTileInteraction(self: *Self, ship: *TileObject, hover_x: i32, hover_y: i32, world: *World, input: *const InputManager) !void {
         _ = world;
         const tile_x: usize = @intCast(hover_x);
         const tile_y: usize = @intCast(hover_y);
 
-        if (self.keyboard.isPressed(.r)) {
-            self.rotateTile(ship, tile_x, tile_y);
+        if (input.keyboard.isPressed(.r)) {
+            ShipLogic.rotateTile(ship, tile_x, tile_y);
         }
 
-        if (self.mouse.is_left_clicked) {
+        if (input.mouse.is_left_clicked) {
             switch (self.cursor_item.item) {
                 .component => |part_kind| {
-                    if (ship.getTile(tile_x, tile_y)) |tile| {
-                        if (tile.data == .empty) {
-                            const tier = 1; // Default tier
-                            const health = PartStats.getMaxHealth(part_kind, tier);
-                            const rotation: ?Direction = if (part_kind == .chemical_thruster) .north else null;
-                            const new_tile = Tile.init(.{
-                                .ship_part = .{
-                                    .kind = part_kind,
-                                    .tier = tier,
-                                    .health = health,
-                                    .rotation = rotation,
-                                },
-                            }) catch unreachable;
-
-                            ship.setTile(tile_x, tile_y, new_tile);
-
-                            self.cursor_item.amount -= 1;
-                            if (self.cursor_item.amount == 0) {
-                                self.cursor_item = .{};
-                            }
-
-                            try ship.initInventories();
-                        }
-                    }
+                     try ShipLogic.constructPart(ship, tile_x, tile_y, part_kind, &self.cursor_item);
                 },
                 else => {},
             }
@@ -257,6 +130,7 @@ pub const ShipManagement = struct {
         self: *Self,
         renderer: *Renderer,
         world: *World,
+        input: *const InputManager,
         pass: zgpu.wgpu.RenderPassEncoder,
     ) !void {
         const wh = self.window.getFramebufferSize();
@@ -279,10 +153,10 @@ pub const ShipManagement = struct {
         // background
         _ = try ui.panel(.{ .x = 0, .y = 0, .w = screen_w, .h = screen_h }, null, null);
 
-        try self.drawShipPanel(renderer, layout, ship);
-        try self.drawInventoryPanel(renderer, layout, ship);
-        try self.drawToolsPanel(renderer, layout, world);
-        try self.drawRecipesPanel(renderer, layout, world);
+        try self.drawShipPanel(renderer, layout, ship, input);
+        try self.drawInventoryPanel(renderer, layout, ship, input);
+        try self.drawToolsPanel(renderer, layout, world, input);
+        try self.drawRecipesPanel(renderer, layout, world, input);
         try self.drawCraftingPanel(renderer, layout, ship);
 
         ui.flush(pass, &renderer.global);
@@ -296,14 +170,14 @@ pub const ShipManagement = struct {
             ui.flush(pass, &renderer.global);
         }
 
-        try self.drawTileMenu(renderer, layout, ship, world);
+        try self.drawTileMenu(renderer, layout, ship, world, input);
         ui.flush(pass, &renderer.global);
 
         if (self.cursor_item.item != .none) {
             const slot_size = renderer.ui.style.slot_size;
             const cursor_rect = UiRect{
-                .x = self.mouse.x - slot_size / 2,
-                .y = self.mouse.y - slot_size / 2,
+                .x = input.mouse.x - slot_size / 2,
+                .y = input.mouse.y - slot_size / 2,
                 .w = slot_size,
                 .h = slot_size,
             };
@@ -316,7 +190,7 @@ pub const ShipManagement = struct {
         ui.flush(pass, &renderer.global);
     }
 
-    fn drawShipPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
+    fn drawShipPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject, input: *const InputManager) !void {
         var ui = &renderer.ui;
         _ = try ui.panel(layout.ship_panel_rect, null, null);
 
@@ -324,7 +198,7 @@ pub const ShipManagement = struct {
         var hover_y: i32 = -1;
         var hover_active: f32 = 0.0;
 
-        if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
+        if (layout.getHoveredTile(input.mouse.x, input.mouse.y)) |tile_pos| {
             hover_x = tile_pos.x;
             hover_y = tile_pos.y;
             hover_active = 1.0;
@@ -363,14 +237,14 @@ pub const ShipManagement = struct {
                     ) catch "!";
 
                     self.hovered_item_name = text;
-                    self.hover_pos_x = self.mouse.x + hover_offset_x;
-                    self.hover_pos_y = self.mouse.y + hover_offset_y;
+                    self.hover_pos_x = input.mouse.x + hover_offset_x;
+                    self.hover_pos_y = input.mouse.y + hover_offset_y;
                 }
             }
         }
     }
 
-    fn drawInventoryPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
+    fn drawInventoryPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject, input: *const InputManager) !void {
         var ui = &renderer.ui;
         const content_rect = try ui.panel(layout.inventory_rect, "Inventory", renderer.font);
 
@@ -385,11 +259,11 @@ pub const ShipManagement = struct {
             for (inv.stacks.items) |*stack| {
                 const slot_rect = UiRect{ .x = inv_x, .y = inv_y, .w = slot_size, .h = slot_size };
 
-                if (slot_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+                if (slot_rect.contains(.{ .x = input.mouse.x, .y = input.mouse.y })) {
                     if (stack.item != .none) {
                         self.hovered_item_name = stack.item.getName();
-                        self.hover_pos_x = self.mouse.x + hover_offset_x;
-                        self.hover_pos_y = self.mouse.y + hover_offset_y;
+                        self.hover_pos_x = input.mouse.x + hover_offset_x;
+                        self.hover_pos_y = input.mouse.y + hover_offset_y;
                     }
                 }
 
@@ -465,11 +339,11 @@ pub const ShipManagement = struct {
         }
     }
 
-    fn drawToolsPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World) !void {
+    fn drawToolsPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World, input: *const InputManager) !void {
         var ui = &renderer.ui;
         const content_rect = try ui.panel(layout.tools_rect, "Tools", renderer.font);
 
-        if (self.mouse.is_left_clicked and layout.tools_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+        if (input.mouse.is_left_clicked and layout.tools_rect.contains(.{ .x = input.mouse.x, .y = input.mouse.y })) {
             self.current_recipe = null;
         }
 
@@ -483,10 +357,10 @@ pub const ShipManagement = struct {
             const tool_rect = UiRect{ .x = tool_x, .y = tool_y, .w = slot_size, .h = slot_size };
             const item = Item{ .tool = .welding };
 
-            if (tool_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+            if (tool_rect.contains(.{ .x = input.mouse.x, .y = input.mouse.y })) {
                 self.hovered_item_name = item.getName();
-                self.hover_pos_x = self.mouse.x + hover_offset_x;
-                self.hover_pos_y = self.mouse.y + hover_offset_y;
+                self.hover_pos_x = input.mouse.x + hover_offset_x;
+                self.hover_pos_y = input.mouse.y + hover_offset_y;
             }
 
             _ = try ui.toolSlot(tool_rect, item);
@@ -499,7 +373,7 @@ pub const ShipManagement = struct {
         }
     }
 
-    fn drawRecipesPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World) !void {
+    fn drawRecipesPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, world: *World, input: *const InputManager) !void {
         var ui = &renderer.ui;
         const content_rect = try ui.panel(layout.recipe_rect, "Recipes", renderer.font);
 
@@ -519,10 +393,10 @@ pub const ShipManagement = struct {
                     if (r == recipe) is_selected = true;
                 }
 
-                if (recipe_rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
+                if (recipe_rect.contains(.{ .x = input.mouse.x, .y = input.mouse.y })) {
                     self.hovered_item_name = item.getName();
-                    self.hover_pos_x = self.mouse.x + hover_offset_x;
-                    self.hover_pos_y = self.mouse.y + hover_offset_y;
+                    self.hover_pos_x = input.mouse.x + hover_offset_x;
+                    self.hover_pos_y = input.mouse.y + hover_offset_y;
                 }
 
                 if ((try ui.recipeSlot(recipe_rect, item, is_selected)).is_clicked) {
@@ -543,36 +417,10 @@ pub const ShipManagement = struct {
         }
     }
 
-    fn tryCraft(self: *Self, ship: *TileObject, recipe: Recipe) !void {
-        if (self.active_crafting != null) {
-            return;
-        }
-
-        const costs = RecipeStats.getCost(recipe);
-
-        for (costs) |cost| {
-            const count = ship.getInventoryCountByItem(cost.item);
-
-            if (count < cost.amount) {
-                return;
-            }
-        }
-
-        for (costs) |cost| {
-            ship.removeNumberOfItemsFromInventory(cost.item, cost.amount);
-        }
-
-        self.active_crafting = .{
-            .recipe = recipe,
-            .progress = 0.0,
-            .duration = RecipeStats.getDuration(recipe),
-        };
-    }
-
     fn drawCraftingPanel(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject) !void {
         var ui = &renderer.ui;
 
-        if (self.active_crafting) |task| {
+        if (self.logic.active_crafting) |task| {
             // progress bar
             _ = try ui.panel(layout.crafting_rect, null, null);
 
@@ -606,19 +454,19 @@ pub const ShipManagement = struct {
 
             if (button_state.is_clicked) {
                 if (self.current_recipe) |recipe| {
-                    try self.tryCraft(ship, recipe);
+                    try self.logic.tryCraft(ship, recipe);
                 }
             }
         }
     }
 
-    fn drawTileMenu(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject, world: *World) !void {
-        if (self.mouse.is_right_clicked) {
+    fn drawTileMenu(self: *Self, renderer: *Renderer, layout: ShipManagementLayout, ship: *TileObject, world: *World, input: *const InputManager) !void {
+        if (input.mouse.is_right_clicked) {
             self.is_tile_menu_open = true;
-            self.tile_menu_x = self.mouse.x;
-            self.tile_menu_y = self.mouse.y;
+            self.tile_menu_x = input.mouse.x;
+            self.tile_menu_y = input.mouse.y;
 
-            if (layout.getHoveredTile(self.mouse.x, self.mouse.y)) |tile_pos| {
+            if (layout.getHoveredTile(input.mouse.x, input.mouse.y)) |tile_pos| {
                 self.tile_menu_tile_x = @intCast(tile_pos.x);
                 self.tile_menu_tile_y = @intCast(tile_pos.y);
             }
@@ -632,7 +480,7 @@ pub const ShipManagement = struct {
         const ship_part = tile.getShipPart() orelse return;
         const repair_costs = PartStats.getRepairCosts(ship_part.kind);
         const is_broken = PartStats.isBroken(ship_part);
-        const can_repair = is_broken and self.canRepair(ship, repair_costs);
+        const can_repair = is_broken and self.logic.canRepair(ship, repair_costs);
 
         const can_weld = world.research_manager.isUnlocked(.welding);
 
@@ -676,13 +524,13 @@ pub const ShipManagement = struct {
 
         if (result.selected_index) |index| {
             switch (actions[index]) {
-                .rotate => self.rotateTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y),
-                .repair => try self.repairTile(ship, world, self.tile_menu_tile_x, self.tile_menu_tile_y),
-                .dismantle => self.removeTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y),
+                .rotate => ShipLogic.rotateTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y),
+                .repair => try self.logic.repairTile(ship, world, self.tile_menu_tile_x, self.tile_menu_tile_y),
+                .dismantle => ShipLogic.removeTile(ship, self.tile_menu_tile_x, self.tile_menu_tile_y),
             }
             self.is_tile_menu_open = false;
-        } else if (!result.rect.contains(.{ .x = self.mouse.x, .y = self.mouse.y })) {
-            if (self.mouse.is_left_clicked) {
+        } else if (!result.rect.contains(.{ .x = input.mouse.x, .y = input.mouse.y })) {
+            if (input.mouse.is_left_clicked) {
                 self.is_tile_menu_open = false;
                 return;
             }

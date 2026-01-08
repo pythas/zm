@@ -4,6 +4,7 @@ const Font = @import("renderer/font.zig").Font;
 const UiVec4 = @import("renderer/ui_renderer.zig").UiVec4;
 const UiVec2 = @import("renderer/ui_renderer.zig").UiVec2;
 const UiRect = @import("renderer/ui_renderer.zig").UiRect;
+const config = @import("config.zig");
 
 pub const NotificationType = enum {
     auto_dismiss,
@@ -41,7 +42,7 @@ pub const NotificationSystem = struct {
         var n = Notification{
             .text = undefined,
             .len = 0,
-            .timer = 3.0,
+            .timer = config.ui.notification_auto_dismiss_time,
             .color = color,
             .type = n_type,
         };

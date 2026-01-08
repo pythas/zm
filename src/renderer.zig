@@ -12,6 +12,7 @@ const LineRenderer = @import("renderer/line_renderer.zig").LineRenderer;
 const UiRenderer = @import("renderer/ui_renderer.zig").UiRenderer;
 const World = @import("world.zig").World;
 const Font = @import("renderer/font.zig").Font;
+const config = @import("config.zig");
 
 pub const Renderer = struct {
     const Self = @This();
@@ -32,15 +33,15 @@ pub const Renderer = struct {
         window: *zglfw.Window,
     ) !Self {
         const font = try allocator.create(Font);
-        font.* = try Font.init(allocator, "assets/spleen-6x12.bdf");
+        font.* = try Font.init(allocator, config.assets.font);
 
         const atlas = try Atlas.init(allocator, gctx, &.{
             .{ .raw = font.texture_data },
-            .{ .path = "assets/asteroid.png" },
-            .{ .path = "assets/ship.png" },
-            .{ .path = "assets/resource.png" },
-            .{ .path = "assets/tool.png" },
-            .{ .path = "assets/recipe.png" },
+            .{ .path = config.assets.asteroid },
+            .{ .path = config.assets.ship },
+            .{ .path = config.assets.resource },
+            .{ .path = config.assets.tool },
+            .{ .path = config.assets.recipe },
         });
 
         var global = try GlobalRenderState.init(gctx, atlas.view);

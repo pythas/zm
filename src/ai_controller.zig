@@ -4,10 +4,12 @@ const Vec2 = @import("vec2.zig").Vec2;
 const TileObject = @import("tile_object.zig").TileObject;
 const World = @import("world.zig").World;
 const PartStats = @import("ship.zig").PartStats;
+const PhysicsLogic = @import("systems/physics_logic.zig").PhysicsLogic;
 const InputState = @import("input.zig").InputState;
 const PartKind = @import("tile.zig").PartKind;
 const rng = @import("rng.zig");
 const TileReference = @import("tile.zig").TileReference;
+const config = @import("config.zig");
 
 const DroneState = struct {
     mode: enum { idle, combat } = .idle,
@@ -147,10 +149,10 @@ pub const AiController = struct {
         const local_x = world_dir.x * cos_rot - world_dir.y * sin_rot;
         const local_y = world_dir.x * sin_rot + world_dir.y * cos_rot;
 
-        if (local_y < -0.2) drone.applyInputThrust(&world.physics, .forward);
-        if (local_y > 0.2) drone.applyInputThrust(&world.physics, .backward);
-        if (local_x > 0.2) drone.applyInputThrust(&world.physics, .right);
-        if (local_x < -0.2) drone.applyInputThrust(&world.physics, .left);
+        if (local_y < -0.2) PhysicsLogic.applyInputThrust(drone, &world.physics, .forward);
+        if (local_y > 0.2) PhysicsLogic.applyInputThrust(drone, &world.physics, .backward);
+        if (local_x > 0.2) PhysicsLogic.applyInputThrust(drone, &world.physics, .right);
+        if (local_x < -0.2) PhysicsLogic.applyInputThrust(drone, &world.physics, .left);
     }
 
     fn droneFireWeapons(
@@ -175,7 +177,7 @@ pub const AiController = struct {
             try self.fireLaser(world, drone, ref, target_pos, player_ship, target_tile_world_pos);
         }
 
-        state.laser_cooldown = 1.0;
+        state.laser_cooldown = config.combat.laser_cooldown;
     }
 
     fn findTargetTile(self: *Self, ship: *TileObject) !Vec2 {
@@ -250,14 +252,13 @@ pub const AiController = struct {
         _ = self;
         var actual_hit = end;
         const diff = end.sub(start);
-        const dist = diff.length();
-        const dir = diff.normalize();
-
-        // step size 4.0
-        var d: f32 = 0.0;
-        while (d < dist) : (d += 4.0) {
-            const test_pt = start.add(dir.mulScalar(d));
-
+                const dist = diff.length();
+                const dir = diff.normalize();
+        
+                // step size from config
+                var d: f32 = 0.0;
+                while (d < dist) : (d += config.combat.laser_raycast_step) {
+                    const test_pt = start.add(dir.mulScalar(d));
             if (ship.getTileCoordsAtWorldPos(test_pt)) |coords| {
                 if (ship.getTile(coords.x, coords.y)) |hit_tile| {
                     if (hit_tile.data != .empty) {

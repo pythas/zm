@@ -7,13 +7,16 @@ const Offset = @import("tile.zig").Offset;
 const TileReference = @import("tile.zig").TileReference;
 const TileCoords = @import("tile.zig").TileCoords;
 const TileObject = @import("tile_object.zig").TileObject;
-const KeyboardState = @import("input.zig").KeyboardState;
-const MouseState = @import("input.zig").MouseState;
+const InputManager = @import("input/input_manager.zig").InputManager;
+const GameAction = @import("input/input_manager.zig").GameAction;
 const Physics = @import("box2d_physics.zig").Physics;
+const PhysicsLogic = @import("systems/physics_logic.zig").PhysicsLogic;
+const InventoryLogic = @import("systems/inventory_logic.zig").InventoryLogic;
 const World = @import("world.zig").World;
 const PartKind = @import("tile.zig").PartKind;
 const PartStats = @import("ship.zig").PartStats;
 const rng = @import("rng.zig");
+const config = @import("config.zig");
 
 pub const Action = enum {
     laser,
@@ -55,23 +58,22 @@ pub const PlayerController = struct {
         self: *Self,
         dt: f32,
         world: *World,
-        keyboard_state: *const KeyboardState,
-        mouse_state: *const MouseState,
+        input: *const InputManager,
     ) !void {
         if (self.railgun_cooldown > 0.0) self.railgun_cooldown -= dt;
         if (self.laser_cooldown > 0.0) self.laser_cooldown -= dt;
 
         const ship = world.getObjectById(self.target_id) orelse return;
 
-        self.updateMovementInputs(ship, world, keyboard_state);
-        try self.updateCombatInputs(ship, world, keyboard_state);
-        try self.updateMouseInputs(ship, world, mouse_state);
+        self.updateMovementInputs(ship, world, input);
+        try self.updateCombatInputs(ship, world, input);
+        try self.updateMouseInputs(ship, world, input);
         try self.updateDebrisPickup(ship, world);
         try self.updateTileActions(dt, world);
     }
 
-    fn updateMovementInputs(self: *Self, ship: *TileObject, world: *World, keyboard_state: *const KeyboardState) void {
-        if (keyboard_state.isPressed(.z)) {
+    fn updateMovementInputs(self: *Self, ship: *TileObject, world: *World, input: *const InputManager) void {
+        if (input.isActionPressed(.toggle_flight_assist)) {
             self.flight_assist_enabled = !self.flight_assist_enabled;
             const text = if (self.flight_assist_enabled) "Flight Assist: ON" else "Flight Assist: OFF";
             world.notifications.add(text, .{ .r = 0.5, .g = 0.8, .b = 1.0, .a = 1.0 }, .auto_dismiss);
@@ -79,45 +81,44 @@ pub const PlayerController = struct {
 
         var has_linear_input = false;
 
-        if (keyboard_state.isDown(.w)) {
-            ship.applyInputThrust(&world.physics, .forward);
+        if (input.isActionDown(.move_forward)) {
+            PhysicsLogic.applyInputThrust(ship, &world.physics, .forward);
             has_linear_input = true;
         }
-        if (keyboard_state.isDown(.s)) {
-            ship.applyInputThrust(&world.physics, .backward);
+        if (input.isActionDown(.move_backward)) {
+            PhysicsLogic.applyInputThrust(ship, &world.physics, .backward);
             has_linear_input = true;
         }
-        if (keyboard_state.isDown(.a)) {
-            ship.applyInputThrust(&world.physics, .left);
+        if (input.isActionDown(.move_left)) {
+            PhysicsLogic.applyInputThrust(ship, &world.physics, .left);
             has_linear_input = true;
         }
-        if (keyboard_state.isDown(.d)) {
-            ship.applyInputThrust(&world.physics, .right);
+        if (input.isActionDown(.move_right)) {
+            PhysicsLogic.applyInputThrust(ship, &world.physics, .right);
             has_linear_input = true;
         }
 
         if (self.flight_assist_enabled) {
-            ship.stabilize(&world.physics, !has_linear_input);
+            PhysicsLogic.stabilize(ship, &world.physics, !has_linear_input);
         }
     }
 
-    fn updateCombatInputs(self: *Self, ship: *TileObject, world: *World, keyboard_state: *const KeyboardState) !void {
-        if (keyboard_state.isPressed(.r)) {
+    fn updateCombatInputs(self: *Self, ship: *TileObject, world: *World, input: *const InputManager) !void {
+        if (input.isActionPressed(.cycle_target)) {
             self.cycleTarget(world);
         }
 
-        if (keyboard_state.isDown(.space)) {
+        if (input.isActionDown(.fire_secondary)) {
             if (self.locked_target_id != null) {
                 try self.fireLasersAtLockedTarget(ship, world);
             }
         }
     }
 
-    fn updateMouseInputs(self: *Self, ship: *TileObject, world: *World, mouse_state: *const MouseState) !void {
-        if (!mouse_state.is_left_down) return;
+    fn updateMouseInputs(self: *Self, ship: *TileObject, world: *World, input: *const InputManager) !void {
+        if (!input.isActionDown(.fire_primary)) return;
 
-        const mouse_pos = mouse_state.getRelativePosition();
-        const world_pos = world.camera.screenToWorld(mouse_pos);
+        const world_pos = input.getMouseWorldPos(world.camera);
 
         switch (self.current_action) {
             .laser => {
@@ -194,7 +195,7 @@ pub const PlayerController = struct {
                     const amount = res_amount.amount;
                     if (amount == 0) continue;
 
-                    const remaining = try ship.addItemToInventory(.{ .resource = res_amount.resource }, amount, debris.position);
+                    const remaining = try InventoryLogic.addItemToInventory(ship, .{ .resource = res_amount.resource }, amount, debris.position);
                     const added = amount - remaining;
 
                     if (added > 0) {
@@ -247,7 +248,7 @@ pub const PlayerController = struct {
                             var debris = try TileObject.init(self.allocator, new_id, 1, 1, debris_pos, target_obj.rotation);
                             debris.object_type = .debris;
                             debris.setTile(0, 0, tile.*);
-                            try debris.recalculatePhysics(&world.physics);
+                            try PhysicsLogic.recalculatePhysics(&debris, &world.physics);
 
                             if (target_obj.body_id.isValid()) {
                                 const parent_vel = world.physics.getLinearVelocity(target_obj.body_id);
@@ -388,7 +389,7 @@ pub const PlayerController = struct {
         var candidates = std.ArrayList(Candidate).init(self.allocator);
         defer candidates.deinit();
 
-        const max_targeting_range = 500.0;
+        const max_targeting_range = config.combat.max_targeting_range;
         const max_range_sq = max_targeting_range * max_targeting_range;
 
         for (world.objects.items) |*obj| {
@@ -489,7 +490,7 @@ pub const PlayerController = struct {
         }
 
         if (fired) {
-            self.laser_cooldown = 1.0;
+            self.laser_cooldown = config.combat.laser_cooldown;
         }
     }
 
@@ -500,7 +501,7 @@ pub const PlayerController = struct {
         const dir = diff.normalize();
         var d: f32 = 0.0;
 
-        while (d < dist) : (d += 4.0) {
+        while (d < dist) : (d += config.combat.laser_raycast_step) {
             const pt = start.add(dir.mulScalar(d));
 
             if (ship.getTileCoordsAtWorldPos(pt)) |coords| {
