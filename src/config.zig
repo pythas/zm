@@ -21,7 +21,7 @@ pub const ui = struct {
     pub const radar_padding: f32 = 20.0;
     pub const radar_blip_size: f32 = 2.0;
     pub const radar_player_blip_size: f32 = 3.0;
-    
+
     pub const notification_auto_dismiss_time: f32 = 3.0;
 };
 

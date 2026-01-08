@@ -26,7 +26,7 @@ pub const ShipManagementUi = struct {
 
     allocator: std.mem.Allocator,
     window: *zglfw.Window,
-    
+
     logic: ShipLogic,
 
     current_recipe: ?Recipe = null,
@@ -44,7 +44,7 @@ pub const ShipManagementUi = struct {
     tile_menu_tile_y: usize = 0,
 
     pub fn init(allocator: std.mem.Allocator, window: *zglfw.Window) Self {
-        return .{ 
+        return .{
             .allocator = allocator,
             .window = window,
             .logic = .{},
@@ -119,7 +119,7 @@ pub const ShipManagementUi = struct {
         if (input.mouse.is_left_clicked) {
             switch (self.cursor_item.item) {
                 .component => |part_kind| {
-                     try ShipLogic.constructPart(ship, tile_x, tile_y, part_kind, &self.cursor_item);
+                    try ShipLogic.constructPart(ship, tile_x, tile_y, part_kind, &self.cursor_item);
                 },
                 else => {},
             }

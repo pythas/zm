@@ -5,11 +5,11 @@ const shader_utils = @import("../shader_utils.zig");
 const GlobalRenderState = @import("common.zig").GlobalRenderState;
 
 pub const LineRenderData = extern struct {
-    start: [2]f32,    // 0
-    end: [2]f32,      // 8
-    color: [4]f32,    // 16
-    thickness: f32,   // 32
-    dash_scale: f32,  // 36
+    start: [2]f32, // 0
+    end: [2]f32, // 8
+    color: [4]f32, // 16
+    thickness: f32, // 32
+    dash_scale: f32, // 36
     _pad: [2]f32 = .{ 0, 0 }, // 40. Align to something? size 48.
 };
 

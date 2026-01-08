@@ -71,21 +71,21 @@ pub const GameplayRenderer = struct {
         const ship = &world.objects.items[0];
 
         for (world.player_controller.tile_actions.items) |action| {
-             if (action.kind != .mine) continue;
+            if (action.kind != .mine) continue;
 
-             const source_pos = ship.getTileWorldPos(action.source.x, action.source.y);
+            const source_pos = ship.getTileWorldPos(action.source.x, action.source.y);
 
-             if (world.getObjectById(action.target.object_id)) |target_obj| {
-                 const target_pos = target_obj.getTileWorldPos(action.target.tile_x, action.target.tile_y);
+            if (world.getObjectById(action.target.object_id)) |target_obj| {
+                const target_pos = target_obj.getTileWorldPos(action.target.tile_x, action.target.tile_y);
 
-                 try lines.append(.{
-                     .start = .{ source_pos.x, source_pos.y },
-                     .end = .{ target_pos.x, target_pos.y },
-                     .color = .{ 1.0, 0.6, 0.1, 0.7 }, // Amber/Orange
-                     .thickness = 1.5,
-                     .dash_scale = 0.0,
-                 });
-             }
+                try lines.append(.{
+                    .start = .{ source_pos.x, source_pos.y },
+                    .end = .{ target_pos.x, target_pos.y },
+                    .color = .{ 1.0, 0.6, 0.1, 0.7 }, // Amber/Orange
+                    .thickness = 1.5,
+                    .dash_scale = 0.0,
+                });
+            }
         }
 
         renderer.line.draw(pass, &renderer.global, lines.items);

@@ -71,7 +71,7 @@ pub const WorldGenerator = struct {
             .seed = seed,
             .sector_type = .cradle,
         };
-        return .{ 
+        return .{
             .allocator = allocator,
             .noise = noise,
             .sector_config = sector_config,
@@ -333,3 +333,4 @@ pub const WorldGenerator = struct {
         try world.objects.append(drone);
     }
 };
+

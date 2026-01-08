@@ -252,13 +252,13 @@ pub const AiController = struct {
         _ = self;
         var actual_hit = end;
         const diff = end.sub(start);
-                const dist = diff.length();
-                const dir = diff.normalize();
-        
-                // step size from config
-                var d: f32 = 0.0;
-                while (d < dist) : (d += config.combat.laser_raycast_step) {
-                    const test_pt = start.add(dir.mulScalar(d));
+        const dist = diff.length();
+        const dir = diff.normalize();
+
+        // step size from config
+        var d: f32 = 0.0;
+        while (d < dist) : (d += config.combat.laser_raycast_step) {
+            const test_pt = start.add(dir.mulScalar(d));
             if (ship.getTileCoordsAtWorldPos(test_pt)) |coords| {
                 if (ship.getTile(coords.x, coords.y)) |hit_tile| {
                     if (hit_tile.data != .empty) {
@@ -287,4 +287,3 @@ pub const AiController = struct {
         }
     }
 };
-

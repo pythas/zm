@@ -118,7 +118,7 @@ pub fn loadShip(
             .ship_part => blk: {
                 const kind_str = json_tile.kind orelse return ShipSerializationError.InvalidEnumString;
                 const kind = std.meta.stringToEnum(PartKind, kind_str) orelse return ShipSerializationError.InvalidEnumString;
-                
+
                 const rotation: ?Direction = if (json_tile.rotation) |rot_str|
                     std.meta.stringToEnum(Direction, rot_str) orelse return ShipSerializationError.InvalidEnumString
                 else

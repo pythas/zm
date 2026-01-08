@@ -91,10 +91,10 @@ pub const ShipLogic = struct {
             }
 
             if (unlocked) {
-                 var buf: [64]u8 = undefined;
-                 const name = PartStats.getName(ship_part.kind);
-                 const text = std.fmt.bufPrint(&buf, "Unlocked: {s}", .{name}) catch "Unlocked Tech";
-                 world.notifications.add(text, .{ .r = 1.0, .g = 0.8, .b = 0.0, .a = 1.0 }, .manual_dismiss);
+                var buf: [64]u8 = undefined;
+                const name = PartStats.getName(ship_part.kind);
+                const text = std.fmt.bufPrint(&buf, "Unlocked: {s}", .{name}) catch "Unlocked Tech";
+                world.notifications.add(text, .{ .r = 1.0, .g = 0.8, .b = 0.0, .a = 1.0 }, .manual_dismiss);
             }
 
             try InventoryLogic.initInventories(ship);
