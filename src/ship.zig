@@ -168,10 +168,10 @@ pub const PartStats = struct {
 
     pub fn getMiningRangeSq(tier: u8, is_broken: bool) f32 {
         var range: f32 = switch (tier) {
-            1 => 150.0,
-            2 => 200.0,
-            3 => 300.0,
-            4 => 400.0,
+            1 => 300.0,
+            2 => 500.0,
+            3 => 750.0,
+            4 => 1250.0,
             else => 0.0,
         };
 

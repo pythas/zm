@@ -23,7 +23,7 @@ pub const GameAction = enum {
     fire_primary,
     open_tile_menu,
     cheat_repair,
-    mining_auto_target,
+    mining_precise_target,
 };
 
 pub const InputManager = struct {
@@ -64,7 +64,7 @@ pub const InputManager = struct {
             .fire_primary => self.mouse.is_left_down,
             .open_tile_menu => self.mouse.is_right_down,
             .cheat_repair => self.keyboard.isDown(.f1),
-            .mining_auto_target => self.keyboard.isDown(.left_shift),
+            .mining_precise_target => self.keyboard.isDown(.left_shift),
         };
     }
 
@@ -88,7 +88,7 @@ pub const InputManager = struct {
             .fire_primary => self.mouse.is_left_clicked, // This is technically released after pressed in current MouseState
             .open_tile_menu => self.mouse.is_right_clicked,
             .cheat_repair => self.keyboard.isPressed(.f1),
-            .mining_auto_target => self.keyboard.isPressed(.left_shift),
+            .mining_precise_target => self.keyboard.isPressed(.left_shift),
         };
     }
 

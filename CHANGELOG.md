@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 
+- Tooltips when hovering asteroids.
+- Default mining mode that mines the closest tile of an asteroid. SHIFT to target single tile.
 - Reduce zoom distance by half.
 - Removed damping on asteroids.
 - Changed laser to pulse laser and added mining tile.

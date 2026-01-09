@@ -64,7 +64,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     let hover_ty = i32(input.hover.y);
     let is_empty = tile.category == 0u;
 
-    if ((hover_active && tile_x == hover_tx && tile_y == hover_ty) || (highlight_all && !is_empty)) {
+    if (hover_active && tile_x == hover_tx && tile_y == hover_ty) {
       let grid_color = grid(tile_uv);
       var a = color.a;
       color = mix(grid_color, color, a);
@@ -78,6 +78,39 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
       let highlight_mask = step(edge, highlight_thickness);
 
       color = mix(color, highlight, highlight_mask);
+    } else if (highlight_all && !is_empty) {
+      let texture_dims_i = vec2<i32>(i32(texture_dimensions.x), i32(texture_dimensions.y));
+      let edge = 0.06;
+      var outline_mask = 0.0;
+
+      if (tile_uv.x < edge) {
+        let left_tile = fetch_tile(vec2<i32>(tile_x - 1, tile_y), texture_dims_i);
+        if (tile_x == 0 || left_tile.category == 0u) {
+          outline_mask = 1.0;
+        }
+      }
+      if (tile_uv.x > 1.0 - edge) {
+        let right_tile = fetch_tile(vec2<i32>(tile_x + 1, tile_y), texture_dims_i);
+        if (tile_x == texture_dims_i.x - 1 || right_tile.category == 0u) {
+          outline_mask = 1.0;
+        }
+      }
+      if (tile_uv.y < edge) {
+        let top_tile = fetch_tile(vec2<i32>(tile_x, tile_y - 1), texture_dims_i);
+        if (tile_y == 0 || top_tile.category == 0u) {
+          outline_mask = 1.0;
+        }
+      }
+      if (tile_uv.y > 1.0 - edge) {
+        let bottom_tile = fetch_tile(vec2<i32>(tile_x, tile_y + 1), texture_dims_i);
+        if (tile_y == texture_dims_i.y - 1 || bottom_tile.category == 0u) {
+          outline_mask = 1.0;
+        }
+      }
+
+      if (outline_mask > 0.5) {
+        color = mix(color, vec4<f32>(1.0, 1.0, 1.0, 1.0), outline_mask);
+      }
     }
   } else if globals.mode == 1u {
     let grid_color = grid(tile_uv);

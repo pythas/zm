@@ -162,12 +162,17 @@ pub const Game = struct {
                     var hover_y: i32 = -1;
                     var highlight_all = false;
 
-                    if (try self.getHoverCoords(obj, world_pos, ship)) |coords| {
-                        hover_x = coords.x;
-                        hover_y = coords.y;
+                    const is_mining = self.world.player_controller.current_action == .mining;
+                    const is_precise = self.input.isActionDown(.mining_precise_target);
+
+                    if (!is_mining or is_precise) {
+                        if (try self.getHoverCoords(obj, world_pos, ship)) |coords| {
+                            hover_x = coords.x;
+                            hover_y = coords.y;
+                        }
                     }
 
-                    if (self.world.player_controller.current_action == .mining and self.input.isActionDown(.mining_auto_target)) {
+                    if (is_mining and !is_precise) {
                         if (obj.getTileCoordsAtWorldPos(world_pos)) |_| {
                             if (obj.id != ship.id and obj.object_type != .debris) {
                                 highlight_all = true;
@@ -191,6 +196,28 @@ pub const Game = struct {
                 self.renderer.beam.draw(pass, global, thruster_count);
 
                 self.renderer.ui.beginFrame();
+
+                const mouse_x = self.input.mouse.x;
+                const mouse_y = self.input.mouse.y;
+
+                for (self.world.objects.items) |*obj| {
+                    if (obj.id == ship.id or obj.object_type == .debris) continue;
+
+                    var hovering = false;
+
+                    if (self.world.player_controller.current_action == .mining and !self.input.isActionDown(.mining_precise_target)) {
+                         if (obj.getTileCoordsAtWorldPos(world_pos)) |_| {
+                            hovering = true;
+                         }
+                    } else if (try self.getHoverCoords(obj, world_pos, ship)) |_| {
+                        hovering = true;
+                    }
+
+                    if (hovering) {
+                        try self.renderer.ui.tooltip(mouse_x + 10, mouse_y + 10, "Todo", self.renderer.font);
+                        break;
+                    }
+                }
 
                 const fb_size = self.window.getFramebufferSize();
                 const screen_w: f32 = @floatFromInt(fb_size[0]);

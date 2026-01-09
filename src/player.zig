@@ -43,7 +43,7 @@ pub const PlayerController = struct {
         return .{
             .allocator = allocator,
             .target_id = target_id,
-            .current_action = .laser,
+            .current_action = .mining,
             .railgun_cooldown = 0.0,
             .laser_cooldown = 0.0,
             .flight_assist_enabled = true,
@@ -120,7 +120,7 @@ pub const PlayerController = struct {
         if (!input.isActionDown(.fire_primary)) return;
 
         const world_pos = input.getMouseWorldPos(world.camera);
-        const auto_target = input.isActionDown(.mining_auto_target);
+        const auto_target = !input.isActionDown(.mining_precise_target);
 
         switch (self.current_action) {
             .mining => {
