@@ -10,6 +10,8 @@ const PartStats = @import("../ship.zig").PartStats;
 const TileObject = @import("../tile_object.zig").TileObject;
 const Vec2 = @import("../vec2.zig").Vec2;
 const config = @import("../config.zig");
+const ResourceStats = @import("../resource.zig").ResourceStats;
+const Resource = @import("../resource.zig").Resource;
 
 pub const GameplayRenderer = struct {
     const Self = @This();
@@ -311,6 +313,106 @@ pub const GameplayRenderer = struct {
             }
 
             current_x += button_w + spacing;
+        }
+    }
+
+    pub fn drawTooltips(self: *Self, renderer: *Renderer, world: *World, world_pos: Vec2, mouse_x: f32, mouse_y: f32, is_precise: bool) !void {
+        _ = self;
+        const ship = &world.objects.items[0];
+
+        for (world.objects.items) |*obj| {
+            if (obj.id == ship.id or obj.object_type == .debris) continue;
+
+            var hover_coords: ?struct { x: i32, y: i32 } = null;
+            const is_mining = world.player_controller.current_action == .mining;
+
+            if (is_mining and !is_precise) {
+                if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
+                    hover_coords = .{ .x = @intCast(coords.x), .y = @intCast(coords.y) };
+                }
+            } else {
+                // Inline getHoverCoords logic
+                if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
+                    var valid_candidate = false;
+                    if (is_mining) {
+                        const target_pos = obj.getTileWorldPos(coords.x, coords.y);
+                        if (try world.player_controller.getMiningCandidate(ship, target_pos)) |_| {
+                            valid_candidate = true;
+                        }
+                    }
+
+                    if (valid_candidate) {
+                        if (obj.getTile(coords.x, coords.y)) |tile| {
+                            if (tile.data != .empty) {
+                                hover_coords = .{ .x = @intCast(coords.x), .y = @intCast(coords.y) };
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (hover_coords) |coords| {
+                if (obj.getTile(@intCast(coords.x), @intCast(coords.y))) |tile| {
+                    if (tile.data != .empty) {
+                        var buf: [512]u8 = undefined;
+                        var stream = std.io.fixedBufferStream(&buf);
+                        const writer = stream.writer();
+
+                        if (tile.data == .terrain) {
+                            if (is_precise) {
+                                // Shift pressed: Show specific tile contents
+                                const terrain = tile.data.terrain;
+                                try writer.print("Tile Resources:", .{});
+                                if (terrain.resources.len > 0) {
+                                    for (terrain.resources.slice()) |res| {
+                                        const name = ResourceStats.getName(res.resource);
+                                        try writer.print("\n- {s}: {d}", .{ name, res.amount });
+                                    }
+                                } else {
+                                    try writer.print("\n(Empty)", .{});
+                                }
+                            } else {
+                                // Default: Show object composition
+                                var total_mass: u32 = 0;
+                                var counts = [_]u32{0} ** 9;
+
+                                for (obj.tiles) |t| {
+                                    if (t.data == .terrain) {
+                                        for (t.data.terrain.resources.slice()) |res| {
+                                            counts[@intFromEnum(res.resource)] += res.amount;
+                                            total_mass += res.amount;
+                                        }
+                                    }
+                                }
+
+                                try writer.print("Asteroid Composition:", .{});
+                                if (total_mass > 0) {
+                                    const fields = @typeInfo(Resource).@"enum".fields;
+                                    inline for (fields) |field| {
+                                        const value = field.value;
+                                        if (value != 0 and counts[value] > 0) { // Skip none
+                                            const pct = @as(f32, @floatFromInt(counts[value])) / @as(f32, @floatFromInt(total_mass)) * 100.0;
+                                            const name = ResourceStats.getName(@enumFromInt(value));
+                                            try writer.print("\n- {s}: {d:.1}%", .{ name, pct });
+                                        }
+                                    }
+                                } else {
+                                    try writer.print("\n(Barren)", .{});
+                                }
+                            }
+                        } else if (tile.data == .ship_part) {
+                            const part = tile.data.ship_part;
+                            try writer.print("Part: {s}", .{ @tagName(part.kind) });
+                        }
+
+                        const text = stream.getWritten();
+                        if (text.len > 0) {
+                            try renderer.ui.tooltip(mouse_x + 10, mouse_y + 10, text, renderer.font);
+                        }
+                        break;
+                    }
+                }
+            }
         }
     }
 };

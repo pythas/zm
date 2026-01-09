@@ -165,10 +165,19 @@ pub const Game = struct {
                     const is_mining = self.world.player_controller.current_action == .mining;
                     const is_precise = self.input.isActionDown(.mining_precise_target);
 
-                    if (!is_mining or is_precise) {
-                        if (try self.getHoverCoords(obj, world_pos, ship)) |coords| {
-                            hover_x = coords.x;
-                            hover_y = coords.y;
+                    if (is_mining and is_precise) {
+                        if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
+                            if (obj.id != ship.id and obj.object_type != .debris) {
+                                const target_pos = obj.getTileWorldPos(coords.x, coords.y);
+                                if (try self.world.player_controller.getMiningCandidate(ship, target_pos)) |_| {
+                                    if (obj.getTile(coords.x, coords.y)) |tile| {
+                                        if (tile.data != .empty) {
+                                            hover_x = @intCast(coords.x);
+                                            hover_y = @intCast(coords.y);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -199,25 +208,9 @@ pub const Game = struct {
 
                 const mouse_x = self.input.mouse.x;
                 const mouse_y = self.input.mouse.y;
+                const is_precise = self.input.isActionDown(.mining_precise_target);
 
-                for (self.world.objects.items) |*obj| {
-                    if (obj.id == ship.id or obj.object_type == .debris) continue;
-
-                    var hovering = false;
-
-                    if (self.world.player_controller.current_action == .mining and !self.input.isActionDown(.mining_precise_target)) {
-                         if (obj.getTileCoordsAtWorldPos(world_pos)) |_| {
-                            hovering = true;
-                         }
-                    } else if (try self.getHoverCoords(obj, world_pos, ship)) |_| {
-                        hovering = true;
-                    }
-
-                    if (hovering) {
-                        try self.renderer.ui.tooltip(mouse_x + 10, mouse_y + 10, "Todo", self.renderer.font);
-                        break;
-                    }
-                }
+                try self.gameplay_renderer.drawTooltips(&self.renderer, &self.world, world_pos, mouse_x, mouse_y, is_precise);
 
                 const fb_size = self.window.getFramebufferSize();
                 const screen_w: f32 = @floatFromInt(fb_size[0]);
@@ -234,29 +227,5 @@ pub const Game = struct {
                 try self.ship_management.draw(&self.renderer, &self.world, &self.input, pass);
             },
         }
-    }
-
-    fn getHoverCoords(self: *Self, obj: *@import("tile_object.zig").TileObject, world_pos: @import("vec2.zig").Vec2, ship: *@import("tile_object.zig").TileObject) !?struct { x: i32, y: i32 } {
-        if (obj.getTileCoordsAtWorldPos(world_pos)) |coords| {
-            if (obj.id != ship.id and obj.object_type != .debris) {
-                var valid_candidate = false;
-                if (self.world.player_controller.current_action == .mining) {
-                    const target_pos = obj.getTileWorldPos(coords.x, coords.y);
-
-                    if (try self.world.player_controller.getMiningCandidate(ship, target_pos)) |_| {
-                        valid_candidate = true;
-                    }
-                }
-
-                if (valid_candidate) {
-                    if (obj.getTile(coords.x, coords.y)) |tile| {
-                        if (tile.data != .empty) {
-                            return .{ .x = @intCast(coords.x), .y = @intCast(coords.y) };
-                        }
-                    }
-                }
-            }
-        }
-        return null;
     }
 };
