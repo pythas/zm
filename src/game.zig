@@ -160,14 +160,23 @@ pub const Game = struct {
                 for (self.world.objects.items) |*obj| {
                     var hover_x: i32 = -1;
                     var hover_y: i32 = -1;
+                    var highlight_all = false;
 
                     if (try self.getHoverCoords(obj, world_pos, ship)) |coords| {
                         hover_x = coords.x;
                         hover_y = coords.y;
                     }
 
+                    if (self.world.player_controller.current_action == .mining and self.input.isActionDown(.mining_auto_target)) {
+                        if (obj.getTileCoordsAtWorldPos(world_pos)) |_| {
+                            if (obj.id != ship.id and obj.object_type != .debris) {
+                                highlight_all = true;
+                            }
+                        }
+                    }
+
                     try self.renderer.sprite.prepareObject(obj);
-                    try instances.append(SpriteRenderer.buildInstance(obj, hover_x, hover_y));
+                    try instances.append(SpriteRenderer.buildInstance(obj, hover_x, hover_y, highlight_all));
                 }
 
                 try self.renderer.sprite.writeInstances(instances.items);

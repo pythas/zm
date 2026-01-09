@@ -133,7 +133,7 @@ pub const SpriteRenderer = struct {
         }
     }
 
-    pub fn buildInstance(object: *const TileObject, hover_x: i32, hover_y: i32) SpriteRenderData {
+    pub fn buildInstance(object: *const TileObject, hover_x: i32, hover_y: i32, highlight_all: bool) SpriteRenderData {
         return .{
             .wh = .{ @floatFromInt(object.width * 8), @floatFromInt(object.height * 8), 0, 0 },
             .position = .{ object.position.x, object.position.y, 0, 0 },
@@ -142,7 +142,7 @@ pub const SpriteRenderer = struct {
                 @floatFromInt(hover_x),
                 @floatFromInt(hover_y),
                 if (hover_x >= 0) 1.0 else 0.0,
-                0,
+                if (highlight_all) 1.0 else 0.0,
             },
             .scale = 1.0,
         };

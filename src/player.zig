@@ -120,36 +120,74 @@ pub const PlayerController = struct {
         if (!input.isActionDown(.fire_primary)) return;
 
         const world_pos = input.getMouseWorldPos(world.camera);
+        const auto_target = input.isActionDown(.mining_auto_target);
 
         switch (self.current_action) {
             .mining => {
                 for (world.objects.items) |*object| {
                     if (object.id == self.target_id) continue;
 
-                    const coords = object.getTileCoordsAtWorldPos(world_pos) orelse continue;
-                    const tile = object.getTile(coords.x, coords.y) orelse continue;
-                    if (tile.data == .empty) continue;
+                    var target_x: i32 = 0;
+                    var target_y: i32 = 0;
 
-                    const target_pos = object.getTileWorldPos(coords.x, coords.y);
+                    if (auto_target) {
+                        if (object.getTileCoordsAtWorldPos(world_pos)) |_| {
+                            if (object.object_type == .debris) continue;
+
+                            var best_dist: f32 = std.math.floatMax(f32);
+                            var found = false;
+
+                            for (0..object.height) |y| {
+                                for (0..object.width) |x| {
+                                    if (object.getTile(x, y)) |t| {
+                                        if (t.data != .empty) {
+                                            const pos = object.getTileWorldPos(x, y);
+                                            const dist = pos.sub(ship.position).lengthSq();
+                                            if (dist < best_dist) {
+                                                best_dist = dist;
+                                                target_x = @intCast(x);
+                                                target_y = @intCast(y);
+                                                found = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (!found) continue;
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        const coords = object.getTileCoordsAtWorldPos(world_pos) orelse continue;
+                        const tile = object.getTile(coords.x, coords.y) orelse continue;
+                        if (tile.data == .empty) continue;
+                        target_x = @intCast(coords.x);
+                        target_y = @intCast(coords.y);
+                    }
+
+                    const target_pos = object.getTileWorldPos(@intCast(target_x), @intCast(target_y));
                     const best_candidate = try self.getMiningCandidate(ship, target_pos);
 
-                    if (best_candidate == null) break;
+                    if (best_candidate == null) {
+                        if (auto_target) break;
+                        continue;
+                    }
 
                     const radius: i32 = @intCast(PartStats.getMiningRadius(best_candidate.?.tier));
-                    const center_x: i32 = @intCast(coords.x);
-                    const center_y: i32 = @intCast(coords.y);
+                    const center_x: i32 = target_x;
+                    const center_y: i32 = target_y;
 
                     var dy: i32 = -radius;
                     while (dy <= radius) : (dy += 1) {
                         var dx: i32 = -radius;
                         while (dx <= radius) : (dx += 1) {
                             if (@abs(dx) + @abs(dy) <= radius) {
-                                const target_x = center_x + dx;
-                                const target_y = center_y + dy;
-                                if (target_x < 0 or target_y < 0) continue;
+                                const tx_i = center_x + dx;
+                                const ty_i = center_y + dy;
+                                if (tx_i < 0 or ty_i < 0) continue;
 
-                                const tx: usize = @intCast(target_x);
-                                const ty: usize = @intCast(target_y);
+                                const tx: usize = @intCast(tx_i);
+                                const ty: usize = @intCast(ty_i);
 
                                 if (object.getTile(tx, ty)) |target_tile| {
                                     if (target_tile.data == .empty) continue;

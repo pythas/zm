@@ -59,10 +59,12 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 
   if globals.mode == 0u {
     let hover_active = input.hover.z > 0.5;
+    let highlight_all = input.hover.w > 0.5;
     let hover_tx = i32(input.hover.x);
     let hover_ty = i32(input.hover.y);
+    let is_empty = tile.category == 0u;
 
-    if (hover_active && tile_x == hover_tx && tile_y == hover_ty) {
+    if ((hover_active && tile_x == hover_tx && tile_y == hover_ty) || (highlight_all && !is_empty)) {
       let grid_color = grid(tile_uv);
       var a = color.a;
       color = mix(grid_color, color, a);
@@ -83,10 +85,12 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     color = mix(grid_color, color, a);
 
     let hover_active = input.hover.z > 0.5;
+    let highlight_all = input.hover.w > 0.5;
     let hover_tx = i32(input.hover.x);
     let hover_ty = i32(input.hover.y);
+    let is_empty = tile.category == 0u;
 
-    if (hover_active && tile_x == hover_tx && tile_y == hover_ty) {
+    if ((hover_active && tile_x == hover_tx && tile_y == hover_ty) || (highlight_all && !is_empty)) {
       let highlight = vec4<f32>(1.0, 1.0, 1.0, 1.0);
       let edge = min(
           min(tile_uv.x, 1.0 - tile_uv.x),
